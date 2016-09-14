@@ -1,2 +1,2 @@
 # ryft-elasticsearch
-Private repos for Ryft-ElasticSerach PoC
+Private repo for Ryft-ElasticSerach PoC
