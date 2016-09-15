@@ -16,7 +16,10 @@ import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
 
 import com.dataart.elastic.ryft.codec.utils.SimpleTextUtil;
-
+/**
+ * 
+ * @author imasternoy
+ */
 public class RyftStoredFieldsWriter extends StoredFieldsWriter {
 	public final static String FIELDS_EXTENSION = "jsonfld";
 	private final BytesRefBuilder scratch = new BytesRefBuilder();

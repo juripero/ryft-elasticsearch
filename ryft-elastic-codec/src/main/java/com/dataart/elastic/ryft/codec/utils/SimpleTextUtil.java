@@ -12,7 +12,6 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.StringHelper;
 
-
 public class SimpleTextUtil {
   public final static byte NEWLINE = 10;
   public final static byte ESCAPE = 92;

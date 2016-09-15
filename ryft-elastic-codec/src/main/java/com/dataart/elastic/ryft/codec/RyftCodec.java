@@ -11,7 +11,10 @@ import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.lucene54.Lucene54Codec;
-
+/**
+ * 
+ * @author imasternoy
+ */
 public class RyftCodec extends Codec {
 	Codec delegate;
 	SegmentInfoFormat segmentInfoFormat;
