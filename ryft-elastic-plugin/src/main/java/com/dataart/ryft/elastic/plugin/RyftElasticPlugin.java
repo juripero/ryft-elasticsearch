@@ -5,10 +5,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.elasticsearch.action.ActionModule;
-import org.elasticsearch.action.search.SearchAction;
-import org.elasticsearch.action.search.TransportSearchAction;
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
-import org.elasticsearch.indices.IndicesModule;
 import org.elasticsearch.plugins.Plugin;
 
 /**
@@ -16,6 +14,9 @@ import org.elasticsearch.plugins.Plugin;
  * @author imasternoy
  */
 public class RyftElasticPlugin extends Plugin {
+    
+    @Inject
+    RestSearchActionFilter filter;
     
     public void onModule(ActionModule actionModule) {
         actionModule.registerFilter(RestSearchActionFilter.class);

@@ -30,12 +30,9 @@ import com.dataart.ryft.elastic.plugin.mappings.RyftResponse;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.google.common.collect.ImmutableMap;
 
 public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
-    private static final String SOURCE_FIELD = "_source";
-
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
 
     ActionListener<SearchResponse> listener;
@@ -45,7 +42,6 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
 
     public RestClientHandler(ActionListener<SearchResponse> listener) {
         this.listener = listener;
-
     }
 
     @Override
@@ -71,7 +67,8 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             mapper.disable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS);
             RyftResponse results = mapper.readValue(accumulator.array(), RyftResponse.class);
             logger.info("Response has been parsed channel will be closed. Response: {}", results);
-
+            // TODO: [imasternoy] we should not block I/O thread. Investigate to
+            // move processing somewhere
             List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
             results.getResults().forEach(
                     hit -> {
@@ -90,7 +87,6 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             SearchResponse response = new SearchResponse(searchResponse, null, 1, 1, results.getStats().getDuration(),
                     ShardSearchFailure.EMPTY_ARRAY);
             listener.onResponse(response);
-
         } catch (IOException e) {
             logger.error("Failed to parse RYFT response", e);
             listener.onFailure(e);

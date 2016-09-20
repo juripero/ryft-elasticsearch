@@ -1,8 +1,14 @@
 package com.dataart.ryft.elastic.plugin;
 
+import org.elasticsearch.action.index.IndexAction;
+import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.multibindings.MapBinder;
 
-import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
+import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
+import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
+import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
+import com.dataart.ryft.elastic.plugin.mappings.RyftHit;
 
 /**
  * 
@@ -13,9 +19,15 @@ public class RyftElasticModule extends AbstractModule {
     @Override
     protected void configure() {
         // TODO: [imasternoy] Think about provider for this
-//        bind(RyftRestClient.class);
-//        bind(RestSearchActionFilter.class);
+        // bind(RyftRestClient.class);
+        bind(RyftHit.class);
+        bind(RestSearchActionFilter.class);
 
+        MapBinder<String, ActionInterceptor> interceptors = MapBinder.newMapBinder(binder(), String.class,
+                ActionInterceptor.class);
+
+        interceptors.addBinding(SearchAction.INSTANCE.name()).to(SearchInterceptor.class);
+        interceptors.addBinding(IndexAction.INSTANCE.name()).to(IndexInterceptor.class);
     }
 
 }
