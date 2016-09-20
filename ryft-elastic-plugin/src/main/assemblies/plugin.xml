@@ -32,6 +32,8 @@
 			<unpack>false</unpack>
 			<scope>compile</scope>
 			<excludes>
+				<exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+				<!-- <exclude>com.fasterxml.jackson:jackson-databind</exclude> -->
 				<exclude>org.elasticsearch:elasticsearch</exclude>
 				<exclude>org.apache.lucene:lucene-core</exclude>
 				<exclude>org.apache.lucene:lucene-analyzers</exclude>
