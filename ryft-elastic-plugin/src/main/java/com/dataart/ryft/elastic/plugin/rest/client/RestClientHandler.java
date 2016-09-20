@@ -1,28 +1,41 @@
 package com.dataart.ryft.elastic.plugin.rest.client;
 
-import java.io.IOException;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.text.Text;
+import org.elasticsearch.search.SearchShardTarget;
+import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.internal.InternalSearchHit;
+import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
+import com.dataart.ryft.elastic.plugin.mappings.RyftResponse;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.MapperConfig;
+import com.google.common.collect.ImmutableMap;
 
 public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
+    private static final String SOURCE_FIELD = "_source";
+
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
 
     ActionListener<SearchResponse> listener;
@@ -38,32 +51,52 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpResponse) {
-            accumulator = Unpooled.buffer(); //BEWARE TO RELEASE
-            logger.error("Message received {}", msg);
+            accumulator = Unpooled.buffer(); // BEWARE TO RELEASE
+            logger.info("Message received {}", msg);
         } else if (msg instanceof HttpContent) {
             HttpContent m = (HttpContent) msg;
             byte[] bytes = new byte[m.content().readableBytes()];
             ((io.netty.buffer.ByteBuf) m.content()).copy().readBytes(bytes);
-            logger.error("Message received {}", new String(bytes));
-            
+            logger.info("Message received {}", new String(bytes));
             accumulator.writeBytes(m.content());
         } else if (msg instanceof LastHttpContent) {
-         
+            logger.info("Received lastHttpContent {}", msg);
         }
-        // ctx.close();
     }
-    
+
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         try {
-            JsonParser parser = new JsonFactory().createParser(accumulator.copy().array());
-            logger.debug("Response has been parsed channel will be closed");
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.disable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS);
+            RyftResponse results = mapper.readValue(accumulator.array(), RyftResponse.class);
+            logger.info("Response has been parsed channel will be closed. Response: {}", results);
+
+            List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
+            results.getResults().forEach(
+                    hit -> {
+                        InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), hit.getUid(), new Text(
+                                hit.getType()), ImmutableMap.of());
+                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), "shakespeare", 0));
+                        searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                        searchHits.add(searchHit);
+                    });
+            InternalSearchHits hits = new InternalSearchHits(
+                    searchHits.toArray(new InternalSearchHit[searchHits.size()]), searchHits.size(), 1.0f);
+
+            InternalSearchResponse searchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY, null,
+                    null, false, false);
+
+            SearchResponse response = new SearchResponse(searchResponse, null, 1, 1, results.getStats().getDuration(),
+                    ShardSearchFailure.EMPTY_ARRAY);
+            listener.onResponse(response);
+
         } catch (IOException e) {
             logger.error("Failed to parse RYFT response", e);
+            listener.onFailure(e);
+        } finally {
+            accumulator.release();
+            super.channelUnregistered(ctx);
         }
-        listener.onResponse(new SearchResponse(InternalSearchResponse.empty(), null, 0, 0, 0, ShardSearchFailure.EMPTY_ARRAY));
-        super.channelUnregistered(ctx);
-        accumulator.release();
     }
-
 }
