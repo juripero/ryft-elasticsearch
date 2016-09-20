@@ -1,8 +1,6 @@
 package com.dataart.ryft.elastic.plugin.mappings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class RyftHit {
