@@ -10,6 +10,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.elasticsearch.action.ActionListener;
@@ -31,6 +33,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
@@ -58,6 +61,14 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
         } else if (msg instanceof LastHttpContent) {
             logger.info("Received lastHttpContent {}", msg);
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), null, 1, 1, 0,
+                (ShardSearchFailure[]) Lists.newArrayList(new ShardSearchFailure(cause)).toArray());
+        listener.onResponse(response);
     }
 
     @Override
@@ -91,7 +102,9 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             logger.error("Failed to parse RYFT response", e);
             listener.onFailure(e);
         } finally {
-            accumulator.release();
+            if (accumulator != null) {
+                accumulator.release();
+            }
             super.channelUnregistered(ctx);
         }
     }

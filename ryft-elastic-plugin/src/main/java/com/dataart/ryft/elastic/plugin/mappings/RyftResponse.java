@@ -3,8 +3,10 @@ package com.dataart.ryft.elastic.plugin.mappings;
 import java.util.ArrayList;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftResponse {
 
     private ArrayList<RyftHit> results = new ArrayList<RyftHit>();

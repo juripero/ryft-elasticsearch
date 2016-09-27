@@ -11,6 +11,7 @@ import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.lucene54.Lucene54Codec;
+import org.apache.lucene.codecs.simpletext.SimpleTextCodec;
 /**
  * 
  * @author imasternoy
@@ -24,7 +25,8 @@ public class RyftCodec extends Codec {
 	public RyftCodec() {
 		super("RyftCodec");
 		//TODO: [imasternoy] Check possibility to do SPI lookup Codec.forName("")
-		this.delegate = new Lucene54Codec();
+//		this.delegate = new Lucene54Codec();
+		this.delegate = new SimpleTextCodec();
 		this.segmentInfoFormat = new RyftSegmentInfoFormat(delegate.segmentInfoFormat());
 		this.compoundFormat = new RyftCompoundFormat(delegate.compoundFormat());
 		this.storedFieldsFormat = new RyftStoredFieldsFormat(delegate.storedFieldsFormat());

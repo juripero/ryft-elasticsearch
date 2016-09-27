@@ -1,7 +1,9 @@
 package com.dataart.ryft.elastic.plugin.mappings;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftStats {
 
     @JsonProperty("matches")
