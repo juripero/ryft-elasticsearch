@@ -98,7 +98,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
 					}
 				} else {
 					// Should never happen
-					System.out.println("Received field:"+field.name());
+//					System.out.println("Received field:"+field.name());
 					write(field.stringValue());
 				}
 				newLine();
