@@ -1,0 +1,110 @@
+package com.dataart.ryft.elastic.parser;
+
+import java.util.Arrays;
+import java.util.List;
+
+public class RyftFuzzyRequest {
+
+    private Integer fuzziness;
+    private String[] index;
+    private String[] type;
+    private String query;
+    private List<String> fields;// Needed for multi matching
+
+    public RyftFuzzyRequest(Integer fuzziness, String query, List<String> fields) {
+        super();
+        this.fuzziness = fuzziness;
+        this.query = query;
+        this.fields = fields;
+    }
+
+    public Integer getFuzziness() {
+        return fuzziness;
+    }
+
+    public void setFuzziness(Integer fuzziness) {
+        this.fuzziness = fuzziness;
+    }
+
+    public String[] getIndex() {
+        return index;
+    }
+
+    public void setIndex(String[] index) {
+        this.index = index;
+    }
+
+    public String[] getType() {
+        return type;
+    }
+
+    public void setType(String[] type) {
+        this.type = type;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    public List<String> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<String> fields) {
+        this.fields = fields;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
+        result = prime * result + ((fuzziness == null) ? 0 : fuzziness.hashCode());
+        result = prime * result + Arrays.hashCode(index);
+        result = prime * result + ((query == null) ? 0 : query.hashCode());
+        result = prime * result + Arrays.hashCode(type);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RyftFuzzyRequest other = (RyftFuzzyRequest) obj;
+        if (fields == null) {
+            if (other.fields != null)
+                return false;
+        } else if (!fields.equals(other.fields))
+            return false;
+        if (fuzziness == null) {
+            if (other.fuzziness != null)
+                return false;
+        } else if (!fuzziness.equals(other.fuzziness))
+            return false;
+        if (!Arrays.equals(index, other.index))
+            return false;
+        if (query == null) {
+            if (other.query != null)
+                return false;
+        } else if (!query.equals(other.query))
+            return false;
+        if (!Arrays.equals(type, other.type))
+            return false;
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", type="
+                + Arrays.toString(type) + ", query=" + query + ", fields=" + fields + "]";
+    }
+
+}
