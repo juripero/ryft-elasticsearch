@@ -8,19 +8,38 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilterChain;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.xcontent.XContent;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.search.SearchShardTarget;
+import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.internal.InternalSearchHit;
+import org.elasticsearch.search.internal.InternalSearchHits;
+import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.tasks.Task;
 
+import com.dataart.ryft.elastic.parser.FuzzyQueryParser;
+import com.dataart.ryft.elastic.parser.RyftFuzzyRequest;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 public class SearchInterceptor implements ActionInterceptor {
     private final ESLogger logger = Loggers.getLogger(getClass());
@@ -33,13 +52,21 @@ public class SearchInterceptor implements ActionInterceptor {
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
             ActionFilterChain chain) {
         // TODO: [imasternoy] ugly, sorry.
-        byte[] searchContent = ((SearchRequest) request).source().copyBytesArray().array();
+        SearchRequest searchReq = ((SearchRequest) request);
+        BytesReference searchContent = searchReq.source().copyBytesArray();
         try {
-            Map<String, Object> json = (Map<String, Object>) XContentFactory.xContent(searchContent)
-                    .createParser(searchContent).map();
-            if (!json.containsKey(QUERY_KEY)) {
+            RyftFuzzyRequest ryftFuzzy = FuzzyQueryParser.parseQuery(searchContent);
+            if (ryftFuzzy == null) {
+                // Not fuzzy search request case
                 return true;
             }
+            ryftFuzzy.setIndex(searchReq.indices());
+            ryftFuzzy.setType(searchReq.types());
+
+            logger.info("Ryft request has been generated {}", ryftFuzzy);
+
+            Map<String, Object> json = (Map<String, Object>) XContentFactory.xContent(searchContent)
+                    .createParser(searchContent).map();
 
             Map<String, Object> queryContent = (Map<String, Object>) json.get(QUERY_KEY);
             if (!queryContent.containsKey(QUERY_STRING)) {
@@ -51,6 +78,21 @@ public class SearchInterceptor implements ActionInterceptor {
                     : "";
 
             if (!searchQuery.startsWith("_ryftSearch")) {
+                if (queryContent.containsKey("someQuery")) {
+                    List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
+                    InternalSearchHit searchHit = new InternalSearchHit(1, "12345", new Text("igorTest"),
+                            ImmutableMap.of());
+                    searchHit.shard(new SearchShardTarget("0", "shakespeare", 0));
+                    searchHit.sourceRef(((BytesReference) new BytesArray("{\"test\":\"testValue\"}")));
+                    searchHits.add(searchHit);
+                    InternalSearchHits hits = new InternalSearchHits(
+                            searchHits.toArray(new InternalSearchHit[searchHits.size()]), searchHits.size(), 1.0f);
+                    InternalSearchResponse searchResponse = new InternalSearchResponse(hits,
+                            InternalAggregations.EMPTY, null, null, false, false);
+                    SearchResponse response = new SearchResponse(searchResponse, null, 1, 1, 10L,
+                            ShardSearchFailure.EMPTY_ARRAY);
+                    listener.onResponse(response);
+                }
                 return true;
             }
 
@@ -63,7 +105,7 @@ public class SearchInterceptor implements ActionInterceptor {
                 // Sample search URI
                 uri = uri += "(RECORD.type%20CONTAINS%20%22act%22)&files=elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld&mode=es&format=json&local=true&stats=true";
             }
-
+            // TODO: [imasternoy] Create message add it to the queue
             RyftRestClient handler = new RyftRestClient(listener);
             handler.init();
             Channel channel = handler.getChannel();
