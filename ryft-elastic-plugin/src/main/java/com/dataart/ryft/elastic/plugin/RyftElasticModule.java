@@ -5,6 +5,7 @@ import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.multibindings.MapBinder;
 
+import com.dataart.ryft.disruptor.DisruptorMessageBusModule;
 import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
@@ -28,6 +29,8 @@ public class RyftElasticModule extends AbstractModule {
 
         interceptors.addBinding(SearchAction.INSTANCE.name()).to(SearchInterceptor.class);
         interceptors.addBinding(IndexAction.INSTANCE.name()).to(IndexInterceptor.class);
+        
+        (new DisruptorMessageBusModule()).configure(binder());
     }
 
 }

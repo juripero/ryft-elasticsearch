@@ -9,15 +9,17 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.plugins.Plugin;
 
+import com.dataart.ryft.disruptor.DisruptorMessageBusModule;
+
 /**
  * 
  * @author imasternoy
  */
 public class RyftElasticPlugin extends Plugin {
-    
+
     @Inject
     RestSearchActionFilter filter;
-    
+
     public void onModule(ActionModule actionModule) {
         actionModule.registerFilter(RestSearchActionFilter.class);
     }
