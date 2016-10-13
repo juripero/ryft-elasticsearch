@@ -1,9 +1,9 @@
-package com.dataart.ryft.elastic.parser;
+package com.dataart.ryft.disruptor.messages;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class RyftFuzzyRequest {
+public class RyftRequestEvent extends InternalEvent{
 
     private Integer fuzziness;
     private String[] index;
@@ -11,7 +11,7 @@ public class RyftFuzzyRequest {
     private String query;
     private List<String> fields;// Needed for multi matching
 
-    public RyftFuzzyRequest(Integer fuzziness, String query, List<String> fields) {
+    public RyftRequestEvent(Integer fuzziness, String query, List<String> fields) {
         super();
         this.fuzziness = fuzziness;
         this.query = query;
@@ -78,7 +78,7 @@ public class RyftFuzzyRequest {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RyftFuzzyRequest other = (RyftFuzzyRequest) obj;
+        RyftRequestEvent other = (RyftRequestEvent) obj;
         if (fields == null) {
             if (other.fields != null)
                 return false;
@@ -105,6 +105,11 @@ public class RyftFuzzyRequest {
     public String toString() {
         return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", type="
                 + Arrays.toString(type) + ", query=" + query + ", fields=" + fields + "]";
+    }
+
+    @Override
+    public EventType getEventType() {
+        return EventType.ES_REQUEST;
     }
 
 }

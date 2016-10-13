@@ -11,10 +11,12 @@ import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+
 public class FuzzyQueryParser {
 
-    public static RyftFuzzyRequest parseQuery(BytesReference searchContent) throws ElasticsearchParseException {
-        RyftFuzzyRequest request = null;
+    public static RyftRequestEvent parseQuery(BytesReference searchContent) throws ElasticsearchParseException {
+        RyftRequestEvent request = null;
         String currentName;
         XContentParser parser;
         try {
@@ -67,7 +69,7 @@ public class FuzzyQueryParser {
             } else {
                 throw new ElasticsearchParseException("Failed to parse query. Field entry should have 'fuzziness' field");
             }
-            request = new RyftFuzzyRequest(fuzziness, fieldQuery, Arrays.asList(fieldName));
+            request = new RyftRequestEvent(fuzziness, fieldQuery, Arrays.asList(fieldName));
 
         } catch (Exception e) {
             throw new ElasticsearchParseException("Failed to parse query", e);
@@ -75,7 +77,7 @@ public class FuzzyQueryParser {
         return request;
     }
 
-    private static RyftFuzzyRequest parseMultiMatch(XContentParser parser) {
+    private static RyftRequestEvent parseMultiMatch(XContentParser parser) {
         //XXX: [imasternoy] Implement me
         return null;
     }

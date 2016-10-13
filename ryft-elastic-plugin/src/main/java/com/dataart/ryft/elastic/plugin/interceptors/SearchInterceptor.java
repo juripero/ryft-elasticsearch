@@ -22,6 +22,7 @@ import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.text.Text;
@@ -35,8 +36,9 @@ import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.tasks.Task;
 
+import com.dataart.ryft.disruptor.EventProducer;
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.parser.FuzzyQueryParser;
-import com.dataart.ryft.elastic.parser.RyftFuzzyRequest;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -47,6 +49,13 @@ public class SearchInterceptor implements ActionInterceptor {
     private final static String QUERY_STRING = "query_string";
     private static final String RYFT_SEARCH_URL = "http://172.16.13.3:8765";
 
+    EventProducer<RyftRequestEvent> producer;
+
+    @Inject
+    public SearchInterceptor( EventProducer<RyftRequestEvent> producer) {
+        this.producer = producer;
+    }
+
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
@@ -55,7 +64,7 @@ public class SearchInterceptor implements ActionInterceptor {
         SearchRequest searchReq = ((SearchRequest) request);
         BytesReference searchContent = searchReq.source().copyBytesArray();
         try {
-            RyftFuzzyRequest ryftFuzzy = FuzzyQueryParser.parseQuery(searchContent);
+            RyftRequestEvent ryftFuzzy = FuzzyQueryParser.parseQuery(searchContent);
             if (ryftFuzzy == null) {
                 // Not fuzzy search request case
                 return true;
@@ -64,6 +73,7 @@ public class SearchInterceptor implements ActionInterceptor {
             ryftFuzzy.setType(searchReq.types());
 
             logger.info("Ryft request has been generated {}", ryftFuzzy);
+            producer.send(ryftFuzzy);
 
             Map<String, Object> json = (Map<String, Object>) XContentFactory.xContent(searchContent)
                     .createParser(searchContent).map();
@@ -105,6 +115,7 @@ public class SearchInterceptor implements ActionInterceptor {
                 // Sample search URI
                 uri = uri += "(RECORD.type%20CONTAINS%20%22act%22)&files=elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld&mode=es&format=json&local=true&stats=true";
             }
+
             // TODO: [imasternoy] Create message add it to the queue
             RyftRestClient handler = new RyftRestClient(listener);
             handler.init();
