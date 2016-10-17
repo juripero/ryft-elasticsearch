@@ -21,18 +21,6 @@ public class DisruptorMessageBusModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bindListener(POST_CONSTRUCT_MATCHER, new TypeListener() {
-            @Override
-            public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
-                try {
-                    TypeEncounter<PostConstruct> g = (TypeEncounter<PostConstruct>) encounter;
-                    g.register(InvokePostConstructMethod.INSTANCE);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
         bind(new TypeLiteral<EventProducer<RyftRequestEvent>>() {
         }).to(new TypeLiteral<InternalEventProducer<RyftRequestEvent>>() {
         });
@@ -50,44 +38,5 @@ public class DisruptorMessageBusModule extends AbstractModule {
 
     }
 
-    /**
-     * PostConstruct developed according to
-     * http://developer.vz.net/2012/02/08/extending-guice-2/
-     */
-    private static final Matcher<TypeLiteral<?>> POST_CONSTRUCT_MATCHER = new TypeMatcher(PostConstruct.class);
-
-    private static final class TypeMatcher extends AbstractMatcher<TypeLiteral<?>> {
-        private final Class<?> type;
-
-        public TypeMatcher(Class<?> type) {
-            this.type = type;
-        }
-
-        public boolean matches(TypeLiteral<?> type) {
-            try {
-                return this.type.isAssignableFrom(type.getRawType());
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
-
-    /**
-     * invoke the afterPropertiesSet() method in class that guice is
-     * constructing
-     */
-    static enum InvokePostConstructMethod implements InjectionListener<PostConstruct> {
-        INSTANCE;
-
-        public void afterInjection(PostConstruct injectee) {
-            try {
-                PostConstruct g = (PostConstruct) injectee;
-                g.onPostConstruct();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-    }
 
 }

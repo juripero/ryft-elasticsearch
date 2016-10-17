@@ -3,8 +3,12 @@ package com.dataart.ryft.disruptor.messages;
 import java.util.Arrays;
 import java.util.List;
 
-public class RyftRequestEvent extends InternalEvent{
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.search.SearchResponse;
 
+public class RyftRequestEvent extends InternalEvent {
+
+    private ActionListener<SearchResponse> callback;
     private Integer fuzziness;
     private String[] index;
     private String[] type;
@@ -16,6 +20,22 @@ public class RyftRequestEvent extends InternalEvent{
         this.fuzziness = fuzziness;
         this.query = query;
         this.fields = fields;
+    }
+    //(RECORD.type%20CONTAINS%20%22act%22)&files=elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld&mode=es&format=json&local=true&stats=true
+    public String getRyftSearchUrl(){
+        StringBuilder sb = new StringBuilder("/search?query=");
+        sb.append("(");
+        sb.append("RECORD.");
+        sb.append(fields.get(0));
+        sb.append("%20CONTAINS%20%22");
+        sb.append(java.net.URLEncoder.encode(query).replaceAll("\\+", "%20"));
+        sb.append("%22)");
+        sb.append("&");
+        sb.append("files=");
+        sb.append("elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.");
+        sb.append(index[0]+"jsonfld");
+        sb.append("&mode=es&format=json&local=true&stats=true");
+        return sb.toString();
     }
 
     public Integer getFuzziness() {
@@ -56,6 +76,14 @@ public class RyftRequestEvent extends InternalEvent{
 
     public void setFields(List<String> fields) {
         this.fields = fields;
+    }
+    
+    public ActionListener<SearchResponse> getCallback() {
+        return callback;
+    }
+    
+    public void setCallback(ActionListener<SearchResponse> callback) {
+        this.callback = callback;
     }
 
     @Override
