@@ -10,6 +10,7 @@ import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
 import com.dataart.ryft.elastic.plugin.mappings.RyftHit;
+import com.dataart.ryft.processors.ProcessorsModule;
 
 /**
  * 
@@ -19,6 +20,7 @@ public class RyftElasticModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new JSR250Module());
         // TODO: [imasternoy] Think about provider for this
         // bind(RyftRestClient.class);
         bind(RyftHit.class);
@@ -29,8 +31,10 @@ public class RyftElasticModule extends AbstractModule {
 
         interceptors.addBinding(SearchAction.INSTANCE.name()).to(SearchInterceptor.class);
         interceptors.addBinding(IndexAction.INSTANCE.name()).to(IndexInterceptor.class);
-        
-        (new DisruptorMessageBusModule()).configure(binder());
+
+        install(new DisruptorMessageBusModule());
+        install(new ProcessorsModule());
+
     }
 
 }

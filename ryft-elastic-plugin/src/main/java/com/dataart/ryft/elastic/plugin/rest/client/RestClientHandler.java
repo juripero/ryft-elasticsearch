@@ -97,6 +97,7 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
 
             SearchResponse response = new SearchResponse(searchResponse, null, 1, 1, results.getStats().getDuration(),
                     ShardSearchFailure.EMPTY_ARRAY);
+            // TODO [imasternoy] Should be changed to use message bus
             listener.onResponse(response);
         } catch (IOException e) {
             logger.error("Failed to parse RYFT response", e);
