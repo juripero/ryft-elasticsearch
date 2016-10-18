@@ -10,13 +10,12 @@ import io.netty.handler.codec.http.LastHttpContent;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.bootstrap.Elasticsearch;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
@@ -77,6 +76,18 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             ObjectMapper mapper = new ObjectMapper();
             mapper.disable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS);
             RyftResponse results = mapper.readValue(accumulator.array(), RyftResponse.class);
+            if (results.getErrors() != null) {
+                String[] fails = results.getErrors();
+                List<ShardSearchFailure> failures = new ArrayList<ShardSearchFailure>();
+
+                for (String failure : fails) {
+                    failures.add(new ShardSearchFailure(new RyftRestExeption(failure), null));
+                }
+                SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), null, 1, 0, 0,
+                        failures.toArray(new ShardSearchFailure[fails.length]));
+                listener.onResponse(response);
+                return;
+            }
             logger.info("Response has been parsed channel will be closed. Response: {}", results);
             // TODO: [imasternoy] we should not block I/O thread. Investigate to
             // move processing somewhere

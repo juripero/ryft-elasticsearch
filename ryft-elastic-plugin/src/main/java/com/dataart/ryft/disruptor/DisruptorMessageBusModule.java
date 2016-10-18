@@ -4,12 +4,7 @@ import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Key;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.inject.TypeLiteral;
-import org.elasticsearch.common.inject.matcher.AbstractMatcher;
-import org.elasticsearch.common.inject.matcher.Matcher;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
-import org.elasticsearch.common.inject.spi.InjectionListener;
-import org.elasticsearch.common.inject.spi.TypeEncounter;
-import org.elasticsearch.common.inject.spi.TypeListener;
 
 import com.dataart.ryft.disruptor.messages.DisruptorEvent;
 import com.dataart.ryft.disruptor.messages.InternalEvent;

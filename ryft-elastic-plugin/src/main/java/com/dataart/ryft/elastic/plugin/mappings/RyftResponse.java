@@ -13,20 +13,31 @@ public class RyftResponse {
 
     private RyftStats stats;
 
+    private String[] errors;
+
     public RyftResponse() {
         // TODO Auto-generated constructor stub
     }
-    
+
     @JsonCreator
-    public RyftResponse(@JsonProperty("results") ArrayList<RyftHit> results, @JsonProperty("stats") RyftStats stats) {
+    public RyftResponse(@JsonProperty("results") ArrayList<RyftHit> results,//
+            @JsonProperty("stats") RyftStats stats, //
+            @JsonProperty("errors") String[] errors) {
         super();
         this.results = results;
         this.stats = stats;
+        this.errors = errors;
+
     }
-    
+
     @JsonProperty("results")
     public ArrayList<RyftHit> getResults() {
         return results;
+    }
+
+    @JsonProperty("errors")
+    public String[] getErrors() {
+        return errors;
     }
 
     public void setResults(ArrayList<RyftHit> results) {
