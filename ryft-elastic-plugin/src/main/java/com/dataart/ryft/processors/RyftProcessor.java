@@ -1,6 +1,5 @@
 package com.dataart.ryft.processors;
 
-import java.awt.event.ActionListener;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

@@ -25,6 +25,7 @@ public class JSR250Module extends AbstractModule {
             @Override
             public <I> void hear(TypeLiteral<I> type, TypeEncounter<I> encounter) {
                 try {
+                    @SuppressWarnings("unchecked")
                     TypeEncounter<PostConstruct> g = (TypeEncounter<PostConstruct>) encounter;
                     g.register(InvokePostConstructMethod.INSTANCE);
                 } catch (Exception e) {

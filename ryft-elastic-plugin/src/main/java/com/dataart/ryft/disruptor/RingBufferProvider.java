@@ -4,14 +4,12 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 
 import com.dataart.ryft.disruptor.messages.DisruptorEvent;
 import com.dataart.ryft.disruptor.messages.Factory;
-import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;

@@ -1,5 +1,7 @@
 package com.dataart.ryft.elastic.plugin;
 
+import io.netty.channel.Channel;
+
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.inject.AbstractModule;
@@ -10,6 +12,7 @@ import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
 import com.dataart.ryft.elastic.plugin.mappings.RyftHit;
+import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 import com.dataart.ryft.processors.ProcessorsModule;
 
 /**
@@ -34,6 +37,8 @@ public class RyftElasticModule extends AbstractModule {
 
         install(new DisruptorMessageBusModule());
         install(new ProcessorsModule());
+
+        bind(Channel.class).toProvider(RyftRestClient.class);
 
     }
 
