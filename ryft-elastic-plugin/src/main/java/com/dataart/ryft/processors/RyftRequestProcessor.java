@@ -15,35 +15,32 @@ import org.elasticsearch.common.logging.Loggers;
 
 import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.elastic.plugin.PropertiesProvider;
+import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.elastic.plugin.rest.client.RestClientHandler;
 
 @Singleton
 public class RyftRequestProcessor extends RyftProcessor {
     private final ESLogger logger = Loggers.getLogger(getClass());
-    private static final String RYFT_SEARCH_URL = "http://172.16.13.3:8765";
-
     Provider<Channel> channelProvider;
+    RyftProperties props;
 
     @Inject
-    public RyftRequestProcessor(Provider<Channel> channelProvider) {
+    public RyftRequestProcessor(RyftProperties properties, Provider<Channel> channelProvider) {
+        this.props = properties;
         this.channelProvider = channelProvider;
     }
 
     @Override
     public void process(InternalEvent event) {
         RyftRequestEvent requestEvent = (RyftRequestEvent) event;
-        executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                sendToRyft(requestEvent);
-            }
-        });
+        executor.submit(() -> sendToRyft(requestEvent));
     }
 
     private void sendToRyft(RyftRequestEvent requestEvent) {
         Channel ryftChannel = channelProvider.get();
-        ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent.getCallback()));
-        String searchUri = RYFT_SEARCH_URL + requestEvent.getRyftSearchUrl();
+        ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
+        String searchUri = props.getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
         ryftChannel.writeAndFlush(new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri))
                 .addListener(new ChannelFutureListener() {
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -51,6 +48,11 @@ public class RyftRequestProcessor extends RyftProcessor {
                     }
                 });
 
+    }
+
+    @Override
+    public int getPoolSize() {
+        return  props.getInt(PropertiesProvider.REQ_THREAD_NUM);
     }
 
     @Override

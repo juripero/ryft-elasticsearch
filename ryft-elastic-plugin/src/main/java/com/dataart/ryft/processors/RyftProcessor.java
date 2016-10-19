@@ -8,23 +8,25 @@ import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class RyftProcessor implements PostConstruct {
-    private final int THREAD_NUM = 5; 
-    
     ExecutorService executor;
     
+
+    // TODO: [imasternoy] Configure thread pool via properties
     @Override
     public void onPostConstruct() {
-        executor = Executors.newFixedThreadPool(THREAD_NUM, new ThreadFactoryBuilder().setNameFormat(getName()).build());
-        
+        executor = Executors
+                .newFixedThreadPool(getPoolSize(), new ThreadFactoryBuilder().setNameFormat(getName()).build());
+
     }
-    
+
     public abstract void process(InternalEvent event);
-    
+
     /**
-     * Should return name for current pool impl 
+     * Should return name for current pool impl
      *
      */
     public abstract String getName();
     
+    public abstract int getPoolSize();
 
 }

@@ -1,10 +1,13 @@
 package com.dataart.ryft.elastic.plugin;
 
+import java.util.Properties;
+
 import io.netty.channel.Channel;
 
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.inject.multibindings.MapBinder;
 
 import com.dataart.ryft.disruptor.DisruptorMessageBusModule;
@@ -24,6 +27,8 @@ public class RyftElasticModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new JSR250Module());
+        
+        bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
         // TODO: [imasternoy] Think about provider for this
         // bind(RyftRestClient.class);
         bind(RyftHit.class);
