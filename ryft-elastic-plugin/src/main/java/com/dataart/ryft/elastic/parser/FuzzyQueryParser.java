@@ -1,11 +1,9 @@
 package com.dataart.ryft.elastic.parser;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.xml.ParserException;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -15,7 +13,7 @@ import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 
 public class FuzzyQueryParser {
 
-    public static RyftRequestEvent parseQuery(BytesReference searchContent) throws ElasticsearchParseException {
+    public static Optional<RyftRequestEvent> parseQuery(BytesReference searchContent) throws ElasticsearchParseException {
         RyftRequestEvent request = null;
         String currentName;
         XContentParser parser;
@@ -27,7 +25,7 @@ public class FuzzyQueryParser {
             token = parser.nextToken();
             currentName = parser.currentName();
             if (token != XContentParser.Token.FIELD_NAME && !currentName.equals("query")) {
-                return null;
+                return Optional.empty();
             }
 
             parser.nextToken(); // Start object
@@ -35,7 +33,7 @@ public class FuzzyQueryParser {
             currentName = parser.currentName();
             if (token != XContentParser.Token.FIELD_NAME
                     && (!parser.currentName().equals("match") || !currentName.equals("multi_match"))) {
-                return null;
+                return Optional.empty();
             }
 
             if (currentName.equals("multi_match")) {
@@ -74,12 +72,12 @@ public class FuzzyQueryParser {
         } catch (Exception e) {
             throw new ElasticsearchParseException("Failed to parse query", e);
         }
-        return request;
+        return Optional.of(request);
     }
 
-    private static RyftRequestEvent parseMultiMatch(XContentParser parser) {
+    private static Optional<RyftRequestEvent> parseMultiMatch(XContentParser parser) {
         //XXX: [imasternoy] Implement me
-        return null;
+        return Optional.empty();
     }
 
 }
