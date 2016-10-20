@@ -1,6 +1,7 @@
 package com.dataart.ryft.disruptor;
 
-import java.util.Properties;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -29,11 +30,14 @@ public class RingBufferProvider<T> implements Provider<RingBuffer<DisruptorEvent
         this.consumers = consumers;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void onPostConstruct() {
         Executor executor = Executors.newCachedThreadPool();
         Factory<T> factory = new Factory<T>();
-        disruptor = new Disruptor<>(factory, props.getInt(PropertiesProvider.DISRUPTOR_CAPACITY), executor);
+        disruptor = AccessController.doPrivileged((PrivilegedAction<Disruptor>) () -> {
+            return new Disruptor<>(factory, props.getInt(PropertiesProvider.DISRUPTOR_CAPACITY), executor);
+        });
         disruptor.handleEventsWith(consumers.toArray(new EventHandler[consumers.size()]));
         disruptor.start();
     }

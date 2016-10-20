@@ -9,6 +9,10 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 
 import java.io.IOException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,12 +73,24 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
         event.getCallback().onResponse(response);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.disable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS);
-            RyftResponse results = mapper.readValue(accumulator.array(), RyftResponse.class);
+            // Ugly construction because of SecurityManager used by ES
+            RyftResponse results = (RyftResponse) AccessController.doPrivileged(//
+                    (PrivilegedAction) () -> {
+                        RyftResponse res = null;
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            res = mapper.readValue(accumulator.array(), RyftResponse.class);
+                        } catch (Exception e) {
+                            logger.error("Failed to parse RYFT response", e);
+                            event.getCallback().onFailure(e);
+                        }
+                        return res;
+                    });
+
             if (results.getErrors() != null) {
                 String[] fails = results.getErrors();
                 List<ShardSearchFailure> failures = new ArrayList<ShardSearchFailure>();
@@ -110,9 +126,7 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             // TODO: [imasternoy] Check should we use thread pool or leave it as
             // is
             event.getCallback().onResponse(response);
-        } catch (IOException e) {
-            logger.error("Failed to parse RYFT response", e);
-            event.getCallback().onFailure(e);
+
         } finally {
             if (accumulator != null) {
                 accumulator.release();
