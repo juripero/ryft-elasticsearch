@@ -9,6 +9,7 @@
 		<fasterxml.jackson>2.8.1</fasterxml.jackson>
 		<io.netty>4.0.33.Final</io.netty>
 		<lmax.disruptor>3.2.0</lmax.disruptor>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
 		<dependency>

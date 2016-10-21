@@ -6,6 +6,7 @@ import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.multibindings.MapBinder;
 
 import com.dataart.ryft.disruptor.DisruptorMessageBusModule;
+import com.dataart.ryft.elastic.converter.ElasticConversionModule;
 import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
@@ -34,7 +35,7 @@ public class RyftElasticModule extends AbstractModule {
 
         install(new DisruptorMessageBusModule());
         install(new ProcessorsModule());
-
+        install(new ElasticConversionModule());
     }
 
 }
