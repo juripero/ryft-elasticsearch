@@ -24,7 +24,7 @@ import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
 
 @Singleton
-public class RyftRestClient implements Provider<Channel>, PostConstruct {
+public class RyftRestClient implements PostConstruct {
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
     private Bootstrap b;
     RyftProperties props;

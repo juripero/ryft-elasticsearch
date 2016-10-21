@@ -18,15 +18,16 @@ import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.elastic.plugin.rest.client.RestClientHandler;
+import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 
 @Singleton
 public class RyftRequestProcessor extends RyftProcessor {
     private final ESLogger logger = Loggers.getLogger(getClass());
-    Provider<Channel> channelProvider;
+    RyftRestClient channelProvider;
     RyftProperties props;
 
     @Inject
-    public RyftRequestProcessor(RyftProperties properties, Provider<Channel> channelProvider) {
+    public RyftRequestProcessor(RyftProperties properties, RyftRestClient channelProvider) {
         this.props = properties;
         this.channelProvider = channelProvider;
     }
@@ -37,7 +38,7 @@ public class RyftRequestProcessor extends RyftProcessor {
         executor.submit(() -> sendToRyft(requestEvent));
     }
 
-    private void sendToRyft(RyftRequestEvent requestEvent) {
+    protected void sendToRyft(RyftRequestEvent requestEvent) {
         Channel ryftChannel = channelProvider.get();
         ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
         String searchUri = props.getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
@@ -52,7 +53,7 @@ public class RyftRequestProcessor extends RyftProcessor {
 
     @Override
     public int getPoolSize() {
-        return  props.getInt(PropertiesProvider.REQ_THREAD_NUM);
+        return props.getInt(PropertiesProvider.REQ_THREAD_NUM);
     }
 
     @Override

@@ -1,10 +1,10 @@
 package com.dataart.ryft.elastic.plugin.mappings;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftHit {
-
     @JsonProperty("_index")
     private RyftIndex index;
     @JsonProperty("_uid")
@@ -13,17 +13,20 @@ public class RyftHit {
     private ObjectNode doc;
     @JsonProperty("type")
     private String type;
+    @JsonProperty("_error")
+    private String error;
 
     public RyftHit() {
         // TODO Auto-generated constructor stub
     }
 
-    public RyftHit(RyftIndex index, String uid, ObjectNode doc, String type) {
+    public RyftHit(RyftIndex index, String uid, ObjectNode doc, String type, String error) {
         super();
         this.index = index;
         this.uid = uid;
         this.doc = doc;
         this.type = type;
+        this.error = error;
     }
 
     public RyftIndex getIndex() {
@@ -56,6 +59,14 @@ public class RyftHit {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
     }
 
     @Override
@@ -103,7 +114,8 @@ public class RyftHit {
 
     @Override
     public String toString() {
-        return "RyftHit [index=" + index + ", uid=" + uid + ", doc=" + doc + ", type=" + type + "]";
+        return "RyftHit [index=" + index + ", uid=" + uid + ", doc=" + doc + ", type=" + type + ", error=" + error
+                + "]";
     }
 
 }

@@ -27,7 +27,7 @@ public class RyftElasticModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new JSR250Module());
-        
+
         bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
         // TODO: [imasternoy] Think about provider for this
         // bind(RyftRestClient.class);
@@ -43,7 +43,7 @@ public class RyftElasticModule extends AbstractModule {
         install(new DisruptorMessageBusModule());
         install(new ProcessorsModule());
 
-        bind(Channel.class).toProvider(RyftRestClient.class);
+        bind(RyftRestClient.class).in(Singleton.class);
 
     }
 
