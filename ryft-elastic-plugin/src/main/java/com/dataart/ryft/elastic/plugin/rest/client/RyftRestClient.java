@@ -13,50 +13,56 @@ import io.netty.handler.codec.http.HttpResponseDecoder;
 
 import java.net.InetSocketAddress;
 
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Provider;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public class RyftRestClient {
+import com.dataart.ryft.disruptor.PostConstruct;
+import com.dataart.ryft.elastic.plugin.PropertiesProvider;
+import com.dataart.ryft.elastic.plugin.RyftProperties;
+
+@Singleton
+public class RyftRestClient implements PostConstruct {
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
-    //TODO: [imasternoy] In fact we are running on the same machine and can access it via local address
-    private static final String HOST = "172.16.13.3";
-    private static final int PORT = 8765;
+    private Bootstrap b;
+    RyftProperties props;
 
-    private Channel inboundChannel;
-    private ActionListener<SearchResponse> listener;
-
-    public RyftRestClient(ActionListener<SearchResponse> listener) {
-        this.listener = listener;
+    @Inject
+    public RyftRestClient(RyftProperties props) {
+        this.props = props;
     }
 
-    public void init() {
-        EventLoopGroup workerGroup = new NioEventLoopGroup(2);
+    @Override
+    public void onPostConstruct() {
+        EventLoopGroup workerGroup = new NioEventLoopGroup( props.getInt(PropertiesProvider.WROKER_THREAD_COUNT));
+        b = new Bootstrap();
+        b = b.group(workerGroup)//
+                .channel(NioSocketChannel.class)//
+                .option(ChannelOption.SO_KEEPALIVE, true)//
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    public void initChannel(SocketChannel ch) throws Exception {
+                        // DefaultChannelPipeline pipe =
+                        // (DefaultChannelPipeline)
+                        // ch.pipeline();
+                        ch.pipeline().addLast("encoder", new HttpRequestEncoder());
+                        ch.pipeline().addLast("decoder", new HttpResponseDecoder());
+                    }
+                });
+    }
+
+    public Channel get() {
         try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
-            b.channel(NioSocketChannel.class);
-            b.option(ChannelOption.SO_KEEPALIVE, true);
-            b.handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                public void initChannel(SocketChannel ch) throws Exception {
-                    // DefaultChannelPipeline pipe = (DefaultChannelPipeline)
-                    // ch.pipeline();
-                    ch.pipeline().addLast("encoder", new HttpRequestEncoder());
-                    ch.pipeline().addLast("decoder", new HttpResponseDecoder());
-                    ch.pipeline().addLast("client", new RestClientHandler(listener));
-                }
-            });
-            // Start the client.
-            inboundChannel = b.connect(new InetSocketAddress(HOST, PORT)).sync().channel();
-        } catch (Exception e) {
-            logger.error("Rest client died", e);
+            return b.connect(new InetSocketAddress(//
+                    props.getStr(PropertiesProvider.HOST),//
+                    props.getInt(PropertiesProvider.PORT)))//
+                    .sync().channel();
+        } catch (InterruptedException e) {
+            // Should not happen
+            logger.error("Rest client dead", e);
         }
+        return null;
     }
-
-    public Channel getChannel() {
-        return this.inboundChannel;
-    }
-
 }

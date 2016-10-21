@@ -9,14 +9,17 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 
 import java.io.IOException;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
+import org.elasticsearch.bootstrap.Elasticsearch;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
@@ -28,6 +31,7 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.mappings.RyftResponse;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -38,13 +42,11 @@ import com.google.common.collect.Lists;
 public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
 
-    ActionListener<SearchResponse> listener;
-    // TODO: [imasternoy] should be deleted and changed to special decoder
-    JsonParser parser;
+    RyftRequestEvent event;
     ByteBuf accumulator;
 
-    public RestClientHandler(ActionListener<SearchResponse> listener) {
-        this.listener = listener;
+    public RestClientHandler(RyftRequestEvent event) {
+        this.event = event;
     }
 
     @Override
@@ -68,25 +70,53 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
         super.exceptionCaught(ctx, cause);
         SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), null, 1, 1, 0,
                 (ShardSearchFailure[]) Lists.newArrayList(new ShardSearchFailure(cause)).toArray());
-        listener.onResponse(response);
+        event.getCallback().onResponse(response);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.disable(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS);
-            RyftResponse results = mapper.readValue(accumulator.array(), RyftResponse.class);
+            // Ugly construction because of SecurityManager used by ES
+            RyftResponse results = (RyftResponse) AccessController.doPrivileged(//
+                    (PrivilegedAction) () -> {
+                        RyftResponse res = null;
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            res = mapper.readValue(accumulator.array(), RyftResponse.class);
+                        } catch (Exception e) {
+                            logger.error("Failed to parse RYFT response", e);
+                            event.getCallback().onFailure(e);
+                        }
+                        return res;
+                    });
+
+            if (results.getErrors() != null) {
+                String[] fails = results.getErrors();
+                List<ShardSearchFailure> failures = new ArrayList<ShardSearchFailure>();
+
+                for (String failure : fails) {
+                    failures.add(new ShardSearchFailure(new RyftRestExeption(failure), null));
+                }
+                SearchResponse response = new SearchResponse(InternalSearchResponse.empty(), null, 1, 0, 0,
+                        failures.toArray(new ShardSearchFailure[fails.length]));
+                event.getCallback().onResponse(response);
+                return;
+            }
             logger.info("Response has been parsed channel will be closed. Response: {}", results);
-            // TODO: [imasternoy] we should not block I/O thread. Investigate to
-            // move processing somewhere
             List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
             results.getResults().forEach(
                     hit -> {
                         InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), hit.getUid(), new Text(
                                 hit.getType()), ImmutableMap.of());
-                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), "shakespeare", 0));
-                        searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                        // TODO: [imasternoy] change index name
+                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), event.getIndex()[0], 0));
+                        
+                        if (hit.getDoc() == null && hit.getError() != null) {
+                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""+hit.getError().toString()+"\"}")));
+                        } else {
+                            searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                        }
                         searchHits.add(searchHit);
                     });
             InternalSearchHits hits = new InternalSearchHits(
@@ -97,11 +127,11 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
 
             SearchResponse response = new SearchResponse(searchResponse, null, 1, 1, results.getStats().getDuration(),
                     ShardSearchFailure.EMPTY_ARRAY);
-            // TODO [imasternoy] Should be changed to use message bus
-            listener.onResponse(response);
-        } catch (IOException e) {
-            logger.error("Failed to parse RYFT response", e);
-            listener.onFailure(e);
+            // TODO: [imasternoy] Should be changed to use message bus
+            // TODO: [imasternoy] Check should we use thread pool or leave it as
+            // is
+            event.getCallback().onResponse(response);
+
         } finally {
             if (accumulator != null) {
                 accumulator.release();

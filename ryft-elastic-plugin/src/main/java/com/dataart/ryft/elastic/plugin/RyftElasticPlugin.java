@@ -9,8 +9,6 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.plugins.Plugin;
 
-import com.dataart.ryft.disruptor.DisruptorMessageBusModule;
-
 /**
  * 
  * @author imasternoy
