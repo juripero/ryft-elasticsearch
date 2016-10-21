@@ -111,7 +111,12 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                                 hit.getType()), ImmutableMap.of());
                         // TODO: [imasternoy] change index name
                         searchHit.shard(new SearchShardTarget(results.getStats().getHost(), event.getIndex()[0], 0));
-                        searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                        
+                        if (hit.getDoc() == null && hit.getError() != null) {
+                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""+hit.getError().toString()+"\"}")));
+                        } else {
+                            searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                        }
                         searchHits.add(searchHit);
                     });
             InternalSearchHits hits = new InternalSearchHits(
