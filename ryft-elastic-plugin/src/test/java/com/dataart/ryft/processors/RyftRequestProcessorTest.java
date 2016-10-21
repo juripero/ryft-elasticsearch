@@ -3,14 +3,9 @@ package com.dataart.ryft.processors;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -23,8 +18,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -35,15 +28,25 @@ import com.dataart.ryft.disruptor.RyftRequestEventConsumer;
 import com.dataart.ryft.disruptor.messages.DisruptorEvent;
 import com.dataart.ryft.disruptor.messages.EventType;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionExactSearch;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftInputSpecifierRecord;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuerySimple;
 import com.dataart.ryft.elastic.plugin.JSR250Module;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
-import com.google.common.util.concurrent.FutureCallback;
 
 public class RyftRequestProcessorTest {
 
     private Injector injector;
+
+    private static final String SEARCH_FIELD = "text_entry";
+    private static final RyftQuery RYFT_QUERY
+            = new RyftQuerySimple(
+                    new RyftInputSpecifierRecord(SEARCH_FIELD), RyftOperator.CONTAINS,
+                    new RyftExpressionExactSearch("To be, or not to be"));
 
     @Before
     public void init() {
@@ -69,7 +72,7 @@ public class RyftRequestProcessorTest {
         RyftRequestEventConsumer consumer = new RyftRequestEventConsumer(mockedProcessors);
 
         DisruptorEvent event = new DisruptorEvent<RyftRequestEvent>();
-        event.setEvent(new RyftRequestEvent(5, "query", Collections.EMPTY_LIST));
+        event.setEvent(new RyftRequestEvent(RYFT_QUERY));
 
         consumer.onEvent(event, 1235L, true);
         verify(mockedProcessors, times(1)).get(EventType.ES_REQUEST);
@@ -90,9 +93,8 @@ public class RyftRequestProcessorTest {
         ChannelPipeline pipeline = mock(ChannelPipeline.class);
         when(channel.pipeline()).thenReturn(pipeline);
         RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(RyftProperties.class), client);
-        RyftRequestEvent event = new RyftRequestEvent(5, "query", Arrays.asList("text_entry"));
+        RyftRequestEvent event = new RyftRequestEvent(RYFT_QUERY);
         event.setIndex((String[]) Arrays.asList("shakspeare").toArray());
-        event.setQuery("query");
         processor.sendToRyft(event);
         verify(client, times(1)).get();
         verify(channel, times(1)).writeAndFlush(any());
@@ -100,6 +102,7 @@ public class RyftRequestProcessorTest {
     }
 
     class TestModule extends AbstractModule {
+
         @Override
         protected void configure() {
             install(new JSR250Module());

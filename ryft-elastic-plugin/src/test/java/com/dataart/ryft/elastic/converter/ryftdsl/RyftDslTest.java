@@ -1,7 +1,7 @@
-package com.dataart.ryft.elastic.parser.dsl;
+package com.dataart.ryft.elastic.converter.ryftdsl;
 
-import static com.dataart.ryft.elastic.parser.dsl.RyftOperator.*;
-import static com.dataart.ryft.elastic.parser.dsl.RyftQueryComplex.RyftLogicalOperator.*;
+import static com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator.*;
+import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator.*;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package com.dataart.ryft.elastic.parser.dsl;
+package com.dataart.ryft.elastic.converter.ryftdsl;
 
 public class RyftExpressionFuzzySearch extends RyftExpression {
 
@@ -13,8 +13,8 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
 
     private final String searchString;
     private final RyftFuzzyMetric metric;
-    private final Integer distance;
-    private final Integer width;
+    private Integer distance = null;
+    private Integer width = null;
 
     public RyftExpressionFuzzySearch(String searchString, RyftFuzzyMetric metric, Integer distance, Integer width) {
         this.searchString = searchString;
@@ -23,10 +23,19 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
         this.width = width;
     }
 
+    public RyftExpressionFuzzySearch(String searchString, RyftFuzzyMetric metric, Integer distance) {
+        this(searchString, metric, distance, null);
+    }
+
     @Override
     public String buildRyftString() {
-        return String.format("%s(\"%s\", DIST=%d, WIDTH=%d)",
-                metric.buildRyftString(), searchString, distance, width);
+        StringBuilder result = new StringBuilder(metric.buildRyftString());
+        result.append("(\"").append(searchString).append("\", DIST=").append(distance);
+        if (width != null) {
+            result.append(", WIDTH=").append(width);
+        }
+        result.append(")");
+        return result.toString();
     }
 
 }

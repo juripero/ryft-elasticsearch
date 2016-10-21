@@ -1,4 +1,4 @@
-package com.dataart.ryft.elastic.parser.dsl;
+package com.dataart.ryft.elastic.converter.ryftdsl;
 
 public class RyftInputSpecifierRecord extends RyftInputSpecifier {
 

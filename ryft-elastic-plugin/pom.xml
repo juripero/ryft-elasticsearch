@@ -5,11 +5,12 @@
 	<artifactId>ryft-elastic-plugin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<properties>
-		<elasticsearch.version>2.4.1-SNAPSHOT</elasticsearch.version>
+		<elasticsearch.version>2.4.1</elasticsearch.version>
 		<fasterxml.jackson>2.8.1</fasterxml.jackson>
 		<io.netty>4.0.33.Final</io.netty>
 		<lmax.disruptor>3.2.0</lmax.disruptor>
 		<mockito-core>1.9.5</mockito-core>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
 		<dependency>

@@ -1,5 +1,6 @@
 package com.dataart.ryft.disruptor.messages;
 
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,29 +12,20 @@ public class RyftRequestEvent extends InternalEvent {
     private ActionListener<SearchResponse> callback;
     private Integer fuzziness;
     private String[] index;
-    private String[] type;
-    private String query;
+    private RyftQuery query;
     private List<String> fields;// Needed for multi matching
 
-    public RyftRequestEvent(Integer fuzziness, String query, List<String> fields) {
+    public RyftRequestEvent(RyftQuery ryftQuery) {
         super();
-        this.fuzziness = fuzziness;
-        this.query = query;
-        this.fields = fields;
+        this.query = ryftQuery;
     }
     //(RECORD.type%20CONTAINS%20%22act%22)&files=elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld&mode=es&format=json&local=true&stats=true
     public String getRyftSearchUrl(){
         StringBuilder sb = new StringBuilder("/search?query=");
-        sb.append("(");
-        sb.append("RECORD.");
-        sb.append(fields.get(0));
-        sb.append("%20CONTAINS%20%22");
-        sb.append(java.net.URLEncoder.encode(query).replaceAll("\\+", "%20"));
-        sb.append("%22)");
-        sb.append("&");
-        sb.append("files=");
+        sb.append(java.net.URLEncoder.encode(query.buildRyftString()).replaceAll("\\+", "%20"));
+        sb.append("&files=");
         sb.append("elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.");
-        sb.append(index[0]+"jsonfld");
+        sb.append(index[0]).append("jsonfld");
         sb.append("&mode=es&format=json&local=true&stats=true");
         return sb.toString();
     }
@@ -54,19 +46,11 @@ public class RyftRequestEvent extends InternalEvent {
         this.index = index;
     }
 
-    public String[] getType() {
-        return type;
-    }
-
-    public void setType(String[] type) {
-        this.type = type;
-    }
-
-    public String getQuery() {
+    public RyftQuery getQuery() {
         return query;
     }
 
-    public void setQuery(String query) {
+    public void setQuery(RyftQuery query) {
         this.query = query;
     }
 
@@ -94,7 +78,6 @@ public class RyftRequestEvent extends InternalEvent {
         result = prime * result + ((fuzziness == null) ? 0 : fuzziness.hashCode());
         result = prime * result + Arrays.hashCode(index);
         result = prime * result + ((query == null) ? 0 : query.hashCode());
-        result = prime * result + Arrays.hashCode(type);
         return result;
     }
 
@@ -124,15 +107,12 @@ public class RyftRequestEvent extends InternalEvent {
                 return false;
         } else if (!query.equals(other.query))
             return false;
-        if (!Arrays.equals(type, other.type))
-            return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", type="
-                + Arrays.toString(type) + ", query=" + query + ", fields=" + fields + "]";
+        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", query=" + query + ", fields=" + fields + "]";
     }
 
     @Override
