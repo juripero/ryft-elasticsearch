@@ -2,6 +2,7 @@ package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.inject.Guice;
@@ -15,7 +16,10 @@ import org.junit.Test;
 public class ElasticConverterTest {
 
     @Inject
-    public ElasticConverter elasticParser;
+    public ElasticConverter elasticConverter;
+    
+    @Inject
+    public Map<String, ElasticConvertingElement> сonverters;
 
     public ElasticConverterTest() {
     }
@@ -26,32 +30,35 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void SimpleFuzzyRequestTest1() throws IOException {
+    public void SimpleFuzzyRequestTest1() throws IOException, ClassNotFoundException {
         BytesArray bytes = new BytesArray("{\"query\": {\"match_phrase\": {\"text_entry\": "
                 + "{\"value\": \"knight\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}");
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
-        Optional<RyftQuery> maybeRyftQuery = elasticParser.parse(parser);
+        ElasticConvertingContext convertingContext = new ElasticConvertingContext(parser, сonverters);
+        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(convertingContext);
         assertTrue(maybeRyftQuery.isPresent());
         assertEquals(maybeRyftQuery.get().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"knight\", DIST=2))");
     }
 
     @Test
-    public void SimpleFuzzyRequestTest2() throws IOException {
+    public void SimpleFuzzyRequestTest2() throws IOException, ClassNotFoundException {
         BytesArray bytes = new BytesArray("{\"query\": {\"fuzzy\": {\"text_entry\" : "
                 + "{\"value\": \"knight\", \"fuzziness\" :1, \"metric\": \"feds\"}}}}");
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
-        Optional<RyftQuery> maybeRyftQuery = elasticParser.parse(parser);
+        ElasticConvertingContext convertingContext = new ElasticConvertingContext(parser, сonverters);
+        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(convertingContext);
         assertTrue(maybeRyftQuery.isPresent());
         assertEquals(maybeRyftQuery.get().buildRyftString(), "(RECORD.text_entry CONTAINS FEDS(\"knight\", DIST=1))");
     }
 
     @Test
-    public void ComplexFuzzyRequestTest1() throws IOException {
+    public void ComplexFuzzyRequestTest1() throws IOException, ClassNotFoundException {
         BytesArray bytes = new BytesArray("{\"query\": {\"bool\": {\"must\": ["
                 + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
                 + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}]}}}");
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
-        Optional<RyftQuery> maybeRyftQuery = elasticParser.parse(parser);
+        ElasticConvertingContext convertingContext = new ElasticConvertingContext(parser, сonverters);
+        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(convertingContext);
         assertTrue(maybeRyftQuery.isPresent());
         assertEquals(maybeRyftQuery.get().buildRyftString(), 
                 "((RECORD.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.text_entry CONTAINS \"knight\"))");

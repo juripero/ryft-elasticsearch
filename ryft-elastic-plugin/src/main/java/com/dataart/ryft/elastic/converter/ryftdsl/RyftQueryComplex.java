@@ -25,7 +25,7 @@ public class RyftQueryComplex implements RyftQuery {
     public RyftQueryComplex(RyftLogicalOperator operator, RyftQuery... operands) {
         this(operator, Arrays.asList(operands));
     }
-    
+
     public RyftQueryComplex(RyftLogicalOperator operator, List<RyftQuery> operands) {
         this.operands = operands;
         this.operator = operator;
@@ -37,6 +37,11 @@ public class RyftQueryComplex implements RyftQuery {
                 .map(operand -> operand.buildRyftString())
                 .collect(Collectors.joining(" " + operator.buildRyftString() + " "));
         return String.format("(%s)", queryString);
+    }
+
+    @Override
+    public String toString() {
+        return "RyftQueryComplex{" + buildRyftString() + '}';
     }
 
 }

@@ -16,13 +16,7 @@ public class ElasticConvertingContext {
     private final XContentParser contentParser;
     private final Map<String, ElasticConvertingElement> elasticConverters;
 
-    //TODO: [dendec] add default values
-    private RyftFuzzyMetric metric = null;
-    private Integer fuzziness = null;
-    private String searchText = null;
-    private String fieldName = null;
-
-    public ElasticConvertingContext(XContentParser parser, 
+    public ElasticConvertingContext(XContentParser parser,
             Map<String, ElasticConvertingElement> converters) {
         this.contentParser = parser;
         this.elasticConverters = converters;
@@ -39,47 +33,8 @@ public class ElasticConvertingContext {
         }
         return result;
     }
-    
-    public RyftFuzzyMetric getMetric() {
-        return metric;
-    }
 
-    public void setMetric(RyftFuzzyMetric metric) {
-        this.metric = metric;
-    }
-
-    public Integer getFuzziness() {
-        return fuzziness;
-    }
-
-    public void setFuzziness(Integer fuzziness) {
-        this.fuzziness = fuzziness;
-    }
-
-    public String getSearchText() {
-        return searchText;
-    }
-
-    public void setSearchText(String searchText) {
-        this.searchText = searchText;
-    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public void setFieldName(String fieldName) {
-        this.fieldName = fieldName;
-    }
-    
-    public void clean() {
-        fieldName = null;
-        searchText = null;
-        fuzziness = null;
-        metric = null;        
-    }
-
-    RyftQuery constructFuzzyQuery() {
+    RyftQuery constructFuzzyQuery(RyftFuzzyMetric metric, Integer fuzziness, String searchText, String fieldName) {
         if ((fieldName != null) && (searchText != null)
                 && (fuzziness != null) && (metric != null)) {
             RyftExpression ryftExpression;

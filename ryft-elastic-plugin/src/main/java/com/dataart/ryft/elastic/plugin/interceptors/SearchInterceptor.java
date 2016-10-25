@@ -18,7 +18,7 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 
 public class SearchInterceptor implements ActionInterceptor {
 
-    private final ESLogger logger = Loggers.getLogger(getClass());
+    private final ESLogger LOGGER = Loggers.getLogger(SearchInterceptor.class);
     private final EventProducer<RyftRequestEvent> producer;
     private final ElasticConverter elasticConverter;
 
@@ -32,24 +32,17 @@ public class SearchInterceptor implements ActionInterceptor {
     @Override
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
             ActionFilterChain chain) {
-        boolean proceed = false;
-        try {
-            Optional<RyftQuery> maybeRyftQuery = elasticConverter.parse(request);
-            if (maybeRyftQuery.isPresent()) {
-                RyftQuery ryftQuery = maybeRyftQuery.get();
-                logger.info("Ryft query {}", ryftQuery.buildRyftString());
-                RyftRequestEvent ryftRequest = new RyftRequestEvent(ryftQuery);
-                ryftRequest.setIndex(((SearchRequest) request).indices());
-                ryftRequest.setCallback(listener);
-                producer.send(ryftRequest);
-            } else {
-                proceed = true;
-            }
-        } catch (Exception e) {
-            logger.error("Failed to filter search action", e);
-            proceed = true;
+        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(request);
+        Boolean isIntercepted = maybeRyftQuery.isPresent();
+        if (isIntercepted) {
+            RyftQuery ryftQuery = maybeRyftQuery.get();
+            LOGGER.info("Constructed {}", ryftQuery);
+            RyftRequestEvent ryftRequest = new RyftRequestEvent(ryftQuery);
+            ryftRequest.setIndex(((SearchRequest) request).indices());
+            ryftRequest.setCallback(listener);
+            producer.send(ryftRequest);
         }
-        return proceed;
+        return isIntercepted;
     }
 
 }

@@ -18,5 +18,5 @@ public class ElasticConversionException extends IOException {
     public ElasticConversionException(Throwable cause) {
         super(cause);
     }
-    
+
 }

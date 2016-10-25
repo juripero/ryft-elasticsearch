@@ -18,4 +18,9 @@ public class RyftQuerySimple implements RyftQuery {
                 operator.buildRyftString(), expression.buildRyftString());
     }
 
+    @Override
+    public String toString() {
+        return "RyftQuerySimple{" + buildRyftString() + '}';
+    }
+
 }
