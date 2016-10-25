@@ -39,7 +39,7 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                     }
                     return new RyftQueryComplex(AND, ryftQueryParts);
                 }
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException ex) {
                 throw new ElasticConversionException(ex);
             }
             return null;
@@ -61,7 +61,7 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                 currentName = parser.currentName();
                 return convertingContext.getElasticConverter(currentName).convert(convertingContext);
             }
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (IOException ex) {
             throw new ElasticConversionException(ex);
         }
         return null;

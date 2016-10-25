@@ -3,8 +3,9 @@ package com.dataart.ryft.elastic.converter;
 import com.dataart.ryft.elastic.converter.ElasticConverterBool.ElasticConverterMust;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
-import org.elasticsearch.common.inject.multibindings.Multibinder;
+import org.elasticsearch.common.inject.multibindings.MapBinder;
 
 public class ElasticConversionModule extends AbstractModule {
 
@@ -12,6 +13,7 @@ public class ElasticConversionModule extends AbstractModule {
     protected void configure() {
         bind(ContextFactory.class).toProvider(
                 FactoryProvider.newFactory(ContextFactory.class, ElasticConvertingContext.class));
+
         MapBinder<String, ElasticConvertingElement> convertersBinder
                 = MapBinder.newMapBinder(binder(), String.class, ElasticConvertingElement.class);
         convertersBinder.addBinding(ElasticConverterQuery.NAME).to(ElasticConverterQuery.class);

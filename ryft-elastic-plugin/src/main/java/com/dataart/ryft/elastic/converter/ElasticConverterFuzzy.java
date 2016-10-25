@@ -27,7 +27,7 @@ public class ElasticConverterFuzzy implements ElasticConvertingElement {
                 return convertingContext.getElasticConverter(ElasticConverterField.NAME)
                         .convert(convertingContext);
             }
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (IOException ex) {
             throw new ElasticConversionException(ex);
         }
         return null;

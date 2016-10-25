@@ -25,7 +25,7 @@ public class ElasticConverterQuery implements ElasticConvertingElement {
                 currentName = parser.currentName();
                 return convertingContext.getElasticConverter(currentName).convert(convertingContext);
             }
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (IOException ex) {
             throw new ElasticConversionException(ex);
         }
         return null;
