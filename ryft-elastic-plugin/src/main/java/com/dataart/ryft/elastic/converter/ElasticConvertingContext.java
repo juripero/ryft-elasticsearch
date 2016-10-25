@@ -16,10 +16,16 @@ public class ElasticConvertingContext {
     private final XContentParser contentParser;
     private final Map<String, ElasticConvertingElement> elasticConverters;
 
-    public ElasticConvertingContext(XContentParser parser,
-            Map<String, ElasticConvertingElement> converters) {
+    @Inject
+    public ElasticConvertingContext(@Assisted XContentParser parser, Set<ElasticConvertingElement> injectedConverters) {
+        Map<String, ElasticConvertingElement> convertersMap = Maps.newHashMap();
+        for (ElasticConvertingElement converter : injectedConverters) {
+            for (String name : converter.names()) {
+                convertersMap.put(name, converter);
+            }
+        }
+        this.elasticConverters = ImmutableMap.copyOf(convertersMap);
         this.contentParser = parser;
-        this.elasticConverters = converters;
     }
 
     public XContentParser getContentParser() {
@@ -32,22 +38,6 @@ public class ElasticConvertingContext {
             throw new ClassNotFoundException(String.format("Can not find elastic parser for: %s", name));
         }
         return result;
-    }
-
-    RyftQuery constructFuzzyQuery(RyftFuzzyMetric metric, Integer fuzziness, String searchText, String fieldName) {
-        if ((fieldName != null) && (searchText != null)
-                && (fuzziness != null) && (metric != null)) {
-            RyftExpression ryftExpression;
-            if (fuzziness == 0) {
-                ryftExpression = new RyftExpressionExactSearch(searchText);
-            } else {
-                ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
-            }
-            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
-                    RyftOperator.CONTAINS, ryftExpression);
-        } else {
-            return null;
-        }
     }
 
 }
