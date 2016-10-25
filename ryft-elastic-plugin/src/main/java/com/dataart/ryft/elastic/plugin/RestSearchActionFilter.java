@@ -18,20 +18,22 @@ import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 public class RestSearchActionFilter implements ActionFilter {
     // private final ESLogger logger = Loggers.getLogger(getClass());
 
-    Map<String, ActionInterceptor> interceptors;
+    private Map<String, ActionInterceptor> interceptors;
 
     @Inject
     public RestSearchActionFilter(Map<String, ActionInterceptor> interceptors) {
         this.interceptors = interceptors;
     }
 
+    @Override
     public int order() {
         return 0; // We are the first here!
     }
 
+    @Override
     public void apply(Task task, String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
         ActionInterceptor interceptor = interceptors.get(task.getAction());
-        if (interceptor == null || interceptor.intercept(task, action, request, listener, chain)) {
+        if (interceptor == null || !interceptor.intercept(task, action, request, listener, chain)) {
             chain.proceed(task, action, request, listener);
         }
     }

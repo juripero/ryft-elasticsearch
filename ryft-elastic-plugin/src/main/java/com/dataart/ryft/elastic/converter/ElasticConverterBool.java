@@ -6,22 +6,22 @@ import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLo
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 public class ElasticConverterBool implements ElasticConvertingElement {
 
+    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterBool.class);
+
     public static class ElasticConverterMust implements ElasticConvertingElement {
 
-        private static final String NAME = "must";
-
-        @Override
-        public String[] names() {
-            return new String[]{NAME};
-        }
+        static final String NAME = "must";
 
         @Override
         public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             try {
+                LOGGER.debug("Start \"must\" parsing");
                 XContentParser parser = convertingContext.getContentParser();
                 XContentParser.Token token = parser.nextToken();
                 String currentName = parser.currentName();
@@ -39,7 +39,7 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                     }
                     return new RyftQueryComplex(AND, ryftQueryParts);
                 }
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException ex) {
                 throw new ElasticConversionException(ex);
             }
             return null;
@@ -47,16 +47,12 @@ public class ElasticConverterBool implements ElasticConvertingElement {
 
     }
 
-    private static final String NAME = "bool";
-
-    @Override
-    public String[] names() {
-        return new String[]{NAME};
-    }
+    static final String NAME = "bool";
 
     @Override
     public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         try {
+            LOGGER.debug("Start \"bool\" parsing");
             XContentParser parser = convertingContext.getContentParser();
             XContentParser.Token token = parser.nextToken();
             String currentName = parser.currentName();
@@ -65,7 +61,7 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                 currentName = parser.currentName();
                 return convertingContext.getElasticConverter(currentName).convert(convertingContext);
             }
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (IOException ex) {
             throw new ElasticConversionException(ex);
         }
         return null;
