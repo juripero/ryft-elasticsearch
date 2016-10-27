@@ -71,7 +71,7 @@ public class RyftRequestProcessorTest {
         when(mockedProcessors.get(EventType.ES_REQUEST)).thenReturn(processor);
         RyftRequestEventConsumer consumer = new RyftRequestEventConsumer(mockedProcessors);
 
-        DisruptorEvent event = new DisruptorEvent<RyftRequestEvent>();
+        DisruptorEvent event = new DisruptorEvent<>();
         event.setEvent(new RyftRequestEvent(RYFT_QUERY));
 
         consumer.onEvent(event, 1235L, true);
@@ -84,7 +84,7 @@ public class RyftRequestProcessorTest {
     // syntax support
     @Test
     @Ignore
-    public void processorProcess() {
+    public void processorProcess() throws InterruptedException {
         ChannelFuture chFuture = mock(ChannelFuture.class);
         RyftRestClient client = mock(RyftRestClient.class);
         Channel channel = mock(Channel.class);

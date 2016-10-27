@@ -1,6 +1,11 @@
 package com.dataart.ryft.elastic.plugin.interceptors;
 
+<<<<<<< HEAD
+=======
+import java.util.Map;
+import java.util.Optional;
 
+>>>>>>> 0ccb046b6ab159fccf4252f22b3e06b9698e04a3
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -15,19 +20,20 @@ import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.converter.ElasticConversionCriticalException;
 import com.dataart.ryft.elastic.converter.ElasticConverter;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+<<<<<<< HEAD
+import com.dataart.ryft.utils.Try;
+=======
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftPluginGlobalSettingsProvider;
-
-import com.dataart.ryft.utils.Try;
-import java.util.Map;
+>>>>>>> 0ccb046b6ab159fccf4252f22b3e06b9698e04a3
 
 public class SearchInterceptor implements ActionInterceptor {
 
     private final ESLogger LOGGER = Loggers.getLogger(SearchInterceptor.class);
     private final EventProducer<RyftRequestEvent> producer;
     private final ElasticConverter elasticConverter;
-    private final PropertiesProvider provider;
-    private final RyftPluginGlobalSettingsProvider globalSettings;
+    private PropertiesProvider provider;
+    private RyftPluginGlobalSettingsProvider globalSettings;
 
     @Inject
     public SearchInterceptor(PropertiesProvider provider, RyftPluginGlobalSettingsProvider globalSettings,
@@ -41,8 +47,15 @@ public class SearchInterceptor implements ActionInterceptor {
     @Override
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
             ActionFilterChain chain) {
+<<<<<<< HEAD
         Try<RyftQuery> tryRyftQuery = elasticConverter.convert(request);
-        Boolean isIntercepted = ryftIntegrationEnabled() && !tryRyftQuery.hasError();
+        Boolean isIntercepted = !tryRyftQuery.hasError();
+=======
+        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(request);
+
+        // TODO: [imasternoy] Check integration fieldc
+        Boolean isIntercepted = ryftIntegrationEnabled() && maybeRyftQuery.isPresent();
+>>>>>>> 0ccb046b6ab159fccf4252f22b3e06b9698e04a3
         if (isIntercepted) {
             RyftQuery ryftQuery = tryRyftQuery.getResult();
             LOGGER.info("Constructed {}", ryftQuery);

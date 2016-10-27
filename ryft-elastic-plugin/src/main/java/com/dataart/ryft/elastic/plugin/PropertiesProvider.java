@@ -19,6 +19,7 @@ import com.dataart.ryft.disruptor.PostConstruct;
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
     private final ESLogger logger = Loggers.getLogger(getClass());
 
+    public static final String PLUGIN_SETTINGS_INDEX ="ryft.plugin.settings.index";
     public static final String DISRUPTOR_CAPACITY = "ryft.disruptor.cpacity";
     public static final String WROKER_THREAD_COUNT = "ryft.rest.client.thread.num";
     public static final String HOST = "ryft.rest.client.host";
@@ -30,9 +31,9 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     RyftProperties props;
     Map<String, Object> defaults = new HashMap<String, Object>();
 
-    @SuppressWarnings("static-access")
     @Override
     public void onPostConstruct() {
+        defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
         defaults.put(WROKER_THREAD_COUNT, "2");
         defaults.put(HOST, "172.16.13.3");
@@ -41,18 +42,16 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RESP_THREAD_NUM, "2");
         defaults.put(RYFT_SEARCH_URL, "http://172.16.13.3:8765");
 
-        Properties props = new Properties();
+        Properties defaultProps = new Properties();
+        defaultProps.putAll(defaults);
         try {
             InputStream file = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> this.getClass()
                     .getClassLoader().getResourceAsStream("ryft.elastic.plugin.properties"));
             if (file != null) {
-                props.load(file);
-                this.props = new RyftProperties(props);
-            } else {
-                logger.info("Properties file not found using default values", defaults);
-                Properties properties = new Properties();
-                properties.putAll(defaults);
-                this.props = new RyftProperties(properties);
+                Properties fileProps = new Properties();
+                fileProps.load(file);
+                defaultProps.putAll(fileProps);
+                this.props = new RyftProperties(defaultProps);
             }
 
         } catch (IOException e) {

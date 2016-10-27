@@ -43,8 +43,9 @@ public class RyftElasticModule extends AbstractModule {
 
         install(new DisruptorMessageBusModule());
         install(new ProcessorsModule());
-	install(new ElasticConversionModule());
+        install(new ElasticConversionModule());
         bind(RyftRestClient.class).in(Singleton.class);
+        bind(RyftPluginGlobalSettingsProvider.class).in(Singleton.class);
 
     }
 

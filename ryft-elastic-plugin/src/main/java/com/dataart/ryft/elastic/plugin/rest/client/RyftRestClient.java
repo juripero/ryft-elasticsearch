@@ -41,6 +41,7 @@ public class RyftRestClient implements PostConstruct {
         b = b.group(workerGroup)//
                 .channel(NioSocketChannel.class)//
                 .option(ChannelOption.SO_KEEPALIVE, true)//
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
@@ -53,16 +54,10 @@ public class RyftRestClient implements PostConstruct {
                 });
     }
 
-    public Channel get() {
-        try {
+    public Channel get() throws InterruptedException {
             return b.connect(new InetSocketAddress(//
                     props.getStr(PropertiesProvider.HOST),//
                     props.getInt(PropertiesProvider.PORT)))//
                     .sync().channel();
-        } catch (InterruptedException e) {
-            // Should not happen
-            logger.error("Rest client dead", e);
-        }
-        return null;
     }
 }
