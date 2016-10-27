@@ -84,7 +84,7 @@ public class RyftRequestProcessorTest {
     // syntax support
     @Test
     @Ignore
-    public void processorProcess() {
+    public void processorProcess() throws InterruptedException {
         ChannelFuture chFuture = mock(ChannelFuture.class);
         RyftRestClient client = mock(RyftRestClient.class);
         Channel channel = mock(Channel.class);
