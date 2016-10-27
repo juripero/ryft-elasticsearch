@@ -3,7 +3,7 @@ package com.dataart.ryft.elastic.converter;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex;
 import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator.AND;
-import java.io.IOException;
+import com.dataart.ryft.utils.Try;
 import java.util.ArrayList;
 import java.util.List;
 import org.elasticsearch.common.logging.ESLogger;
@@ -19,9 +19,9 @@ public class ElasticConverterBool implements ElasticConvertingElement {
         static final String NAME = "must";
 
         @Override
-        public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-            try {
-                LOGGER.debug("Start \"must\" parsing");
+        public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return Try.apply(() -> {
                 XContentParser parser = convertingContext.getContentParser();
                 XContentParser.Token token = parser.nextToken();
                 String currentName = parser.currentName();
@@ -30,19 +30,20 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                     while (!XContentParser.Token.END_ARRAY.equals(token)) {
                         token = parser.currentToken();
                         currentName = parser.currentName();
-                        ElasticConvertingElement elasticConverter;
+                        Try<RyftQuery> tryRyftQueryPart;
                         if ((currentName != null) && (XContentParser.Token.FIELD_NAME.equals(token))) {
-                            elasticConverter = convertingContext.getElasticConverter(parser.currentName());
-                            ryftQueryParts.add(elasticConverter.convert(convertingContext));
+                            tryRyftQueryPart = convertingContext.getElasticConverter(parser.currentName())
+                                    .flatMap(converter -> converter.convert(convertingContext));
+                            if (!tryRyftQueryPart.hasError()) {
+                                ryftQueryParts.add(tryRyftQueryPart.getResult());
+                            }
                         }
                         parser.nextToken();
                     }
                     return new RyftQueryComplex(AND, ryftQueryParts);
                 }
-            } catch (IOException ex) {
-                throw new ElasticConversionException(ex);
-            }
-            return null;
+                throw new ElasticConversionException();
+            });
         }
 
     }
@@ -50,21 +51,15 @@ public class ElasticConverterBool implements ElasticConvertingElement {
     static final String NAME = "bool";
 
     @Override
-    public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        try {
-            LOGGER.debug("Start \"bool\" parsing");
-            XContentParser parser = convertingContext.getContentParser();
-            XContentParser.Token token = parser.nextToken();
-            String currentName = parser.currentName();
-            if (XContentParser.Token.START_OBJECT.equals(token) && NAME.equals(currentName)) {
-                parser.nextToken();
-                currentName = parser.currentName();
-                return convertingContext.getElasticConverter(currentName).convert(convertingContext);
-            }
-        } catch (IOException ex) {
-            throw new ElasticConversionException(ex);
-        }
-        return null;
+    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+        LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+        return Try.apply(() -> {
+            String currentName = getNextElasticPrimitive(convertingContext);
+            return convertingContext.getElasticConverter(currentName)
+                    .flatMap(converter -> converter.convert(convertingContext))
+                    .getResultOrException();
+
+        });
     }
 
 }

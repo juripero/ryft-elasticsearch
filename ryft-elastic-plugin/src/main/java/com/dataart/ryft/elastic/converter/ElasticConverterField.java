@@ -3,7 +3,7 @@ package com.dataart.ryft.elastic.converter;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
-import java.io.IOException;
+import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -36,8 +36,8 @@ public class ElasticConverterField implements ElasticConvertingElement {
     }
 
     @Override
-    public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        try {
+    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+        return Try.apply(() -> {
             LOGGER.debug("Start field parsing");
             XContentParser parser = convertingContext.getContentParser();
             Token token = parser.nextToken();
@@ -51,16 +51,14 @@ public class ElasticConverterField implements ElasticConvertingElement {
                     parseMetric(fieldParameters, parser);
                     parseFuzziness(fieldParameters, parser);
                 }
-                return queryFactory.buildFuzzyQuery(fieldParameters.metric,
-                        fieldParameters.fuzziness, fieldParameters.searchText, fieldParameters.fieldName);
+                return queryFactory.buildFuzzyQuery(fieldParameters.searchText,
+                        fieldParameters.fieldName, fieldParameters.metric, fieldParameters.fuzziness);
             }
-        } catch (Exception ex) {
-            throw new ElasticConversionException(ex);
-        }
-        return null;
+            throw new ElasticConversionException();
+        });
     }
 
-    private void parseSearchText(ElasticFieldParameters fieldParameters, XContentParser parser) throws IOException {
+    private void parseSearchText(ElasticFieldParameters fieldParameters, XContentParser parser) throws Exception {
         if (PARAMETER_QUERY.equals(parser.currentName())
                 || PARAMETER_VALUE.equals(parser.currentName())) {
             if (Token.FIELD_NAME.equals(parser.currentToken())) {
@@ -74,7 +72,7 @@ public class ElasticConverterField implements ElasticConvertingElement {
         }
     }
 
-    private void parseMetric(ElasticFieldParameters fieldParameters, XContentParser parser) throws IOException {
+    private void parseMetric(ElasticFieldParameters fieldParameters, XContentParser parser) throws Exception {
         if (PARAMETER_METRIC.equals(parser.currentName())) {
             if (Token.FIELD_NAME.equals(parser.currentToken())) {
                 parser.nextToken();
@@ -86,13 +84,14 @@ public class ElasticConverterField implements ElasticConvertingElement {
                     RyftFuzzyMetric metric = RyftFuzzyMetric.valueOf(metricString);
                     fieldParameters.metric = metric;
                 } catch (Exception e) {
-                    throw new ElasticConversionException(String.format("Unknown metric: %s", metricString), e);
+                    throw new ElasticConversionCriticalException(
+                            String.format("Unknown metric: %s", metricString), e);
                 }
             }
         }
     }
 
-    private void parseFuzziness(ElasticFieldParameters fieldParameters, XContentParser parser) throws IOException {
+    private void parseFuzziness(ElasticFieldParameters fieldParameters, XContentParser parser) throws Exception {
         if (PARAMETER_FUZZINESS.equals(parser.currentName())) {
             if (Token.FIELD_NAME.equals(parser.currentToken())) {
                 parser.nextToken();
@@ -103,7 +102,8 @@ public class ElasticConverterField implements ElasticConvertingElement {
                 Integer fuzziness = Integer.parseInt(fuzzinessString);
                 fieldParameters.fuzziness = fuzziness;
             } catch (Exception e) {
-                throw new ElasticConversionException(String.format("Can not parse fuzziness: %s", fuzzinessString), e);
+                throw new ElasticConversionCriticalException(
+                        String.format("Can not parse fuzziness: %s", fuzzinessString), e);
             }
         }
     }

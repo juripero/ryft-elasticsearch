@@ -1,11 +1,9 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
-import java.io.IOException;
+import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentParser.Token;
 
 public class ElasticConverterQuery implements ElasticConvertingElement {
 
@@ -14,20 +12,13 @@ public class ElasticConverterQuery implements ElasticConvertingElement {
     static final String NAME = "query";
 
     @Override
-    public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        try {
-            LOGGER.debug("Start \"query\" parsing");
-            XContentParser parser = convertingContext.getContentParser();
-            Token token = parser.nextToken();
-            String currentName = parser.currentName();
-            if (Token.START_OBJECT.equals(token) && NAME.equals(currentName)) {
-                parser.nextToken();
-                currentName = parser.currentName();
-                return convertingContext.getElasticConverter(currentName).convert(convertingContext);
-            }
-        } catch (IOException ex) {
-            throw new ElasticConversionException(ex);
-        }
-        return null;
+    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+        LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+        return Try.apply(() -> {
+            String currentName = getNextElasticPrimitive(convertingContext);
+            return convertingContext.getElasticConverter(currentName)
+                    .flatMap(converter -> converter.convert(convertingContext))
+                    .getResultOrException();
+        });
     }
 }

@@ -1,7 +1,7 @@
 package com.dataart.ryft.elastic.converter.ryftdsl;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class RyftQueryComplex implements RyftQuery {
@@ -15,7 +15,7 @@ public class RyftQueryComplex implements RyftQuery {
         }
     }
 
-    private final List<RyftQuery> operands;
+    private final Collection<RyftQuery> operands;
     private final RyftLogicalOperator operator;
 
     public RyftQueryComplex(RyftQuery operand1, RyftLogicalOperator operator, RyftQuery operand2) {
@@ -26,7 +26,7 @@ public class RyftQueryComplex implements RyftQuery {
         this(operator, Arrays.asList(operands));
     }
 
-    public RyftQueryComplex(RyftLogicalOperator operator, List<RyftQuery> operands) {
+    public RyftQueryComplex(RyftLogicalOperator operator, Collection<RyftQuery> operands) {
         this.operands = operands;
         this.operator = operator;
     }

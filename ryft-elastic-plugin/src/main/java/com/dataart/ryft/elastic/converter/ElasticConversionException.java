@@ -1,8 +1,6 @@
 package com.dataart.ryft.elastic.converter;
 
-import java.io.IOException;
-
-public class ElasticConversionException extends IOException {
+public class ElasticConversionException extends Exception {
 
     public ElasticConversionException() {
     }

@@ -1,7 +1,5 @@
 package com.dataart.ryft.elastic.plugin.interceptors;
 
-import java.util.Optional;
-
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -13,8 +11,10 @@ import org.elasticsearch.tasks.Task;
 
 import com.dataart.ryft.disruptor.EventProducer;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.elastic.converter.ElasticConversionCriticalException;
 import com.dataart.ryft.elastic.converter.ElasticConverter;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.utils.Try;
 
 public class SearchInterceptor implements ActionInterceptor {
 
@@ -32,15 +32,22 @@ public class SearchInterceptor implements ActionInterceptor {
     @Override
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
             ActionFilterChain chain) {
-        Optional<RyftQuery> maybeRyftQuery = elasticConverter.convert(request);
-        Boolean isIntercepted = maybeRyftQuery.isPresent();
+        Try<RyftQuery> tryRyftQuery = elasticConverter.convert(request);
+        Boolean isIntercepted = !tryRyftQuery.hasError();
         if (isIntercepted) {
-            RyftQuery ryftQuery = maybeRyftQuery.get();
+            RyftQuery ryftQuery = tryRyftQuery.getResult();
             LOGGER.info("Constructed {}", ryftQuery);
             RyftRequestEvent ryftRequest = new RyftRequestEvent(ryftQuery);
             ryftRequest.setIndex(((SearchRequest) request).indices());
             ryftRequest.setCallback(listener);
             producer.send(ryftRequest);
+        } else {
+            try {
+                tryRyftQuery.throwException();
+            } catch (Exception ex) {
+                LOGGER.error("Converion exception.", ex);
+                return ex instanceof ElasticConversionCriticalException;
+            }
         }
         return isIntercepted;
     }
