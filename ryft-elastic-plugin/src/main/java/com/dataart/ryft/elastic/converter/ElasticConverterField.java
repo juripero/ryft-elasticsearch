@@ -1,6 +1,7 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.converter.ElasticConvertingContext.ElasticSearchType;
+import com.dataart.ryft.elastic.converter.entities.FuzzyQueryParameters;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
@@ -14,15 +15,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 
 public class ElasticConverterField implements ElasticConvertingElement {
-
-    private class ElasticFieldParameters {
-
-        private RyftFuzzyMetric metric = null;
-        private Integer fuzziness = null;
-        private String searchText = null;
-        private String fieldName = null;
-        private RyftLogicalOperator operator = null;
-    }
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterField.class);
 
@@ -48,8 +40,9 @@ public class ElasticConverterField implements ElasticConvertingElement {
             XContentParser parser = convertingContext.getContentParser();
             Token token = parser.nextToken();
             if (Token.START_OBJECT.equals(token)) {
-                ElasticFieldParameters fieldParameters = new ElasticFieldParameters();
-                fieldParameters.fieldName = parser.currentName();
+                FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
+                fieldParameters.setFieldName(parser.currentName());
+                fieldParameters.setSearchType(convertingContext.getSearchType());
                 while (!Token.END_OBJECT.equals(token)) {
                     token = parser.nextToken();
                     //ignore unknown parameters
@@ -58,42 +51,32 @@ public class ElasticConverterField implements ElasticConvertingElement {
                     parseFuzziness(fieldParameters, convertingContext);
                     parseOperator(fieldParameters, convertingContext);
                 }
-                ElasticSearchType searchType = convertingContext.getSearchType();
-                if (ElasticSearchType.FUZZY.equals(searchType)
-                        || ElasticSearchType.MATCH_PHRASE.equals(searchType)) {
-                    return queryFactory.buildFuzzyQuery(fieldParameters.searchText,
-                            fieldParameters.fieldName, fieldParameters.metric, fieldParameters.fuzziness);
-                }
-                if (ElasticSearchType.MATCH.equals(searchType)) {
-                    return queryFactory.buildFuzzyTokenizedQuery(fieldParameters.searchText,
-                            fieldParameters.fieldName, fieldParameters.operator, fieldParameters.metric, fieldParameters.fuzziness);
-                }
-
+                return queryFactory.buildFuzzyQuery(fieldParameters);
             }
             throw new ElasticConversionException();
         });
     }
 
-    private void parseSearchText(ElasticFieldParameters fieldParameters,
+    private void parseSearchText(FuzzyQueryParameters fieldParameters,
             ElasticConvertingContext convertingContext) throws ElasticConversionException, IOException {
         String name = convertingContext.getContentParser().currentName();
         if (PARAMETER_QUERY.equals(name)
-                && ElasticSearchType.MATCH_PHRASE.equals(convertingContext.getSearchType())) {
-            fieldParameters.searchText = ElasticConversionUtil.getString(convertingContext);
+                && !convertingContext.getSearchType().equals(ElasticSearchType.FUZZY)) {
+            fieldParameters.setSearchValue(ElasticConversionUtil.getString(convertingContext));
         }
         if (PARAMETER_VALUE.equals(name)
                 && ElasticSearchType.FUZZY.equals(convertingContext.getSearchType())) {
-            fieldParameters.searchText = ElasticConversionUtil.getString(convertingContext);
+            fieldParameters.setSearchValue(ElasticConversionUtil.getString(convertingContext));
         }
     }
 
-    private void parseMetric(ElasticFieldParameters fieldParameters,
+    private void parseMetric(FuzzyQueryParameters fieldParameters,
             ElasticConvertingContext convertingContext) throws ElasticConversionException {
         RyftFuzzyMetric metric = null;
         try {
             String name = convertingContext.getContentParser().currentName();
             if (PARAMETER_METRIC.equals(name)) {
-                fieldParameters.metric = ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class);
+                fieldParameters.setMetric(ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class));
             }
         } catch (IOException | ElasticConversionException ex) {
             throw new ElasticConversionCriticalException(
@@ -101,24 +84,24 @@ public class ElasticConverterField implements ElasticConvertingElement {
         }
     }
 
-    private void parseFuzziness(ElasticFieldParameters fieldParameters,
+    private void parseFuzziness(FuzzyQueryParameters fieldParameters,
             ElasticConvertingContext convertingContext) throws IOException, ElasticConversionException {
         String name = convertingContext.getContentParser().currentName();
         if (PARAMETER_FUZZINESS.equals(name)) {
             String fuzziness = ElasticConversionUtil.getString(convertingContext);
             if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
-                fieldParameters.fuzziness = RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
+                fieldParameters.setFuzziness(RyftQueryFactory.FUZZYNESS_AUTO_VALUE);
             } else {
-                fieldParameters.fuzziness = ElasticConversionUtil.getInteger(convertingContext);
+                fieldParameters.setFuzziness(ElasticConversionUtil.getInteger(convertingContext));
             }
         }
     }
 
-    private void parseOperator(ElasticFieldParameters fieldParameters,
+    private void parseOperator(FuzzyQueryParameters fieldParameters,
             ElasticConvertingContext convertingContext) throws IOException, ElasticConversionException {
         String name = convertingContext.getContentParser().currentName();
         if (PARAMETER_OPERATOR.equals(name)) {
-            fieldParameters.operator = ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
+            fieldParameters.setOperator(ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class));
         }
     }
 

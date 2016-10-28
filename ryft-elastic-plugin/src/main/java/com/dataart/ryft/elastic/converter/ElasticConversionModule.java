@@ -18,6 +18,7 @@ public class ElasticConversionModule extends AbstractModule {
                 = MapBinder.newMapBinder(binder(), String.class, ElasticConvertingElement.class);
         convertersBinder.addBinding(ElasticConverterQuery.NAME).to(ElasticConverterQuery.class);
         convertersBinder.addBinding(ElasticConverterFuzzy.NAME).to(ElasticConverterFuzzy.class);
+        convertersBinder.addBinding(ElasticConverterMatch.NAME).to(ElasticConverterMatch.class);
         convertersBinder.addBinding(ElasticConverterMatchPhrase.NAME).to(ElasticConverterMatchPhrase.class);
         convertersBinder.addBinding(ElasticConverterField.NAME).to(ElasticConverterField.class);
         convertersBinder.addBinding(ElasticConverterBool.NAME).to(ElasticConverterBool.class);

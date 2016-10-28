@@ -4,10 +4,13 @@ import com.dataart.ryft.elastic.converter.ElasticConversionException;
 import com.dataart.ryft.elastic.converter.entities.FuzzyQueryParameters;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.lucene.analysis.Tokenizer;
@@ -28,55 +31,68 @@ public class RyftQueryFactory {
         fuzzyQueryParameters.check();
         switch (fuzzyQueryParameters.getSearchType()) {
             case FUZZY:
-                return null;
+                return buildQueryFuzzy(
+                        fuzzyQueryParameters.getSearchValue(),
+                        fuzzyQueryParameters.getFieldName(),
+                        fuzzyQueryParameters.getMetric(),
+                        fuzzyQueryParameters.getFuzziness(),
+                        fuzzyQueryParameters.getRyftOperator());
             case MATCH:
-                return null;
+                return buildQueryMatch(
+                        fuzzyQueryParameters.getSearchValue(),
+                        fuzzyQueryParameters.getFieldName(),
+                        fuzzyQueryParameters.getOperator(),
+                        fuzzyQueryParameters.getMetric(),
+                        fuzzyQueryParameters.getFuzziness(),
+                        fuzzyQueryParameters.getRyftOperator());
             case MATCH_PHRASE:
-                return null;
+                return buildQueryMatchPhrase(
+                        fuzzyQueryParameters.getSearchValue(),
+                        fuzzyQueryParameters.getFieldName(),
+                        fuzzyQueryParameters.getMetric(),
+                        fuzzyQueryParameters.getFuzziness(),
+                        fuzzyQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown search type");
         }
     }
 
-    public RyftQuery buildFuzzyQuery(String searchText, String fieldName, RyftFuzzyMetric metric, Integer fuzziness) {
-        if ((fieldName != null) && (searchText != null) && (metric != null)) {
-            RyftExpression ryftExpression;
-            if ((fuzziness == null) || (fuzziness < FUZZYNESS_AUTO_VALUE)) {
-                fuzziness = FUZZYNESS_AUTO_VALUE;
-            }
-            if (fuzziness.equals(FUZZYNESS_AUTO_VALUE)) {
-                fuzziness = getFuzzinessAuto(searchText);
-            }
-            if (fuzziness == 0) {
-                ryftExpression = new RyftExpressionExactSearch(searchText);
-            } else {
-                if (!isCorrectFuzziness(fuzziness, searchText)) {
-                    LOGGER.warn("Invalid fyzziness {} for search text \"{}\".", fuzziness, searchText);
-                    fuzziness = getFuzzinessAuto(searchText);
-                    LOGGER.info("Fuzziness adjusted to {}.", fuzziness);
-                }
-                ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
-            }
-            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
-                    RyftOperator.CONTAINS, ryftExpression);
-        } else {
-            return null;
+    private RyftQuery buildQueryMatchPhrase(String searchText, String fieldName,
+            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+        RyftExpression ryftExpression;
+        if (FUZZYNESS_AUTO_VALUE.equals(fuzziness)) {
+            fuzziness = getFuzzinessAuto(searchText);
         }
+        if (fuzziness == 0) {
+            ryftExpression = new RyftExpressionExactSearch(searchText);
+        } else {
+            if (!isCorrectFuzziness(fuzziness, searchText)) {
+                LOGGER.warn("Invalid fyzziness {} for search text \"{}\".", fuzziness, searchText);
+                fuzziness = getFuzzinessAuto(searchText);
+                LOGGER.info("Fuzziness adjusted to {}.", fuzziness);
+            }
+            ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
+        }
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
+                ryftOperator, ryftExpression);
     }
 
-    public RyftQuery buildFuzzyQuery(String searchText, String fieldName, RyftFuzzyMetric metric) {
-        return buildFuzzyQuery(searchText, fieldName, metric, null);
-    }
-
-    public RyftQuery buildFuzzyTokenizedQuery(String searchText, String fieldName,
-            RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness) {
+    private RyftQuery buildQueryMatch(String searchText, String fieldName,
+            RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
         Collection<RyftQuery> operands = tokenize(searchText).stream()
-                .map(searchToken -> buildFuzzyQuery(searchToken, fieldName, metric, fuzziness))
+                .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator))
                 .collect(Collectors.toList());
         return buildComplexQuery(operator, operands);
     }
 
-    public RyftQuery buildComplexQuery(RyftLogicalOperator operator, Collection<RyftQuery> operands) {
+    private RyftQuery buildQueryFuzzy(String searchText, String fieldName,
+            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+        String splitSearchText = tokenize(searchText).stream()
+                .collect(Collectors.joining());
+        return buildQueryMatchPhrase(splitSearchText, fieldName, metric, fuzziness, ryftOperator);
+    }
+
+    private RyftQuery buildComplexQuery(RyftLogicalOperator operator, Collection<RyftQuery> operands) {
         return new RyftQueryComplex(operator, operands);
     }
 
@@ -96,13 +112,16 @@ public class RyftQueryFactory {
     }
 
     private Collection<String> tokenize(String searchText) {
-        Set<String> result = new HashSet<>();
+        Collection<String> result = new ArrayList<>();
         try (Tokenizer tokenizer = new StandardTokenizer()) {
             tokenizer.setReader(new StringReader(searchText));
             CharTermAttribute charTermAttrib = tokenizer.getAttribute(CharTermAttribute.class);
             tokenizer.reset();
             while (tokenizer.incrementToken()) {
-                result.add(charTermAttrib.toString());
+                String token = charTermAttrib.toString();
+                if (!result.contains(token)) {
+                    result.add(token);
+                }
             }
             tokenizer.end();
         } catch (IOException ex) {

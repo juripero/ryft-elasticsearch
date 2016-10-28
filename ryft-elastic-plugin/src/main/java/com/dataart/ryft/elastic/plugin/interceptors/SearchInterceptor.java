@@ -1,6 +1,5 @@
 package com.dataart.ryft.elastic.plugin.interceptors;
 
-
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -51,12 +50,9 @@ public class SearchInterceptor implements ActionInterceptor {
             ryftRequest.setCallback(listener);
             producer.send(ryftRequest);
         } else {
-            try {
-                tryRyftQuery.throwException();
-            } catch (Exception ex) {
-                LOGGER.error("Converion exception.", ex);
-                return ex instanceof ElasticConversionCriticalException;
-            }
+            Exception ex = tryRyftQuery.getError();
+            LOGGER.error("Converion exception.", ex);
+            return ex instanceof ElasticConversionCriticalException;
         }
         return isIntercepted;
     }

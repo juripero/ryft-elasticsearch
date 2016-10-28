@@ -29,27 +29,41 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void SimpleFuzzyRequestTest1() throws IOException {
+    public void SimpleMatchPhraseRequestTest() throws IOException {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
-                + "{\"query\": \"knight\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";
+                + "{\"query\": \"good mother\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
         assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"knight\", DIST=2))");
+        assertEquals(maybeRyftQuery.getResult().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
     }
 
     @Test
-    public void SimpleFuzzyRequestTest2() throws IOException {
-        String query = "{\"query\": {\"fuzzy\": {\"text_entry\" : "
-                + "{\"value\": \"knight\", \"fuzziness\" :1, \"metric\": \"feds\"}}}}";
+    public void SimpleMatchRequestTest() throws IOException {
+        String query = "{\"query\": {\"match\": {\"text_entry\": "
+                + "{\"query\": \"good mother\", \"metric\": \"feds\", \"fuzziness\": 2, \"operator\": \"or\"}}}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
         assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(), "(RECORD.text_entry CONTAINS FEDS(\"knight\", DIST=1))");
+        assertEquals(maybeRyftQuery.getResult().buildRyftString(),
+                "((RECORD.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
+    }
+
+    @Test
+    public void SimpleFuzzyRequestTest() throws IOException {
+        String query = "{\"query\": {\"fuzzy\": {\"text_entry\": "
+                + "{\"value\": \"good mother\", \"metric\": \"fhs\", \"fuzziness\": 2}}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
+        assertTrue(!maybeRyftQuery.hasError());
+        assertEquals(maybeRyftQuery.getResult().buildRyftString(),
+                "(RECORD.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
     }
 
     @Test
