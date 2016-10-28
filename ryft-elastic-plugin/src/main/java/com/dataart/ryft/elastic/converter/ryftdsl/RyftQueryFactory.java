@@ -1,5 +1,7 @@
 package com.dataart.ryft.elastic.converter.ryftdsl;
 
+import com.dataart.ryft.elastic.converter.ElasticConversionException;
+import com.dataart.ryft.elastic.converter.entities.FuzzyQueryParameters;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
 import java.io.IOException;
@@ -18,13 +20,31 @@ public class RyftQueryFactory {
 
     private final static ESLogger LOGGER = Loggers.getLogger(RyftQueryFactory.class);
 
-    private final Integer TEXT_LENGTH_NO_FUZZINESS = 3;
-    private final Integer TEXT_LENGTH_FUZZINESS = 5;
+    public final static Integer FUZZYNESS_AUTO_VALUE = -1;
+    private final static Integer TEXT_LENGTH_NO_FUZZINESS = 3;
+    private final static Integer TEXT_LENGTH_FUZZINESS = 5;
+
+    public RyftQuery buildFuzzyQuery(FuzzyQueryParameters fuzzyQueryParameters) throws ElasticConversionException {
+        fuzzyQueryParameters.check();
+        switch (fuzzyQueryParameters.getSearchType()) {
+            case FUZZY:
+                return null;
+            case MATCH:
+                return null;
+            case MATCH_PHRASE:
+                return null;
+            default:
+                throw new ElasticConversionException("Unknown search type");
+        }
+    }
 
     public RyftQuery buildFuzzyQuery(String searchText, String fieldName, RyftFuzzyMetric metric, Integer fuzziness) {
         if ((fieldName != null) && (searchText != null) && (metric != null)) {
             RyftExpression ryftExpression;
-            if ((fuzziness < 0) || (fuzziness == null)) {
+            if ((fuzziness == null) || (fuzziness < FUZZYNESS_AUTO_VALUE)) {
+                fuzziness = FUZZYNESS_AUTO_VALUE;
+            }
+            if (fuzziness.equals(FUZZYNESS_AUTO_VALUE)) {
                 fuzziness = getFuzzinessAuto(searchText);
             }
             if (fuzziness == 0) {

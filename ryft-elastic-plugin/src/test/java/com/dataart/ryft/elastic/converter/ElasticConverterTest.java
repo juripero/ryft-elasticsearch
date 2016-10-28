@@ -31,7 +31,7 @@ public class ElasticConverterTest {
     @Test
     public void SimpleFuzzyRequestTest1() throws IOException {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
-                + "{\"value\": \"knight\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";
+                + "{\"query\": \"knight\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);

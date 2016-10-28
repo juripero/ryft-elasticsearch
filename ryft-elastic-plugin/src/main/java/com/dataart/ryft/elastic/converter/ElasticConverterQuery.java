@@ -15,7 +15,7 @@ public class ElasticConverterQuery implements ElasticConvertingElement {
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         return Try.apply(() -> {
-            String currentName = getNextElasticPrimitive(convertingContext);
+            String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             return convertingContext.getElasticConverter(currentName)
                     .flatMap(converter -> converter.convert(convertingContext))
                     .getResultOrException();

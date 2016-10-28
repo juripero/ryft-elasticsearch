@@ -12,7 +12,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 public class ElasticConvertingContext {
 
     public static enum ElasticSearchType {
-        MATCH, MATCH_PHRASE, FUZZY, BOOL
+        MATCH, MATCH_PHRASE, FUZZY
     }
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConvertingContext.class);
