@@ -51,7 +51,7 @@ public class SearchInterceptor implements ActionInterceptor {
             producer.send(ryftRequest);
         } else {
             Exception ex = tryRyftQuery.getError();
-            LOGGER.error("Converion exception.", ex);
+            LOGGER.error("Convertion exception.", ex);
             return ex instanceof ElasticConversionCriticalException;
         }
         return isIntercepted;
