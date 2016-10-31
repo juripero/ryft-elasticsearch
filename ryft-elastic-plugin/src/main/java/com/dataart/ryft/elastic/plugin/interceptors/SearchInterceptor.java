@@ -48,6 +48,9 @@ public class SearchInterceptor implements ActionInterceptor {
             RyftRequestEvent ryftRequest = new RyftRequestEvent(ryftQuery);
             ryftRequest.setIndex(((SearchRequest) request).indices());
             ryftRequest.setCallback(listener);
+            //TODO: [imasternoy] Merge global with local settings
+            ryftRequest
+                    .setLimit(provider.get().getInt(PropertiesProvider.SEARCH_QUERY_SIZE));
             producer.send(ryftRequest);
         } else {
             Exception ex = tryRyftQuery.getError();
@@ -58,11 +61,7 @@ public class SearchInterceptor implements ActionInterceptor {
     }
 
     private boolean ryftIntegrationEnabled() {
-        Map<String, Object> settings = globalSettings.getGlobalSettings();
-        if (settings == null) {
-            return false;
-        }
-        return globalSettings.getBool(RyftPluginGlobalSettingsProvider.RYFT_INTEGRATION_ENABLED).orElse(false);
+        return provider.get().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
     }
 
 }

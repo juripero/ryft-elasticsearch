@@ -18,21 +18,26 @@ import com.dataart.ryft.disruptor.PostConstruct;
 @Singleton
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
     private final ESLogger logger = Loggers.getLogger(getClass());
-
-    public static final String PLUGIN_SETTINGS_INDEX ="ryft.plugin.settings.index";
-    public static final String DISRUPTOR_CAPACITY = "ryft.disruptor.cpacity";
-    public static final String WROKER_THREAD_COUNT = "ryft.rest.client.thread.num";
-    public static final String HOST = "ryft.rest.client.host";
-    public static final String PORT = "ryft.rest.client.port";
-    public static final String RYFT_SEARCH_URL = "ryft.search.url";
-    public static final String REQ_THREAD_NUM = "ryft.request.processing.thread.num";
-    public static final String RESP_THREAD_NUM = "ryft.response.processing.thread.num";
+    //Global properties
+    public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
+    public static final String SEARCH_QUERY_SIZE = "ryft_query_limit";
+    //Local
+    public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
+    public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_cpacity";
+    public static final String WROKER_THREAD_COUNT = "ryft_rest_client_thread_num";
+    public static final String HOST = "ryft_rest_client_host";
+    public static final String PORT = "ryft_rest_client_port";
+    public static final String RYFT_SEARCH_URL = "ryft_search_url";
+    public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
+    public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
 
     RyftProperties props;
     Map<String, Object> defaults = new HashMap<String, Object>();
 
     @Override
     public void onPostConstruct() {
+        defaults.put(RYFT_INTEGRATION_ENABLED, "false");
+        defaults.put(SEARCH_QUERY_SIZE, "1000");
         defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
         defaults.put(WROKER_THREAD_COUNT, "2");

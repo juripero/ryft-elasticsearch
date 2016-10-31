@@ -1,6 +1,9 @@
 package com.dataart.ryft.disruptor.messages;
 
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,21 +16,39 @@ public class RyftRequestEvent extends InternalEvent {
     private Integer fuzziness;
     private String[] index;
     private RyftQuery query;
-    private List<String> fields;// Needed for multi matching
+    private int limit = 1000;
 
     public RyftRequestEvent(RyftQuery ryftQuery) {
         super();
         this.query = ryftQuery;
     }
-    //(RECORD.type%20CONTAINS%20%22act%22)&files=elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld&mode=es&format=json&local=true&stats=true
     public String getRyftSearchUrl(){
         StringBuilder sb = new StringBuilder("/search?query=");
-        sb.append(java.net.URLEncoder.encode(query.buildRyftString()).replaceAll("\\+", "%20"));
-        sb.append("&files=");
-        sb.append("elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.");
-        sb.append(index[0]).append("jsonfld");
+        try {
+            sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+      
+        for (int i = 0; i < index.length; i++) {
+            sb.append("&file=");
+            sb.append("elasticsearch/elasticsearch/nodes/0/indices/");
+            sb.append(index[i]);
+            sb.append("/0/index/*.");
+            sb.append(index[i]).append("jsonfld");
+        }
         sb.append("&mode=es&format=json&local=true&stats=true");
+        sb.append("&limit=");
+        sb.append(limit);
         return sb.toString();
+    }
+    
+    public int getLimit() {
+        return limit;
+    }
+    
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 
     public Integer getFuzziness() {
@@ -54,13 +75,6 @@ public class RyftRequestEvent extends InternalEvent {
         this.query = query;
     }
 
-    public List<String> getFields() {
-        return fields;
-    }
-
-    public void setFields(List<String> fields) {
-        this.fields = fields;
-    }
     
     public ActionListener<SearchResponse> getCallback() {
         return callback;
@@ -74,7 +88,6 @@ public class RyftRequestEvent extends InternalEvent {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         result = prime * result + ((fuzziness == null) ? 0 : fuzziness.hashCode());
         result = prime * result + Arrays.hashCode(index);
         result = prime * result + ((query == null) ? 0 : query.hashCode());
@@ -90,11 +103,6 @@ public class RyftRequestEvent extends InternalEvent {
         if (getClass() != obj.getClass())
             return false;
         RyftRequestEvent other = (RyftRequestEvent) obj;
-        if (fields == null) {
-            if (other.fields != null)
-                return false;
-        } else if (!fields.equals(other.fields))
-            return false;
         if (fuzziness == null) {
             if (other.fuzziness != null)
                 return false;
@@ -112,7 +120,7 @@ public class RyftRequestEvent extends InternalEvent {
 
     @Override
     public String toString() {
-        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", query=" + query + ", fields=" + fields + "]";
+        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", query=" + query + "]";
     }
 
     @Override
