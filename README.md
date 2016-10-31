@@ -1,6 +1,6 @@
-###Supported elastic search API requests:
+##Supported elastic search API requests:
 
-Match query syntax:
+###Match query syntax:
 
 ```javascript
 {
@@ -17,7 +17,8 @@ Match query syntax:
 }
 ```
 
-Simple fuzzy match query:
+###Simple fuzzy match query:
+
 We are looking for speaker MARCELLUS with one mistake in his name 
 ```javascript
 {
@@ -32,7 +33,7 @@ We are looking for speaker MARCELLUS with one mistake in his name
 }
 ```
 
-#We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'  
+We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'  
 The query below would be devided in couple of queries with AND operator in between.
 ```javascript
 {
@@ -91,7 +92,8 @@ User can rewrite match_phrase query as simple match query like:
 }'
 ```
 
-Boolean query syntax:
+###Boolean query syntax:
+
 Must and Must not queries would be combined with AND operator 'should queries' would be combined with operator OR 
 ```javascript
 {
