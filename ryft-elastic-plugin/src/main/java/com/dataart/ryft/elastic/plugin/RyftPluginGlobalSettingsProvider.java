@@ -29,7 +29,6 @@ import com.dataart.ryft.elastic.converter.ElasticConverterBool;
 public class RyftPluginGlobalSettingsProvider implements PostConstruct {
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterBool.class);
     // Enable/disable ryft-elastic-plugin integration globally
-    public final static String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
 
     Client client;
     PropertiesProvider provider;
@@ -84,6 +83,8 @@ public class RyftPluginGlobalSettingsProvider implements PostConstruct {
                             public void onResponse(GetResponse response) {
                                 if (response.getSource() != null) {
                                     globalSettings = response.getSource();
+                                    //Overriding existing properties with global
+                                    provider.get().properties.putAll(globalSettings);
                                 }
                                 LOGGER.info("Received global settings: {}", globalSettings);
                             }
@@ -96,6 +97,10 @@ public class RyftPluginGlobalSettingsProvider implements PostConstruct {
 
     public Optional<Boolean> getBool(String key) {
         return Optional.ofNullable((Boolean) globalSettings.get(key));
+    }
+    
+    public Optional<Integer> getInt(String key){
+        return Optional.ofNullable((Integer) globalSettings.get(key));
     }
 
     public Map<String, Object> getGlobalSettings() {

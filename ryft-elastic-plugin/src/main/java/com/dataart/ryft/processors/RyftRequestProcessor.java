@@ -30,11 +30,11 @@ import com.google.common.collect.Lists;
 public class RyftRequestProcessor extends RyftProcessor {
     private final ESLogger logger = Loggers.getLogger(getClass());
     RyftRestClient channelProvider;
-    RyftProperties props;
+    PropertiesProvider props;
 
     @Inject
-    public RyftRequestProcessor(RyftProperties properties, RyftRestClient channelProvider) {
-        this.props = properties;
+    public RyftRequestProcessor(PropertiesProvider provider, RyftRestClient channelProvider) {
+        this.props = provider;
         this.channelProvider = channelProvider;
     }
 
@@ -48,7 +48,8 @@ public class RyftRequestProcessor extends RyftProcessor {
         try {
             Channel ryftChannel = channelProvider.get();
             ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
-            String searchUri = props.getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
+            String searchUri = props.get().getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
+            
             ryftChannel.writeAndFlush(new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri))
                     .addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture future) throws Exception {
@@ -65,7 +66,7 @@ public class RyftRequestProcessor extends RyftProcessor {
 
     @Override
     public int getPoolSize() {
-        return props.getInt(PropertiesProvider.REQ_THREAD_NUM);
+        return props.get().getInt(PropertiesProvider.REQ_THREAD_NUM);
     }
 
     @Override

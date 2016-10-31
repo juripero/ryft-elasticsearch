@@ -59,7 +59,7 @@ public class RyftRequestProcessorTest {
     @Ignore
     public void requestProcessorTest() throws Exception {
         RyftRestClient client = mock(RyftRestClient.class);
-        RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(RyftProperties.class), client);
+        RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(PropertiesProvider.class), client);
         ExecutorService executor = mock(ExecutorService.class);
         Future mockFuture = mock(Future.class);
         when(executor.submit((Runnable) any(Runnable.class))).thenReturn(mockFuture);
@@ -92,7 +92,7 @@ public class RyftRequestProcessorTest {
         when(client.get()).thenReturn(channel);
         ChannelPipeline pipeline = mock(ChannelPipeline.class);
         when(channel.pipeline()).thenReturn(pipeline);
-        RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(RyftProperties.class), client);
+        RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(PropertiesProvider.class), client);
         RyftRequestEvent event = new RyftRequestEvent(RYFT_QUERY);
         event.setIndex((String[]) Arrays.asList("shakspeare").toArray());
         processor.sendToRyft(event);

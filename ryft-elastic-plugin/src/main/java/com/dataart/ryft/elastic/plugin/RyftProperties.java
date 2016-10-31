@@ -16,5 +16,9 @@ public class RyftProperties {
     public String getStr(String key) {
         return (String) properties.get(key);
     }
+    
+    public Boolean getBool(String key) {
+        return Boolean.parseBoolean((String) properties.get(key));
+    }
 
 }
