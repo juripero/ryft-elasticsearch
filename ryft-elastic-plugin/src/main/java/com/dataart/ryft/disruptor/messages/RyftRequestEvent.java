@@ -1,6 +1,8 @@
 package com.dataart.ryft.disruptor.messages;
 
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.elastic.plugin.PropertiesProvider;
+import com.dataart.ryft.elastic.plugin.RyftProperties;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -8,18 +10,24 @@ import java.util.Arrays;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.assistedinject.Assisted;
 
 public class RyftRequestEvent extends InternalEvent {
 
+    private final RyftProperties ryftProperties;
     private ActionListener<SearchResponse> callback;
     private Integer fuzziness;
     private String[] index;
     private RyftQuery query;
-    private int limit = 1000;
+    private int limit;
 
-    public RyftRequestEvent(RyftQuery ryftQuery) {
+    @Inject
+    public RyftRequestEvent(PropertiesProvider propertiesProvider, @Assisted RyftQuery ryftQuery) {
         super();
         this.query = ryftQuery;
+        ryftProperties = propertiesProvider.get();
+        limit = ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
     }
 
     public String getRyftSearchUrl() {

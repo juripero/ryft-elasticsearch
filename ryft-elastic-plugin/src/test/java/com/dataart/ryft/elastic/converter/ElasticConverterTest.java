@@ -1,12 +1,18 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
-import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
+import com.dataart.ryft.elastic.plugin.JSR250Module;
+import com.dataart.ryft.elastic.plugin.PropertiesProvider;
+import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.utils.Try;
 import java.io.IOException;
 import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.Singleton;
+import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import static org.junit.Assert.*;
@@ -26,7 +32,17 @@ public class ElasticConverterTest {
 
     @Before
     public void setUp() {
-        Guice.createInjector(new ElasticConversionModule()).injectMembers(this);
+        Guice.createInjector(
+                new AbstractModule() {
+            @Override
+            protected void configure() {
+                install(new JSR250Module());
+                install(new ElasticConversionModule());
+                bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
+                        bind(RyftRequestEventFactory.class).toProvider(
+                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
+            }
+        }).injectMembers(this);
     }
 
     @Test
@@ -37,6 +53,7 @@ public class ElasticConverterTest {
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
         assertTrue(!tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
     }
@@ -49,6 +66,7 @@ public class ElasticConverterTest {
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
         assertTrue(!tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
@@ -62,6 +80,7 @@ public class ElasticConverterTest {
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
         assertTrue(!tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "(RECORD.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
@@ -76,6 +95,7 @@ public class ElasticConverterTest {
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
         assertTrue(!tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.text_entry CONTAINS \"knight\"))");

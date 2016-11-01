@@ -28,17 +28,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
+import com.dataart.ryft.elastic.converter.ElasticConversionModule;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionExactSearch;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftInputSpecifierRecord;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuerySimple;
+import com.dataart.ryft.elastic.plugin.JSR250Module;
+import org.elasticsearch.common.inject.AbstractModule;
+import org.elasticsearch.common.inject.Guice;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 
 public class RestClientHandlerTest {
+
     private static final String SEARCH_FIELD = "text_entry";
-    private static final RyftQuery RYFT_QUERY = 
-            new RyftQuerySimple(
-                    new RyftInputSpecifierRecord(SEARCH_FIELD), RyftOperator.CONTAINS, 
+    private static final RyftQuery RYFT_QUERY
+            = new RyftQuerySimple(
+                    new RyftInputSpecifierRecord(SEARCH_FIELD), RyftOperator.CONTAINS,
                     new RyftExpressionExactSearch("To be, or not to be"));
     private static final String JSON_CONTENT = "{\"results\":[{\"_index\":{\"file\":\"/elasticsearch/elasticsearch/nodes/0/indices/shakespeare/0/index/_0.shakespearejsonfld\",\"offset\":7093566,\"length\":199,\"fuzziness\":0,\"host\":\"ryftone-310\"},\"_uid\":\"34229\",\"doc\":{\"line_id\":34230,\"line_number\":\"3.1.64\",\"play_name\":\"Hamlet\",\"speaker\":\"HAMLET\",\"speech_number\":19,\"text_entry\":\"To be, or not to be: that is the question:\"},\"type\":\"line\"}"
             + "],\"stats\":{\"matches\":1,\"totalBytes\":18893841,\"duration\":200,\"dataRate\":90.0928544998169,\"fabricDuration\":48,\"fabricDataRate\":375.386871,\"host\":\"ryftone-310\"}}";
@@ -51,13 +59,23 @@ public class RestClientHandlerTest {
 
     private EmbeddedChannel channel;
     private RestClientHandler handler;
+    @Inject
+    public RyftRequestEventFactory ryftRequestEventFactory;
     private RyftRequestEvent event;
     ActionListener<SearchResponse> listener;
 
     @Before
     public void init() {
         fails[0] = "Ryft Error";
-        event = new RyftRequestEvent(RYFT_QUERY);
+        Guice.createInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                install(new JSR250Module());
+                bind(RyftRequestEventFactory.class).toProvider(
+                        FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
+            }
+        }).injectMembers(this);
+        event = ryftRequestEventFactory.create(RYFT_QUERY);
 
         listener = mock(ActionListener.class);
         event.setIndex((String[]) Arrays.asList("shakespeare").toArray());

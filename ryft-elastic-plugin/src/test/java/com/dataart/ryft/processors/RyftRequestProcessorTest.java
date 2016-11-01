@@ -28,6 +28,7 @@ import com.dataart.ryft.disruptor.RyftRequestEventConsumer;
 import com.dataart.ryft.disruptor.messages.DisruptorEvent;
 import com.dataart.ryft.disruptor.messages.EventType;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionExactSearch;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftInputSpecifierRecord;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
@@ -37,6 +38,8 @@ import com.dataart.ryft.elastic.plugin.JSR250Module;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
+import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 
 public class RyftRequestProcessorTest {
 
@@ -48,9 +51,13 @@ public class RyftRequestProcessorTest {
                     new RyftInputSpecifierRecord(SEARCH_FIELD), RyftOperator.CONTAINS,
                     new RyftExpressionExactSearch("To be, or not to be"));
 
+    @Inject
+    public RyftRequestEventFactory ryftRequestEventFactory;
+
     @Before
     public void init() {
         injector = Guice.createInjector(new TestModule(), new ProcessorsModule());
+        injector.injectMembers(this);
     }
 
     // TODO: [imasternoy] Currently ignored would need changes after adding ES
@@ -72,7 +79,7 @@ public class RyftRequestProcessorTest {
         RyftRequestEventConsumer consumer = new RyftRequestEventConsumer(mockedProcessors);
 
         DisruptorEvent event = new DisruptorEvent<>();
-        event.setEvent(new RyftRequestEvent(RYFT_QUERY));
+        event.setEvent(ryftRequestEventFactory.create(RYFT_QUERY));
 
         consumer.onEvent(event, 1235L, true);
         verify(mockedProcessors, times(1)).get(EventType.ES_REQUEST);
@@ -93,7 +100,7 @@ public class RyftRequestProcessorTest {
         ChannelPipeline pipeline = mock(ChannelPipeline.class);
         when(channel.pipeline()).thenReturn(pipeline);
         RyftRequestProcessor processor = new RyftRequestProcessor(injector.getInstance(PropertiesProvider.class), client);
-        RyftRequestEvent event = new RyftRequestEvent(RYFT_QUERY);
+        RyftRequestEvent event = ryftRequestEventFactory.create(RYFT_QUERY);
         event.setIndex((String[]) Arrays.asList("shakspeare").toArray());
         processor.sendToRyft(event);
         verify(client, times(1)).get();
@@ -107,6 +114,8 @@ public class RyftRequestProcessorTest {
         protected void configure() {
             install(new JSR250Module());
             bind(RyftProperties.class).toProvider(PropertiesProvider.class);
+            bind(RyftRequestEventFactory.class).toProvider(
+                    FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
         }
     }
 }

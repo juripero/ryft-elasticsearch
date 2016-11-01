@@ -58,11 +58,11 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
                 fileProps.load(file);
                 defaultProps.putAll(fileProps);
             }
-            props = new RyftProperties(defaultProps);
         } catch (IOException e) {
             LOGGER.error("Failed to load properties", e);
             throw new RuntimeException(e);
         }
+        props = new RyftProperties(defaultProps);
     }
 
     @Override

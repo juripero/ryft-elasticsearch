@@ -9,8 +9,10 @@ import org.elasticsearch.common.inject.multibindings.Multibinder;
 import com.dataart.ryft.disruptor.messages.DisruptorEvent;
 import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
+import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 
 public class DisruptorMessageBusModule extends AbstractModule {
 
@@ -22,7 +24,7 @@ public class DisruptorMessageBusModule extends AbstractModule {
 
         Multibinder<EventHandler<DisruptorEvent<InternalEvent>>> binder = Multibinder.newSetBinder(binder(),
                 new TypeLiteral<EventHandler<DisruptorEvent<InternalEvent>>>() {
-                });
+        });
 
         binder.addBinding().to(new TypeLiteral<RyftRequestEventConsumer>() {
         }).asEagerSingleton();
@@ -30,8 +32,8 @@ public class DisruptorMessageBusModule extends AbstractModule {
         bind(new TypeLiteral<RingBuffer<DisruptorEvent<InternalEvent>>>() {
         }).toProvider(Key.get(new TypeLiteral<RingBufferProvider<InternalEvent>>() {
         })).in(Singleton.class);
-
+        bind(RyftRequestEventFactory.class).toProvider(
+                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
     }
-
 
 }
