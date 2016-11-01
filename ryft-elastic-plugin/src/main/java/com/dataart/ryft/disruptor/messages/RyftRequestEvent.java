@@ -17,17 +17,15 @@ public class RyftRequestEvent extends InternalEvent {
 
     private final RyftProperties ryftProperties;
     private ActionListener<SearchResponse> callback;
-    private Integer fuzziness;
     private String[] index;
     private RyftQuery query;
-    private int limit;
 
     @Inject
     public RyftRequestEvent(PropertiesProvider propertiesProvider, @Assisted RyftQuery ryftQuery) {
         super();
         this.query = ryftQuery;
-        ryftProperties = propertiesProvider.get();
-        limit = ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
+        ryftProperties = new RyftProperties();
+        this.ryftProperties.putAll(propertiesProvider.get());
     }
 
     public String getRyftSearchUrl() {
@@ -38,33 +36,21 @@ public class RyftRequestEvent extends InternalEvent {
             e.printStackTrace();
         }
 
-        for (int i = 0; i < index.length; i++) {
+        for (String indexName : index) {
             sb.append("&file=");
             sb.append("elasticsearch/elasticsearch/nodes/0/indices/");
-            sb.append(index[i]);
+            sb.append(indexName);
             sb.append("/0/index/*.");
-            sb.append(index[i]).append("jsonfld");
+            sb.append(indexName).append("jsonfld");
         }
         sb.append("&mode=es&format=json&local=true&stats=true");
         sb.append("&limit=");
-        sb.append(limit);
+        sb.append(getLimit());
         return sb.toString();
     }
 
     public int getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    public Integer getFuzziness() {
-        return fuzziness;
-    }
-
-    public void setFuzziness(Integer fuzziness) {
-        this.fuzziness = fuzziness;
+        return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
     }
 
     public String[] getIndex() {
@@ -91,11 +77,14 @@ public class RyftRequestEvent extends InternalEvent {
         this.callback = callback;
     }
 
+    public RyftProperties getRyftProperties() {
+        return ryftProperties;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fuzziness == null) ? 0 : fuzziness.hashCode());
         result = prime * result + Arrays.hashCode(index);
         result = prime * result + ((query == null) ? 0 : query.hashCode());
         return result;
@@ -113,13 +102,6 @@ public class RyftRequestEvent extends InternalEvent {
             return false;
         }
         RyftRequestEvent other = (RyftRequestEvent) obj;
-        if (fuzziness == null) {
-            if (other.fuzziness != null) {
-                return false;
-            }
-        } else if (!fuzziness.equals(other.fuzziness)) {
-            return false;
-        }
         if (!Arrays.equals(index, other.index)) {
             return false;
         }
@@ -135,7 +117,7 @@ public class RyftRequestEvent extends InternalEvent {
 
     @Override
     public String toString() {
-        return "RyftFuzzyRequest [fuzziness=" + fuzziness + ", index=" + Arrays.toString(index) + ", query=" + query + "]";
+        return "RyftFuzzyRequest [index=" + Arrays.toString(index) + ", query=" + query + "]";
     }
 
     @Override

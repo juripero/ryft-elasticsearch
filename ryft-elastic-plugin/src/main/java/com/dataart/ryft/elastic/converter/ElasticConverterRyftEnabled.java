@@ -5,16 +5,18 @@ import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public class ElasticConverterRyftIntegrationEnabled implements ElasticConvertingElement<Boolean> {
+public class ElasticConverterRyftEnabled implements ElasticConvertingElement<Boolean> {
 
-    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRyftIntegrationEnabled.class);
+    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRyftEnabled.class);
     final static String NAME = RYFT_INTEGRATION_ENABLED;
 
     @Override
     public Try<Boolean> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         return Try.apply(() -> {
-            return ElasticConversionUtil.getBoolean(convertingContext);
+            Boolean isRyftIntegrationElabled = ElasticConversionUtil.getBoolean(convertingContext);
+            convertingContext.getQueryProperties().put(RYFT_INTEGRATION_ENABLED, isRyftIntegrationElabled);
+            return isRyftIntegrationElabled;
         });
     }
     

@@ -2,23 +2,21 @@ package com.dataart.ryft.elastic.plugin;
 
 import java.util.Properties;
 
-public class RyftProperties {
-    Properties properties;
+public class RyftProperties extends Properties {
 
-    public RyftProperties(Properties props) {
-        this.properties = props;
+    public RyftProperties() {
     }
 
     public Integer getInt(String key) {
-        return Integer.parseInt((String) properties.get(key));
+        return Integer.parseInt(getStr(key));
     }
 
     public String getStr(String key) {
-        return (String) properties.get(key);
+        return get(key).toString();
     }
-    
+
     public Boolean getBool(String key) {
-        return Boolean.parseBoolean((String) properties.get(key));
+        return Boolean.parseBoolean(getStr(key));
     }
 
 }

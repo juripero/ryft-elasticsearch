@@ -54,7 +54,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
-        assertTrue(!tryRyftRequest.hasError());
+        assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
     }
 
@@ -67,7 +67,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
-        assertTrue(!tryRyftRequest.hasError());
+        assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
     }
@@ -81,7 +81,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
-        assertTrue(!tryRyftRequest.hasError());
+        assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "(RECORD.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
     }
@@ -96,7 +96,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
-        assertTrue(!tryRyftRequest.hasError());
+        assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.text_entry CONTAINS \"knight\"))");
     }

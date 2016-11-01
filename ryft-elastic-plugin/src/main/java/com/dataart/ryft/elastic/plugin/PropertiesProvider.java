@@ -48,21 +48,20 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RESP_THREAD_NUM, "2");
         defaults.put(RYFT_SEARCH_URL, "http://172.16.13.3:8765");
 
-        Properties defaultProps = new Properties();
-        defaultProps.putAll(defaults);
+        props = new RyftProperties();
+        props.putAll(defaults);
         try {
             InputStream file = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> this.getClass()
                     .getClassLoader().getResourceAsStream("ryft.elastic.plugin.properties"));
             if (file != null) {
                 Properties fileProps = new Properties();
                 fileProps.load(file);
-                defaultProps.putAll(fileProps);
+                props.putAll(fileProps);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to load properties", e);
             throw new RuntimeException(e);
         }
-        props = new RyftProperties(defaultProps);
     }
 
     @Override
