@@ -44,6 +44,16 @@ public abstract class ElasticConversionUtil {
         }
     }
 
+    static Boolean getBoolean(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        String value = getString(convertingContext);
+        try {
+            return Boolean.parseBoolean(value);
+        } catch (RuntimeException ex) {
+            throw new ElasticConversionException(
+                    String.format("Can not parse value \"%s\" as Boolean.", value), ex);
+        }
+    }
+
     static <T extends Enum<T>> T getEnum(ElasticConvertingContext convertingContext, Class<T> enumType) throws ElasticConversionException {
         String value = getString(convertingContext).toUpperCase();
         try {

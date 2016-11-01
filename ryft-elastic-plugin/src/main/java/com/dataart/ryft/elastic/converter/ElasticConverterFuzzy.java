@@ -6,7 +6,7 @@ import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public class ElasticConverterFuzzy implements ElasticConvertingElement {
+public class ElasticConverterFuzzy implements ElasticConvertingElement<RyftQuery> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterFuzzy.class);
 
@@ -19,7 +19,7 @@ public class ElasticConverterFuzzy implements ElasticConvertingElement {
             ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             convertingContext.setSearchType(ElasticSearchType.FUZZY);
             return convertingContext.getElasticConverter(ElasticConverterField.NAME)
-                    .flatMap(converter -> converter.convert(convertingContext))
+                    .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
                     .getResultOrException();
         });
     }

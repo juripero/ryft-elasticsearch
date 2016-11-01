@@ -2,20 +2,18 @@ package com.dataart.ryft.elastic.converter.entities;
 
 import com.dataart.ryft.elastic.converter.ElasticConversionException;
 import com.dataart.ryft.elastic.converter.ElasticConvertingContext;
-import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch;
-import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
-
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex;
 import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
 
 public class FuzzyQueryParameters extends QueryParameters<String> {
 
-    protected RyftExpressionFuzzySearch.RyftFuzzyMetric metric = RyftFuzzyMetric.FEDS;
+    protected RyftFuzzyMetric metric = RyftFuzzyMetric.FEDS;
     protected Integer fuzziness = FUZZYNESS_AUTO_VALUE;
     protected RyftQueryComplex.RyftLogicalOperator operator = RyftQueryComplex.RyftLogicalOperator.OR;
     protected ElasticConvertingContext.ElasticSearchType searchType = ElasticConvertingContext.ElasticSearchType.MATCH_PHRASE;
 
-    public void setMetric(RyftExpressionFuzzySearch.RyftFuzzyMetric metric) {
+    public void setMetric(RyftFuzzyMetric metric) {
         this.metric = metric;
     }
 
@@ -31,7 +29,7 @@ public class FuzzyQueryParameters extends QueryParameters<String> {
         this.searchType = searchType;
     }
 
-    public RyftExpressionFuzzySearch.RyftFuzzyMetric getMetric() {
+    public RyftFuzzyMetric getMetric() {
         return metric;
     }
 

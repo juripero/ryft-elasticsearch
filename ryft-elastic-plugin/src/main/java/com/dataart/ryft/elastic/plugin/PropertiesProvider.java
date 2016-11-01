@@ -17,7 +17,8 @@ import com.dataart.ryft.disruptor.PostConstruct;
 
 @Singleton
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
-    private final ESLogger logger = Loggers.getLogger(getClass());
+
+    private static final ESLogger LOGGER = Loggers.getLogger(PropertiesProvider.class);
     //Global properties
     public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
     public static final String SEARCH_QUERY_SIZE = "ryft_query_limit";
@@ -31,8 +32,8 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
 
-    RyftProperties props;
-    Map<String, Object> defaults = new HashMap<String, Object>();
+    private RyftProperties props;
+    private final Map<String, Object> defaults = new HashMap<>();
 
     @Override
     public void onPostConstruct() {
@@ -56,18 +57,17 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
                 Properties fileProps = new Properties();
                 fileProps.load(file);
                 defaultProps.putAll(fileProps);
-                this.props = new RyftProperties(defaultProps);
             }
-
+            props = new RyftProperties(defaultProps);
         } catch (IOException e) {
-            logger.error("Failed to load properties", e);
+            LOGGER.error("Failed to load properties", e);
             throw new RuntimeException(e);
         }
     }
 
     @Override
     public RyftProperties get() {
-        return this.props;
+        return props;
     }
 
 }

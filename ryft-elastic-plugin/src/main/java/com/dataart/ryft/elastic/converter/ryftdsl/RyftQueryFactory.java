@@ -92,7 +92,7 @@ public class RyftQueryFactory {
         return buildQueryMatchPhrase(splitSearchText, fieldName, metric, fuzziness, ryftOperator);
     }
 
-    private RyftQuery buildComplexQuery(RyftLogicalOperator operator, Collection<RyftQuery> operands) {
+    public RyftQuery buildComplexQuery(RyftLogicalOperator operator, Collection<RyftQuery> operands) {
         return new RyftQueryComplex(operator, operands);
     }
 

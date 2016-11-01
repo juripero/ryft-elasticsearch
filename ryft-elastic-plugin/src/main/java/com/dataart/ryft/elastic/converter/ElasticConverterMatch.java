@@ -7,7 +7,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
 
-public class ElasticConverterMatch implements ElasticConvertingElement {
+public class ElasticConverterMatch implements ElasticConvertingElement<RyftQuery> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterFuzzy.class);
 
@@ -24,7 +24,7 @@ public class ElasticConverterMatch implements ElasticConvertingElement {
                 parser.nextToken();
                 convertingContext.setSearchType(ElasticSearchType.MATCH);
                 return convertingContext.getElasticConverter(ElasticConverterField.NAME)
-                        .flatMap(converter -> converter.convert(convertingContext))
+                        .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
                         .getResultOrException();
             }
             throw new ElasticConversionException();

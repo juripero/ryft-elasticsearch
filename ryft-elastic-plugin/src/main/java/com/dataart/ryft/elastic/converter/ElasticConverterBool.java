@@ -3,20 +3,29 @@ package com.dataart.ryft.elastic.converter;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex;
 import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator.AND;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.dataart.ryft.utils.Try;
 import java.util.ArrayList;
 import java.util.List;
+import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
 
-public class ElasticConverterBool implements ElasticConvertingElement {
+public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterBool.class);
 
-    public static class ElasticConverterMust implements ElasticConvertingElement {
+    public static class ElasticConverterMust implements ElasticConvertingElement<RyftQuery> {
 
         static final String NAME = "must";
+
+        private final RyftQueryFactory queryFactory;
+
+        @Inject
+        public ElasticConverterMust(RyftQueryFactory injectedQueryFactory) {
+            queryFactory = injectedQueryFactory;
+        }
 
         @Override
         public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
@@ -40,7 +49,9 @@ public class ElasticConverterBool implements ElasticConvertingElement {
                         }
                         parser.nextToken();
                     }
-                    return new RyftQueryComplex(AND, ryftQueryParts);
+                    RyftQuery result = queryFactory.buildComplexQuery(AND, ryftQueryParts);
+                    convertingContext.setRyftQuery(result);
+                    return result;
                 }
                 throw new ElasticConversionException();
             });
@@ -56,9 +67,8 @@ public class ElasticConverterBool implements ElasticConvertingElement {
         return Try.apply(() -> {
             String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             return convertingContext.getElasticConverter(currentName)
-                    .flatMap(converter -> converter.convert(convertingContext))
+                    .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
                     .getResultOrException();
-
         });
     }
 

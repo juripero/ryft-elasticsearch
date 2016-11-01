@@ -1,5 +1,7 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.utils.Try;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
@@ -21,6 +23,8 @@ public class ElasticConvertingContext {
     private final Map<String, ElasticConvertingElement> elasticConverters;
     private final String originalQuery;
     private ElasticSearchType searchType;
+    private RyftQuery ryftQuery;
+    private Integer limit;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
@@ -58,6 +62,30 @@ public class ElasticConvertingContext {
 
     public void setSearchType(ElasticSearchType searchType) {
         this.searchType = searchType;
+    }
+
+    public RyftQuery getRyftQuery() {
+        return ryftQuery;
+    }
+
+    public void setRyftQuery(RyftQuery ryftQuery) {
+        this.ryftQuery = ryftQuery;
+    }
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
+    }
+
+    public RyftRequestEvent getRyftRequestEvent() throws ElasticConversionException {
+        RyftRequestEvent result = new RyftRequestEvent(ryftQuery);
+        if (limit != null) {
+            result.setLimit(limit);
+        }
+        return result;
     }
 
 }

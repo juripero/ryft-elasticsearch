@@ -23,17 +23,17 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
 import com.dataart.ryft.disruptor.PostConstruct;
-import com.dataart.ryft.elastic.converter.ElasticConverterBool;
 
 @Singleton
 public class RyftPluginGlobalSettingsProvider implements PostConstruct {
-    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterBool.class);
+
+    private final static ESLogger LOGGER = Loggers.getLogger(RyftPluginGlobalSettingsProvider.class);
     // Enable/disable ryft-elastic-plugin integration globally
 
     Client client;
     PropertiesProvider provider;
     ClusterService clusterService;
-    Map<String, Object> globalSettings;
+    Optional<Map<String, Object>> globalSettingsOptional = Optional.empty();
     String settingsIndex;
 
     @Inject
@@ -74,37 +74,32 @@ public class RyftPluginGlobalSettingsProvider implements PostConstruct {
                 .execute(GetAction.INSTANCE, new GetRequest(settingsIndex, "_all", "1"),
                         new ActionListener<GetResponse>() {
 
-                            @Override
-                            public void onFailure(Throwable e) {
-                                LOGGER.error("Failed to get the response", e);
-                            }
+                    @Override
+                    public void onFailure(Throwable e) {
+                        LOGGER.error("Failed to get the response", e);
+                    }
 
-                            @Override
-                            public void onResponse(GetResponse response) {
-                                if (response.getSource() != null) {
-                                    globalSettings = response.getSource();
-                                    //Overriding existing properties with global
-                                    provider.get().properties.putAll(globalSettings);
-                                }
-                                LOGGER.info("Received global settings: {}", globalSettings);
-                            }
-                        });
+                    @Override
+                    public void onResponse(GetResponse response) {
+                        globalSettingsOptional = Optional.ofNullable(response.getSource());
+                        LOGGER.info("Received global settings: {}", globalSettingsOptional);
+                    }
+                });
     }
 
     public Optional<String> getString(String key) {
-        return Optional.ofNullable((String) globalSettings.get(key));
+        return globalSettingsOptional.map(globalSettings
+                -> globalSettings.get(key).toString());
     }
 
     public Optional<Boolean> getBool(String key) {
-        return Optional.ofNullable((Boolean) globalSettings.get(key));
-    }
-    
-    public Optional<Integer> getInt(String key){
-        return Optional.ofNullable((Integer) globalSettings.get(key));
+        return globalSettingsOptional.map(globalSettings
+                -> Boolean.parseBoolean(globalSettings.get(key).toString()));
     }
 
-    public Map<String, Object> getGlobalSettings() {
-        return globalSettings;
+    public Optional<Integer> getInt(String key) {
+        return globalSettingsOptional.map(globalSettings
+                -> Integer.parseInt(globalSettings.get(key).toString()));
     }
 
     class HealthListener implements ActionListener<ClusterHealthResponse> {
@@ -114,6 +109,7 @@ public class RyftPluginGlobalSettingsProvider implements PostConstruct {
             rereadGlobalSettings();
         }
 
+        @Override
         public void onFailure(Throwable e) {
             LOGGER.error("Failed to get green health response", e);
         }

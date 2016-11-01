@@ -1,5 +1,6 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.utils.Try;
 import java.io.IOException;
@@ -18,7 +19,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 public class ElasticConverterTest {
 
     @Inject
-    public ElasticConverter elasticParser;
+    public ElasticConverter elasticConverter;
 
     @Inject
     public ContextFactory contextFactory;
@@ -35,9 +36,9 @@ public class ElasticConverterTest {
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
-        Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
-        assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertTrue(!tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
     }
 
     @Test
@@ -47,9 +48,9 @@ public class ElasticConverterTest {
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
-        Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
-        assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(),
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertTrue(!tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
     }
 
@@ -60,9 +61,9 @@ public class ElasticConverterTest {
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
-        Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
-        assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(),
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertTrue(!tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "(RECORD.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
     }
 
@@ -74,9 +75,9 @@ public class ElasticConverterTest {
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
-        Try<RyftQuery> maybeRyftQuery = elasticParser.convert(context);
-        assertTrue(!maybeRyftQuery.hasError());
-        assertEquals(maybeRyftQuery.getResult().buildRyftString(),
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertTrue(!tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
                 "((RECORD.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.text_entry CONTAINS \"knight\"))");
     }
 

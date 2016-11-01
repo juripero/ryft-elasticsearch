@@ -14,7 +14,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentParser.Token;
 
-public class ElasticConverterField implements ElasticConvertingElement {
+public class ElasticConverterField implements ElasticConvertingElement<RyftQuery> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterField.class);
 
@@ -51,7 +51,9 @@ public class ElasticConverterField implements ElasticConvertingElement {
                     parseFuzziness(fieldParameters, convertingContext);
                     parseOperator(fieldParameters, convertingContext);
                 }
-                return queryFactory.buildFuzzyQuery(fieldParameters);
+                RyftQuery result = queryFactory.buildFuzzyQuery(fieldParameters);
+                convertingContext.setRyftQuery(result);
+                return result;
             }
             throw new ElasticConversionException();
         });

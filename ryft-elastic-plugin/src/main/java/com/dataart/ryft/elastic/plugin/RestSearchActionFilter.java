@@ -16,16 +16,14 @@ import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.tasks.Task;
 
 import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
-import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 
 @Singleton
-@SuppressWarnings("rawtypes")
 public class RestSearchActionFilter implements ActionFilter {
     // private final ESLogger logger = Loggers.getLogger(getClass());
-    private PropertiesProvider provider;
-    private Map<String, ActionInterceptor> interceptors;
-    private RyftPluginGlobalSettingsProvider globalSettings;
-    private Client client;
+    private final PropertiesProvider provider;
+    private final Map<String, ActionInterceptor> interceptors;
+    private final RyftPluginGlobalSettingsProvider globalSettings;
+    private final Client client;
     private boolean rereadProperties = false;
 
     @Inject

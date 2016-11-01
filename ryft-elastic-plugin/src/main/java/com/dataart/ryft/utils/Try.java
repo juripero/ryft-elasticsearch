@@ -81,8 +81,8 @@ public class Try<T> {
 
     @Override
     public String toString() {
-        return "Try{" + result == null ? "" : String.format("result=%s", result)
-                + error == null ? "" : String.format("error=%s", error) + '}';
+        return "Try{" + ((result == null) ? "" : String.format("result=%s", result))
+                + ((error == null) ? "" : String.format("error=%s", error)) + '}';
     }
 
 }

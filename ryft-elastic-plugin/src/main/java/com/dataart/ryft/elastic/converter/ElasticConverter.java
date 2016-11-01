@@ -1,5 +1,6 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.utils.Try;
 import org.elasticsearch.action.ActionRequest;
@@ -11,7 +12,7 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 
-public class ElasticConverter implements ElasticConvertingElement {
+public class ElasticConverter implements ElasticConvertingElement<RyftRequestEvent> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverter.class);
 
@@ -23,24 +24,30 @@ public class ElasticConverter implements ElasticConvertingElement {
     }
 
     @Override
-    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+    public Try<RyftRequestEvent> convert(ElasticConvertingContext convertingContext) {
         LOGGER.info("Request payload: {}", convertingContext.getOriginalQuery());
         return Try.apply(() -> {
-            String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-            return convertingContext.getElasticConverter(currentName)
-                    .flatMap(converter -> converter.convert(convertingContext))
-                    .getResultOrException();
+            while (!XContentParser.Token.END_OBJECT.equals(convertingContext.getContentParser().currentToken())) {
+                String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
+                convertingContext.getElasticConverter(currentName)
+                        .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
+                        .getResultOrException();
+            }
+            return convertingContext.getRyftRequestEvent();
         });
     }
 
-    public Try<RyftQuery> convert(ActionRequest request) {
+    public Try<RyftRequestEvent> convert(ActionRequest request) {
         return Try.apply(() -> {
             if (request instanceof SearchRequest) {
-                BytesReference searchContent = ((SearchRequest) request).source();
-                String queryString = searchContent.toUtf8();
+                SearchRequest searchRequest = (SearchRequest) request;
+                BytesReference searchContent = searchRequest.source();
+                String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
                 XContentParser parser = XContentFactory.xContent(searchContent).createParser(searchContent);
                 ElasticConvertingContext convertingContext = contextFactory.create(parser, queryString);
-                return convert(convertingContext).getResultOrException();
+                RyftRequestEvent result = convert(convertingContext).getResultOrException();
+                result.setIndex(searchRequest.indices());
+                return result;
             } else {
                 throw new ElasticConversionException("Request is not SearchRequest");
             }

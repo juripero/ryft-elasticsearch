@@ -5,7 +5,6 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
-import java.util.List;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
@@ -22,14 +21,15 @@ public class RyftRequestEvent extends InternalEvent {
         super();
         this.query = ryftQuery;
     }
-    public String getRyftSearchUrl(){
+
+    public String getRyftSearchUrl() {
         StringBuilder sb = new StringBuilder("/search?query=");
         try {
             sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-      
+
         for (int i = 0; i < index.length; i++) {
             sb.append("&file=");
             sb.append("elasticsearch/elasticsearch/nodes/0/indices/");
@@ -42,11 +42,11 @@ public class RyftRequestEvent extends InternalEvent {
         sb.append(limit);
         return sb.toString();
     }
-    
+
     public int getLimit() {
         return limit;
     }
-    
+
     public void setLimit(int limit) {
         this.limit = limit;
     }
@@ -75,11 +75,10 @@ public class RyftRequestEvent extends InternalEvent {
         this.query = query;
     }
 
-    
     public ActionListener<SearchResponse> getCallback() {
         return callback;
     }
-    
+
     public void setCallback(ActionListener<SearchResponse> callback) {
         this.callback = callback;
     }
@@ -96,25 +95,33 @@ public class RyftRequestEvent extends InternalEvent {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RyftRequestEvent other = (RyftRequestEvent) obj;
         if (fuzziness == null) {
-            if (other.fuzziness != null)
+            if (other.fuzziness != null) {
                 return false;
-        } else if (!fuzziness.equals(other.fuzziness))
+            }
+        } else if (!fuzziness.equals(other.fuzziness)) {
             return false;
-        if (!Arrays.equals(index, other.index))
+        }
+        if (!Arrays.equals(index, other.index)) {
             return false;
+        }
         if (query == null) {
-            if (other.query != null)
+            if (other.query != null) {
                 return false;
-        } else if (!query.equals(other.query))
+            }
+        } else if (!query.equals(other.query)) {
             return false;
+        }
         return true;
     }
 
