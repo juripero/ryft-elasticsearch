@@ -32,8 +32,9 @@ public class DisruptorMessageBusModule extends AbstractModule {
         bind(new TypeLiteral<RingBuffer<DisruptorEvent<InternalEvent>>>() {
         }).toProvider(Key.get(new TypeLiteral<RingBufferProvider<InternalEvent>>() {
         })).in(Singleton.class);
+
         bind(RyftRequestEventFactory.class).toProvider(
-                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
+                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class)).in(Singleton.class);
     }
 
 }

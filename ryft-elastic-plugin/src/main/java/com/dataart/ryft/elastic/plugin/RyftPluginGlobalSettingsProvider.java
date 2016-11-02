@@ -82,6 +82,9 @@ public class RyftPluginGlobalSettingsProvider implements PostConstruct {
                     @Override
                     public void onResponse(GetResponse response) {
                         globalSettingsOptional = Optional.ofNullable(response.getSource());
+                        if (globalSettingsOptional.isPresent()) {
+                            provider.get().putAll(globalSettingsOptional.get());
+                        }
                         LOGGER.info("Received global settings: {}", globalSettingsOptional);
                     }
                 });

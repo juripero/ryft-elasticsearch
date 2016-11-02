@@ -24,6 +24,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterBool.NAME).to(ElasticConverterBool.class);
         convertersBinder.addBinding(ElasticConverterMust.NAME).to(ElasticConverterMust.class);
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
+        convertersBinder.addBinding(ElasticConverterRyftLimit.NAME).to(ElasticConverterRyftLimit.class);
 
         bind(RyftQueryFactory.class).in(Singleton.class);
     }

@@ -1,9 +1,5 @@
 package com.dataart.ryft.elastic.plugin;
 
-import java.util.Properties;
-
-import io.netty.channel.Channel;
-
 import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.common.inject.AbstractModule;
@@ -20,7 +16,7 @@ import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 import com.dataart.ryft.processors.ProcessorsModule;
 
 /**
- * 
+ *
  * @author imasternoy
  */
 public class RyftElasticModule extends AbstractModule {
@@ -44,6 +40,7 @@ public class RyftElasticModule extends AbstractModule {
         install(new DisruptorMessageBusModule());
         install(new ProcessorsModule());
         install(new ElasticConversionModule());
+
         bind(RyftRestClient.class).in(Singleton.class);
         bind(RyftPluginGlobalSettingsProvider.class).in(Singleton.class);
 

@@ -1,7 +1,6 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
-import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex;
 import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator.AND;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.dataart.ryft.utils.Try;

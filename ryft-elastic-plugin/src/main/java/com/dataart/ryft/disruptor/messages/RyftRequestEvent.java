@@ -21,11 +21,11 @@ public class RyftRequestEvent extends InternalEvent {
     private RyftQuery query;
 
     @Inject
-    public RyftRequestEvent(PropertiesProvider propertiesProvider, @Assisted RyftQuery ryftQuery) {
+    public RyftRequestEvent(RyftProperties ryftProperties, @Assisted RyftQuery ryftQuery) {
         super();
         this.query = ryftQuery;
-        ryftProperties = new RyftProperties();
-        this.ryftProperties.putAll(propertiesProvider.get());
+        this.ryftProperties = new RyftProperties();
+        this.ryftProperties.putAll(ryftProperties);
     }
 
     public String getRyftSearchUrl() {

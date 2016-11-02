@@ -12,7 +12,6 @@ import com.dataart.ryft.disruptor.EventProducer;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.converter.ElasticConversionCriticalException;
 import com.dataart.ryft.elastic.converter.ElasticConverter;
-import com.dataart.ryft.elastic.converter.ElasticConvertingContext;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
 
@@ -26,9 +25,9 @@ public class SearchInterceptor implements ActionInterceptor {
     private final RyftProperties properties;
 
     @Inject
-    public SearchInterceptor(PropertiesProvider propertiesProvider,
+    public SearchInterceptor(RyftProperties ryftProperties,
             EventProducer<RyftRequestEvent> producer, ElasticConverter elasticConverter) {
-        this.properties = propertiesProvider.get();
+        this.properties = ryftProperties;
         this.producer = producer;
         this.elasticConverter = elasticConverter;
     }
@@ -36,23 +35,23 @@ public class SearchInterceptor implements ActionInterceptor {
     @Override
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener,
             ActionFilterChain chain) {
-        Try<RyftRequestEvent> tryConvertingContext = elasticConverter.convert(request);
-        Boolean isIntercepted = !tryConvertingContext.hasError() && (tryConvertingContext.getResult() != null);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(request);
+        Boolean isIntercepted = !tryRyftRequest.hasError() && (tryRyftRequest.getResult() != null);
         Boolean isRyftIntegrationElabled;
         if (isIntercepted) {
-            RyftRequestEvent requestEvent = tryConvertingContext.getResult();
+            RyftRequestEvent requestEvent = tryRyftRequest.getResult();
             isRyftIntegrationElabled = requestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
         } else {
             isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
         }
         if (isRyftIntegrationElabled) {
             if (isIntercepted) {
-                RyftRequestEvent requestEvent = tryConvertingContext.getResult();
+                RyftRequestEvent requestEvent = tryRyftRequest.getResult();
                 requestEvent.setCallback(listener);
                 producer.send(requestEvent);
                 return true;
             } else {
-                Exception ex = tryConvertingContext.getError();
+                Exception ex = tryRyftRequest.getError();
                 LOGGER.error("Conversion exception.", ex);
                 return ex instanceof ElasticConversionCriticalException;
             }
