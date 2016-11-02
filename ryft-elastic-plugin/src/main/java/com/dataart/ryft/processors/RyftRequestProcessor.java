@@ -49,7 +49,7 @@ public class RyftRequestProcessor extends RyftProcessor {
             Channel ryftChannel = channelProvider.get();
             ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
             String searchUri = props.get().getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
-            
+            logger.info("Ryft rest query has been generated: \n{}", searchUri);
             ryftChannel.writeAndFlush(new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri))
                     .addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture future) throws Exception {

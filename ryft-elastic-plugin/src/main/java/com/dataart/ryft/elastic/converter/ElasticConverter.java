@@ -33,7 +33,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
 
     @Override
     public Try<RyftRequestEvent> convert(ElasticConvertingContext convertingContext) {
-        LOGGER.info("Request payload: {}", convertingContext.getOriginalQuery());
+        LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());
         return Try.apply(() -> {
             while (!XContentParser.Token.END_OBJECT.equals(convertingContext.getContentParser().currentToken())) {
                 String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);

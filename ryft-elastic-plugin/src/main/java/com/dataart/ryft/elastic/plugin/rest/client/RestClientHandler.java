@@ -53,15 +53,15 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof HttpResponse) {
             accumulator = Unpooled.buffer(); // BEWARE TO RELEASE
-            logger.info("Message received {}", msg);
+            logger.trace("Message received {}", msg);
         } else if (msg instanceof HttpContent) {
             HttpContent m = (HttpContent) msg;
             byte[] bytes = new byte[m.content().readableBytes()];
             ((io.netty.buffer.ByteBuf) m.content()).copy().readBytes(bytes);
-            logger.info("Message received {}", new String(bytes));
+            logger.trace("Message received {}", new String(bytes));
             accumulator.writeBytes(m.content());
         } else if (msg instanceof LastHttpContent) {
-            logger.info("Received lastHttpContent {}", msg);
+            logger.trace("Received lastHttpContent {}", msg);
         }
     }
 
@@ -103,7 +103,7 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                 event.getCallback().onResponse(response);
                 return;
             }
-            logger.info("Response has been parsed channel will be closed. Response: {}", results);
+            logger.trace("Response has been parsed channel will be closed. Response: {}", results);
             List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
             results.getResults().forEach(
                     hit -> {
