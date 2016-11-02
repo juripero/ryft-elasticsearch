@@ -21,7 +21,7 @@ public class RyftDslTest {
         assertEquals(ryftQuery.buildRyftString(), "(RECORD EQUALS \"test\")");
         inputSpecifier = new RyftInputSpecifierRecord("parameter");
         ryftQuery = new RyftQuerySimple(inputSpecifier, EQUALS, expression);
-        assertEquals(ryftQuery.buildRyftString(), "(RECORD.parameter EQUALS \"test\")");
+        assertEquals(ryftQuery.buildRyftString(), "(RECORD.doc.parameter EQUALS \"test\")");
     }
 
     @Test

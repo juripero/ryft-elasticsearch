@@ -55,7 +55,7 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ElasticConverterTest {
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
+                "((RECORD.doc.text_entry CONTAINS FEDS(\"good\", DIST=2)) OR (RECORD.doc.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
     }
 
     @Test
@@ -83,7 +83,7 @@ public class ElasticConverterTest {
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "(RECORD.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
+                "(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
     }
 
     @Test
@@ -98,7 +98,7 @@ public class ElasticConverterTest {
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
         assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.text_entry CONTAINS \"knight\"))");
+                "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\"))");
     }
 
 }

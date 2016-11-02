@@ -18,7 +18,7 @@ public class RyftInputSpecifierRecord extends RyftInputSpecifier {
         if (fieldName.isEmpty()) {
             return INPUT_SPECIFIER;
         } else {
-            return String.format("%s.%s", INPUT_SPECIFIER, fieldName);
+            return String.format("%s.doc.%s", INPUT_SPECIFIER, fieldName);
         }
     }
 
