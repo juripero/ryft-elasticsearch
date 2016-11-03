@@ -41,7 +41,9 @@ import com.google.common.collect.Lists;
 
 public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
-
+    
+    //TODO: [imasternoy] REMOVE ANY STATE FROM HANDLER ITSELF!
+    //XXX [imasternoy] Move to context attributes
     RyftRequestEvent event;
     ByteBuf accumulator;
 
@@ -83,13 +85,20 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                         RyftResponse res = null;
                         try {
                             ObjectMapper mapper = new ObjectMapper();
-                            res = mapper.readValue(accumulator.array(), RyftResponse.class);
+                            if (accumulator.isReadable()) {
+                                res = mapper.readValue(accumulator.array(), RyftResponse.class);
+                            }
                         } catch (Exception e) {
                             logger.error("Failed to parse RYFT response", e);
                             event.getCallback().onFailure(e);
                         }
                         return res;
                     });
+            
+            if (results == null) {
+                event.getCallback().onFailure(new RyftRestExeption("EMPTY response"));
+                return;
+            }
 
             if (results.getErrors() != null) {
                 String[] fails = results.getErrors();
@@ -111,9 +120,10 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                                 hit.getType()), ImmutableMap.of());
                         // TODO: [imasternoy] change index name
                         searchHit.shard(new SearchShardTarget(results.getStats().getHost(), event.getIndex()[0], 0));
-                        
+
                         if (hit.getDoc() == null && hit.getError() != null) {
-                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""+hit.getError().toString()+"\"}")));
+                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""
+                                    + hit.getError().toString() + "\"}")));
                         } else {
                             searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
                         }
