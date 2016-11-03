@@ -8,7 +8,6 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOp
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.dataart.ryft.utils.Try;
 import java.io.IOException;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -18,8 +17,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterField.class);
 
-    private final RyftQueryFactory queryFactory;
-
     static final String NAME = "field_name";
     private static final String PARAMETER_QUERY = "query";
     private static final String PARAMETER_VALUE = "value";
@@ -27,11 +24,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     private static final String PARAMETER_METRIC = "metric";
     private static final String PARAMETER_OPERATOR = "operator";
     private static final String VALUE_FUZZINESS_AUTO = "auto";
-
-    @Inject
-    public ElasticConverterField(RyftQueryFactory injectedQueryFactory) {
-        queryFactory = injectedQueryFactory;
-    }
 
     @Override
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
@@ -41,6 +33,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
             Token token = parser.nextToken();
             if (Token.START_OBJECT.equals(token)) {
                 FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
+                fieldParameters.setRyftOperator(convertingContext.getRyftOperator());
                 fieldParameters.setFieldName(parser.currentName());
                 fieldParameters.setSearchType(convertingContext.getSearchType());
                 while (!Token.END_OBJECT.equals(token)) {
@@ -51,8 +44,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                     parseFuzziness(fieldParameters, convertingContext);
                     parseOperator(fieldParameters, convertingContext);
                 }
-                RyftQuery result = queryFactory.buildFuzzyQuery(fieldParameters);
-                convertingContext.setRyftQuery(result);
+                RyftQuery result = convertingContext.getQueryFactory().buildFuzzyQuery(fieldParameters);
                 return result;
             }
             throw new ElasticConversionException();

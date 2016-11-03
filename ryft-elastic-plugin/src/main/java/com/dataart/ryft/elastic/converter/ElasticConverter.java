@@ -1,6 +1,7 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
+import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.utils.Try;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -23,10 +24,13 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
 
     private final ContextFactory contextFactory;
     private final ObjectMapper mapper;
+    private final RyftRequestEventFactory ryftRequestEventFactory;
 
     @Inject
-    public ElasticConverter(ContextFactory contextFactory) {
+    public ElasticConverter(ContextFactory contextFactory,
+            RyftRequestEventFactory ryftRequestEventFactory) {
         this.contextFactory = contextFactory;
+        this.ryftRequestEventFactory = ryftRequestEventFactory;
         mapper = new ObjectMapper();
         mapper.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
     }
@@ -35,13 +39,22 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
     public Try<RyftRequestEvent> convert(ElasticConvertingContext convertingContext) {
         LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());
         return Try.apply(() -> {
-            while (!XContentParser.Token.END_OBJECT.equals(convertingContext.getContentParser().currentToken())) {
-                String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-                convertingContext.getElasticConverter(currentName)
-                        .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
-                        .getResultOrException();
-            }
-            return convertingContext.getRyftRequestEvent();
+            String currentName;
+            convertingContext.getContentParser().nextToken();
+            convertingContext.getContentParser().nextToken();
+            RyftQuery ryftQuery = null;
+            do {
+                currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
+                if ((currentName != null) && (!ElasticConversionUtil.isClosePrimitive(convertingContext))) {
+                    Object conversionResult = convertingContext.getElasticConverter(currentName)
+                            .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
+                            .getResultOrException();
+                    if (conversionResult instanceof RyftQuery) {
+                        ryftQuery = (RyftQuery)conversionResult;
+                    }
+                }
+            } while (currentName != null);
+            return getRyftRequestEvent(convertingContext, ryftQuery);
         });
     }
 
@@ -71,6 +84,12 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
         parsedQuery.remove(ElasticConverterRyftLimit.NAME);
         request.source(parsedQuery);
+    }
+
+    private RyftRequestEvent getRyftRequestEvent(ElasticConvertingContext convertingContext, RyftQuery ryftQuery) {
+        RyftRequestEvent result = ryftRequestEventFactory.create(ryftQuery);
+        result.getRyftProperties().putAll(convertingContext.getQueryProperties());
+        return result;
     }
 
 }

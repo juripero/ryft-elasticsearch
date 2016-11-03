@@ -1,8 +1,7 @@
 package com.dataart.ryft.elastic.converter;
 
-import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
-import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
-import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
+import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.dataart.ryft.utils.Try;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
@@ -19,24 +18,29 @@ public class ElasticConvertingContext {
         MATCH, MATCH_PHRASE, FUZZY
     }
 
+    public static enum ElasticBoolSearchType {
+        MUST, MUST_NOT, SHOULD
+    }
+
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConvertingContext.class);
 
     private final XContentParser contentParser;
     private final Map<String, ElasticConvertingElement> elasticConverters;
     private final String originalQuery;
-    private final RyftRequestEventFactory ryftRequestEventFactory;
+    private final RyftQueryFactory ryftQueryFactory;
     private ElasticSearchType searchType;
-    private RyftQuery ryftQuery;
+    private RyftOperator ryftOperator = RyftOperator.CONTAINS;
     private final Map<String, Object> queryProperties;
+    private Integer minimumShouldMatch = 1;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
             Map<String, ElasticConvertingElement> injectedConverters,
-            RyftRequestEventFactory ryftRequestEventFactory) {
+            RyftQueryFactory ryftQueryFactory) {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
         this.originalQuery = originalQuery;
         this.contentParser = parser;
-        this.ryftRequestEventFactory = ryftRequestEventFactory;
+        this.ryftQueryFactory = ryftQueryFactory;
         this.queryProperties = new HashMap<>();
     }
 
@@ -62,6 +66,14 @@ public class ElasticConvertingContext {
         return originalQuery;
     }
 
+    public RyftOperator getRyftOperator() {
+        return ryftOperator;
+    }
+
+    public void setRyftOperator(RyftOperator ryftOperator) {
+        this.ryftOperator = ryftOperator;
+    }
+
     public ElasticSearchType getSearchType() {
         return searchType;
     }
@@ -70,22 +82,22 @@ public class ElasticConvertingContext {
         this.searchType = searchType;
     }
 
-    public RyftQuery getRyftQuery() {
-        return ryftQuery;
+    public Integer getMinimumShouldMatch() {
+        return minimumShouldMatch;
     }
 
-    public void setRyftQuery(RyftQuery ryftQuery) {
-        this.ryftQuery = ryftQuery;
+    public void setMinimumShouldMatch(Integer minimumShouldMatch) {
+        if ((minimumShouldMatch != null) && (minimumShouldMatch >= 1)) {
+            this.minimumShouldMatch = minimumShouldMatch;
+        }
     }
 
     public Map<String, Object> getQueryProperties() {
         return queryProperties;
     }
 
-    public RyftRequestEvent getRyftRequestEvent() {
-        RyftRequestEvent result = ryftRequestEventFactory.create(ryftQuery);
-        result.getRyftProperties().putAll(queryProperties);
-        return result;
+    public RyftQueryFactory getQueryFactory() {
+        return ryftQueryFactory;
     }
 
 }

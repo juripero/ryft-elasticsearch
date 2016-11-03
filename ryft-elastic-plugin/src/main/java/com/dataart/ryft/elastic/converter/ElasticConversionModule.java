@@ -1,6 +1,9 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.elastic.converter.ElasticConverterBool.ElasticConverterMinimumShouldMatch;
 import com.dataart.ryft.elastic.converter.ElasticConverterBool.ElasticConverterMust;
+import com.dataart.ryft.elastic.converter.ElasticConverterBool.ElasticConverterMustNot;
+import com.dataart.ryft.elastic.converter.ElasticConverterBool.ElasticConverterShould;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Singleton;
@@ -23,6 +26,9 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterField.NAME).to(ElasticConverterField.class);
         convertersBinder.addBinding(ElasticConverterBool.NAME).to(ElasticConverterBool.class);
         convertersBinder.addBinding(ElasticConverterMust.NAME).to(ElasticConverterMust.class);
+        convertersBinder.addBinding(ElasticConverterMustNot.NAME).to(ElasticConverterMustNot.class);
+        convertersBinder.addBinding(ElasticConverterShould.NAME).to(ElasticConverterShould.class);
+        convertersBinder.addBinding(ElasticConverterMinimumShouldMatch.NAME).to(ElasticConverterMinimumShouldMatch.class);
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
         convertersBinder.addBinding(ElasticConverterRyftLimit.NAME).to(ElasticConverterRyftLimit.class);
 

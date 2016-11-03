@@ -39,14 +39,14 @@ public class ElasticConverterTest {
                 install(new JSR250Module());
                 install(new ElasticConversionModule());
                 bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
-                        bind(RyftRequestEventFactory.class).toProvider(
-                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
+                bind(RyftRequestEventFactory.class).toProvider(
+                        FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class));
             }
         }).injectMembers(this);
     }
 
     @Test
-    public void SimpleMatchPhraseRequestTest() throws IOException {
+    public void MatchPhraseWithFuzzyRequestTest() throws IOException {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
                 + "{\"query\": \"good mother\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";
         BytesArray bytes = new BytesArray(query);
@@ -59,7 +59,7 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void SimpleMatchRequestTest() throws IOException {
+    public void MatchWithFuzzyRequestTest() throws IOException {
         String query = "{\"query\": {\"match\": {\"text_entry\": "
                 + "{\"query\": \"good mother\", \"metric\": \"feds\", \"fuzziness\": 2, \"operator\": \"or\"}}}}";
         BytesArray bytes = new BytesArray(query);
@@ -73,7 +73,7 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void SimpleFuzzyRequestTest() throws IOException {
+    public void FuzzyRequestTest() throws IOException {
         String query = "{\"query\": {\"fuzzy\": {\"text_entry\": "
                 + "{\"value\": \"good mother\", \"metric\": \"fhs\", \"fuzziness\": 2}}}}";
         BytesArray bytes = new BytesArray(query);
@@ -87,7 +87,7 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void ComplexFuzzyRequestTest1() throws IOException {
+    public void BoolMustRequestTest() throws IOException {
         String query = "{\"query\": {\"bool\": {\"must\": ["
                 + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
                 + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}]}}}";
@@ -101,4 +101,123 @@ public class ElasticConverterTest {
                 "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\"))");
     }
 
+    @Test
+    public void BoolMustNotRequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {\"must_not\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}]}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
+                "((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\"))");
+    }
+
+    @Test
+    public void BoolMustAndMustNotRequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {\"must\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}],"
+                + "\"must_not\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}]}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        String ryftString = tryRyftRequest.getResult().getQuery().buildRyftString();
+        assertTrue(
+                ryftString.equals(
+                        "(((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\")) AND "
+                        + "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\")))")
+                || ryftString.equals("(((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\")) AND "
+                        + "((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\")))")
+        );
+    }
+
+    @Test
+    public void BoolShouldRequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {\"should\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"Would nat be\", \"fuzziness\": 1, \"metric\": \"Fhs\"}}}, "
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}]}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
+                "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry CONTAINS \"knight\"))");
+    }
+
+    @Test
+    public void BoolShouldWithMinimumShouldMatch2RequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {\"should\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"juliet\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"romeo\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
+                + "\"minimum_should_match\": 2}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
+                "(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\")) OR "
+                + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\")) OR "
+                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))");
+    }
+
+    @Test
+    public void BoolShouldWithMinimumShouldMatch3RequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {"
+                + "\"should\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"juliet\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"romeo\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"hamlet\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
+                + "\"minimum_should_match\": 3}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
+                "(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")) OR "
+                + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")) OR "
+                + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")) OR "
+                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")))");
+    }
+
+    @Test
+    public void BoolShouldWithMinimumShouldMatch2AndMustAndMustNotRequestTest() throws IOException {
+        String query = "{\"query\": {\"bool\": {"
+                + "\"should\": ["
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"juliet\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"romeo\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
+                + "{\"match_phrase\": {\"text_entry\": {\"query\":\"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
+                + "\"must\": ["
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"hamlet\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
+                + "\"must_not\": ["
+                + "{\"fuzzy\": {\"text_entry\" : {\"value\": \"love\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
+                + "\"minimum_should_match\": 2}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
+                "((((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\"))"
+                + " OR ((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\"))"
+                + " OR ((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))"
+                + " AND (RECORD.doc.text_entry NOT_CONTAINS \"love\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\"))");
+    }
 }

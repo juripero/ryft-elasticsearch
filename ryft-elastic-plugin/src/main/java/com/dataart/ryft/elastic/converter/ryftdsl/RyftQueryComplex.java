@@ -33,10 +33,14 @@ public class RyftQueryComplex implements RyftQuery {
 
     @Override
     public String buildRyftString() {
-        String queryString = operands.stream()
-                .map(operand -> operand.buildRyftString())
-                .collect(Collectors.joining(" " + operator.buildRyftString() + " "));
-        return String.format("(%s)", queryString);
+        if (operands.size() == 1) {
+            return operands.iterator().next().buildRyftString();
+        } else {
+            String queryString = operands.stream()
+                    .map(operand -> operand.buildRyftString())
+                    .collect(Collectors.joining(" " + operator.buildRyftString() + " "));
+            return String.format("(%s)", queryString);
+        }
     }
 
     @Override

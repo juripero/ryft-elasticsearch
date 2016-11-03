@@ -1,6 +1,9 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.utils.Try;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 public abstract class ElasticConversionUtil {
@@ -8,14 +11,52 @@ public abstract class ElasticConversionUtil {
     static String getNextElasticPrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         try {
             XContentParser parser = convertingContext.getContentParser();
-            XContentParser.Token token;
-            do {
-                token = parser.nextToken();
-            } while (!XContentParser.Token.FIELD_NAME.equals(token));
+            String currentPrimitive = parser.currentName();
+            if (currentPrimitive == null) {
+                parser.nextToken();
+            } else {
+                do {
+                    parser.nextToken();
+                } while (currentPrimitive.equals(parser.currentName()));
+            }
             return parser.currentName();
         } catch (IOException ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
+    }
+
+    static Boolean isClosePrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        return (parser.currentToken().equals(XContentParser.Token.END_OBJECT)
+                || parser.currentToken().equals(XContentParser.Token.END_ARRAY));
+    }
+
+    static List getArray(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        XContentParser.Token token = parser.currentToken();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(token)) {
+                token = parser.nextToken();
+            }
+            if (XContentParser.Token.START_ARRAY.equals(token)) {
+                List result = new ArrayList();
+                parser.nextToken();
+                while (!XContentParser.Token.END_ARRAY.equals(token)) {
+                    String currentName = getNextElasticPrimitive(convertingContext);
+                    Try tryArrayElement;
+                    if ((currentName != null) && (XContentParser.Token.FIELD_NAME.equals(parser.currentToken()))) {
+                        tryArrayElement = convertingContext.getElasticConverter(parser.currentName())
+                                .flatMap(converter -> converter.convert(convertingContext));
+                        result.add(tryArrayElement.getResultOrException());
+                    }
+                    token = parser.nextToken();
+                }
+                return result;
+            }
+        } catch (Exception ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
+        throw new ElasticConversionException("Can not extract array.");
     }
 
     static String getString(ElasticConvertingContext convertingContext) throws ElasticConversionException {
