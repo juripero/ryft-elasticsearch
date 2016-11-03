@@ -6,6 +6,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -50,7 +51,9 @@ public class RyftRequestProcessor extends RyftProcessor {
             ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
             String searchUri = props.get().getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
             logger.info("Ryft rest query has been generated: \n{}", searchUri);
-            ryftChannel.writeAndFlush(new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri))
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri);
+            request.headers().add(HttpHeaders.Names.AUTHORIZATION,"Basic "+props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
+            ryftChannel.writeAndFlush(request)
                     .addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture future) throws Exception {
                             logger.debug("Operation complete");
