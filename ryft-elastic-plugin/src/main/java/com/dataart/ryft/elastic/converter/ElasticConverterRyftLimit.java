@@ -8,7 +8,7 @@ import org.elasticsearch.common.logging.Loggers;
 public class ElasticConverterRyftLimit implements ElasticConvertingElement<Integer> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRyftEnabled.class);
-    final static String NAME = SEARCH_QUERY_SIZE;
+    final static String NAME = "size";
 
     @Override
     public Try<Integer> convert(ElasticConvertingContext convertingContext) {

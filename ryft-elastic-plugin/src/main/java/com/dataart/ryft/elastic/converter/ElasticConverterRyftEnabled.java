@@ -8,7 +8,7 @@ import org.elasticsearch.common.logging.Loggers;
 public class ElasticConverterRyftEnabled implements ElasticConvertingElement<Boolean> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRyftEnabled.class);
-    final static String NAME = RYFT_INTEGRATION_ENABLED;
+    final static String NAME = "ryft_enabled";
 
     @Override
     public Try<Boolean> convert(ElasticConvertingContext convertingContext) {
