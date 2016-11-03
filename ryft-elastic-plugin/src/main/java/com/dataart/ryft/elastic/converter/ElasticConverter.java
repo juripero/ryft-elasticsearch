@@ -41,7 +41,6 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         return Try.apply(() -> {
             String currentName;
             convertingContext.getContentParser().nextToken();
-            convertingContext.getContentParser().nextToken();
             RyftQuery ryftQuery = null;
             do {
                 currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
