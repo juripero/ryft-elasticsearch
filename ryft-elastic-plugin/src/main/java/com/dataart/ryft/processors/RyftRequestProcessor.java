@@ -2,6 +2,7 @@ package com.dataart.ryft.processors;
 
 import java.util.Arrays;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -23,6 +24,7 @@ import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
+import com.dataart.ryft.elastic.plugin.rest.client.NettyUtils;
 import com.dataart.ryft.elastic.plugin.rest.client.RestClientHandler;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 import com.google.common.collect.Lists;
@@ -48,7 +50,10 @@ public class RyftRequestProcessor extends RyftProcessor {
     protected void sendToRyft(RyftRequestEvent requestEvent) {
         try {
             Channel ryftChannel = channelProvider.get();
-            ryftChannel.pipeline().addLast("client", new RestClientHandler(requestEvent));
+            NettyUtils.setAttribute(RestClientHandler.START_TIME_ATTR, System.currentTimeMillis(), ryftChannel);
+            NettyUtils.setAttribute(RestClientHandler.REQUEST_EVENT_ATTR, requestEvent, ryftChannel);
+            NettyUtils.setAttribute(RestClientHandler.ACCUMULATOR_ATTR, Unpooled.buffer(), ryftChannel);
+            ryftChannel.pipeline().addLast("client", new RestClientHandler());
             String searchUri = props.get().getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
             logger.info("Ryft rest query has been generated: \n{}", searchUri);
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri);

@@ -36,6 +36,7 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuerySimple;
 import com.dataart.ryft.elastic.plugin.JSR250Module;
+
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Inject;
@@ -81,8 +82,12 @@ public class RestClientHandlerTest {
         event.setIndex((String[]) Arrays.asList("shakespeare").toArray());
         event.setCallback(listener);
 
-        handler = new RestClientHandler(event);
+        handler = new RestClientHandler();
+    
         channel = new EmbeddedChannel(handler);
+        NettyUtils.setAttribute(RestClientHandler.START_TIME_ATTR, System.currentTimeMillis(), channel);
+        NettyUtils.setAttribute(RestClientHandler.REQUEST_EVENT_ATTR, event, channel);
+        NettyUtils.setAttribute(RestClientHandler.ACCUMULATOR_ATTR, Unpooled.buffer(), channel);
         channel.pipeline().addFirst(new HttpResponseDecoder());
     }
 
@@ -99,13 +104,14 @@ public class RestClientHandlerTest {
     @Test
     public void testWritingContent() throws Exception {
         DefaultHttpResponse msg = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.OK);
+        ByteBuf accumulator = NettyUtils.getAttribute(channel, RestClientHandler.ACCUMULATOR_ATTR);
         channel.writeInbound(msg);
-        assertTrue(handler.accumulator != null);
+        assertTrue(accumulator != null);
         ByteBuf content = Unpooled.buffer(JSON_CONTENT.getBytes().length);
         content.writeBytes(JSON_CONTENT.getBytes());
         DefaultHttpContent httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == JSON_CONTENT.getBytes().length);
+        assertTrue(accumulator.readableBytes() == JSON_CONTENT.getBytes().length);
         ReferenceCountUtil.release(msg);
     }
 
@@ -113,7 +119,8 @@ public class RestClientHandlerTest {
     public void testWritingPartialContent() throws Exception {
         DefaultHttpResponse msg = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.OK);
         channel.writeInbound(msg);
-        assertTrue(handler.accumulator != null);
+        ByteBuf accumulator = NettyUtils.getAttribute(channel, RestClientHandler.ACCUMULATOR_ATTR);
+        assertTrue(accumulator != null);
 
         String part1 = JSON_CONTENT.substring(0, 300);
         String part2 = JSON_CONTENT.substring(300, 400);
@@ -123,19 +130,19 @@ public class RestClientHandlerTest {
         content.writeBytes(part1.getBytes());
         DefaultHttpContent httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == part1.getBytes().length);
+        assertTrue(accumulator.readableBytes() == part1.getBytes().length);
 
         content = Unpooled.buffer(part2.getBytes().length);
         content.writeBytes(part2.getBytes());
         httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == (part1 + part2).getBytes().length);
+        assertTrue(accumulator.readableBytes() == (part1 + part2).getBytes().length);
 
         content = Unpooled.buffer(part3.getBytes().length);
         content.writeBytes(part3.getBytes());
         httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == (part1 + part2 + part3).getBytes().length);
+        assertTrue(accumulator.readableBytes() == (part1 + part2 + part3).getBytes().length);
 
         channel.close();
 
@@ -167,15 +174,15 @@ public class RestClientHandlerTest {
         };
 
         event.setCallback(callback);
-
+        ByteBuf accumulator = NettyUtils.getAttribute(channel, RestClientHandler.ACCUMULATOR_ATTR);
         DefaultHttpResponse msg = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.OK);
         channel.writeInbound(msg);
-        assertTrue(handler.accumulator != null);
+        assertTrue(accumulator != null);
         ByteBuf content = Unpooled.buffer(JSON_ERORS_IN_CONTENT.getBytes().length);
         content.writeBytes(JSON_ERORS_IN_CONTENT.getBytes());
         DefaultHttpContent httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == JSON_ERORS_IN_CONTENT.getBytes().length);
+        assertTrue(accumulator.readableBytes() == JSON_ERORS_IN_CONTENT.getBytes().length);
         channel.close();
         ReferenceCountUtil.release(msg);
     }
@@ -199,13 +206,14 @@ public class RestClientHandlerTest {
         event.setCallback(callback);
 
         DefaultHttpResponse msg = new DefaultHttpResponse(HttpVersion.HTTP_1_0, HttpResponseStatus.OK);
+        ByteBuf accumulator = NettyUtils.getAttribute(channel, RestClientHandler.ACCUMULATOR_ATTR);
         channel.writeInbound(msg);
-        assertTrue(handler.accumulator != null);
+        assertTrue(accumulator != null);
         ByteBuf content = Unpooled.buffer(JSON__ERROR_IN_FIELD_CONTENT.getBytes().length);
         content.writeBytes(JSON__ERROR_IN_FIELD_CONTENT.getBytes());
         DefaultHttpContent httpContent = new DefaultHttpContent(content);
         channel.writeInbound(httpContent);
-        assertTrue(handler.accumulator.readableBytes() == JSON__ERROR_IN_FIELD_CONTENT.getBytes().length);
+        assertTrue(accumulator.readableBytes() == JSON__ERROR_IN_FIELD_CONTENT.getBytes().length);
         channel.close();
         ReferenceCountUtil.release(msg);
     }
