@@ -21,7 +21,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "value";
 
-        private static final String PARAMETER_NAME = "query";
+        private static final String NAME_ALTERNATIVE = "query";
 
         @Override
         public Try<String> convert(ElasticConvertingContext convertingContext) {
@@ -48,6 +48,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     public static class ElasticConverterFuzziness implements ElasticConvertingElement<Integer> {
 
         public static final String NAME = "fuzziness";
+        private final String VALUE_FUZZINESS_AUTO = "auto";
 
         @Override
         public Try<Integer> convert(ElasticConvertingContext convertingContext) {
@@ -77,12 +78,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     }
 
     static final String NAME = "field_name";
-    private static final String PARAMETER_QUERY = "query";
-    private static final String PARAMETER_VALUE = "value";
-    private static final String PARAMETER_FUZZINESS = "fuzziness";
-    private static final String PARAMETER_METRIC = "metric";
-    private static final String PARAMETER_OPERATOR = "operator";
-    private static final String VALUE_FUZZINESS_AUTO = "auto";
 
     @Override
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
@@ -91,25 +86,58 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
             XContentParser parser = convertingContext.getContentParser();
             parser.nextToken();
             Map<String, Object> fieldParametersMap = new HashMap<>();
-            if (XContentParser.Token.START_OBJECT.equals(parser.currentToken())) {
-                String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-                do {
-                    if (currentName.equals(ElasticConverterValue.PARAMETER_NAME)) {
-                        currentName = ElasticConverterValue.NAME;
-                    }
-                    Object parameterValue = convertingContext.getElasticConverter(currentName)
-                            .flatMap(converter -> converter.convert(convertingContext))
-                            .getResultOrException();
-                    fieldParametersMap.put(currentName, parameterValue);
-                    currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-                } while (!XContentParser.Token.END_OBJECT.equals(parser.currentToken()));
-                return getRyftQuery(convertingContext, fieldParametersMap);
+            switch (parser.currentToken()) {
+                case START_OBJECT:
+                    return convertFromObject(convertingContext, fieldParametersMap);
+                case VALUE_STRING:
+                    return convertFromString(convertingContext, fieldParametersMap);
+                default:
+                    throw new ElasticConversionException("Request parsing error");
             }
-            throw new ElasticConversionException();
         });
     }
 
+    private RyftQuery convertFromObject(ElasticConvertingContext convertingContext,
+            Map<String, Object> fieldParametersMap) throws Exception {
+        String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
+        do {
+            if (currentName.equals(ElasticConverterValue.NAME_ALTERNATIVE)) {
+                currentName = ElasticConverterValue.NAME;
+            }
+            Object parameterValue = convertingContext.getElasticConverter(currentName)
+                    .flatMap(converter -> converter.convert(convertingContext))
+                    .getResultOrException();
+            fieldParametersMap.put(currentName, parameterValue);
+            currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
+        } while (!XContentParser.Token.END_OBJECT.equals(convertingContext.getContentParser().currentToken()));
+        return getRyftQuery(convertingContext, fieldParametersMap);
+    }
+
+    private RyftQuery convertFromString(ElasticConvertingContext convertingContext,
+            Map<String, Object> fieldParametersMap) throws Exception {
+        String value = ElasticConversionUtil.getString(convertingContext);
+        fieldParametersMap.put(ElasticConverterValue.NAME, value);
+        return getRyftQuery(convertingContext, fieldParametersMap);
+    }
+
     private RyftQuery getRyftQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws IOException, ElasticConversionException {
+        if (fieldQueryMap.containsKey(ElasticConverterMetric.NAME)
+                || fieldQueryMap.containsKey(ElasticConverterFuzziness.NAME)
+                || ElasticConvertingContext.ElasticSearchType.FUZZY.equals(convertingContext.getSearchType())) {
+            if (!fieldQueryMap.containsKey(ElasticConverterMetric.NAME)) {
+                fieldQueryMap.put(ElasticConverterMetric.NAME, FuzzyQueryParameters.METRIC_DEFAULT);
+            }
+            if (!fieldQueryMap.containsKey(ElasticConverterFuzziness.NAME)) {
+                fieldQueryMap.put(ElasticConverterFuzziness.NAME, FuzzyQueryParameters.FUZZINESS_DEFAULT);
+            }
+            return getRyftFuzzyQuery(convertingContext, fieldQueryMap);
+        } else {
+            fieldQueryMap.put(ElasticConverterFuzziness.NAME, 0);
+            return getRyftFuzzyQuery(convertingContext, fieldQueryMap);
+        }
+    }
+
+    private RyftQuery getRyftFuzzyQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws IOException, ElasticConversionException {
         FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
         fieldParameters.setRyftOperator(convertingContext.getRyftOperator());
         fieldParameters.setFieldName(convertingContext.getContentParser().currentName());

@@ -8,8 +8,11 @@ import static com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory.FUZZYN
 
 public class FuzzyQueryParameters extends QueryParameters<String> {
 
-    protected RyftFuzzyMetric metric = RyftFuzzyMetric.FEDS;
-    protected Integer fuzziness = FUZZYNESS_AUTO_VALUE;
+    public static RyftFuzzyMetric METRIC_DEFAULT = RyftFuzzyMetric.FEDS;
+    public static Integer FUZZINESS_DEFAULT = FUZZYNESS_AUTO_VALUE;
+    
+    protected RyftFuzzyMetric metric = METRIC_DEFAULT;
+    protected Integer fuzziness = FUZZINESS_DEFAULT;
     protected RyftQueryComplex.RyftLogicalOperator operator = RyftQueryComplex.RyftLogicalOperator.OR;
     protected ElasticConvertingContext.ElasticSearchType searchType = ElasticConvertingContext.ElasticSearchType.MATCH_PHRASE;
 
