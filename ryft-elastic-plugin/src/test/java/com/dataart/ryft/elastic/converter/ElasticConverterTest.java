@@ -220,4 +220,26 @@ public class ElasticConverterTest {
                 + " OR ((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))"
                 + " AND (RECORD.doc.text_entry NOT_CONTAINS \"love\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\"))");
     }
+
+    @Test
+    public void ignoreUnknownPrimitives() throws IOException {
+        String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
+                + "{\"query\": \"good mother\", \"fuzziness\" :0}}}, \"from\": 500}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"good mother\")");
+        query = "{\"from\": 500, \"query\": {\"match_phrase\": {\"text_entry\": "
+                + "{\"query\": \"good mother\", \"fuzziness\" :0}}}}";
+        bytes = new BytesArray(query);
+        parser = XContentFactory.xContent(bytes).createParser(bytes);
+        context = contextFactory.create(parser, query);
+        tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"good mother\")");
+    }
 }
