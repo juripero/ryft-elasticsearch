@@ -62,11 +62,7 @@ public class RyftQueryFactory {
         if (fuzziness == 0) {
             ryftExpression = new RyftExpressionExactSearch(searchText);
         } else {
-            if (!isCorrectFuzziness(fuzziness, searchText)) {
-                LOGGER.warn("Invalid fyzziness {} for search text \"{}\".", fuzziness, searchText);
-                fuzziness = getFuzzinessAuto(searchText);
-                LOGGER.info("Fuzziness adjusted to {}.", fuzziness);
-            }
+            fuzziness = adjustFuzziness(fuzziness, searchText);
             ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
         }
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
@@ -103,8 +99,12 @@ public class RyftQueryFactory {
         }
     }
 
-    private Boolean isCorrectFuzziness(Integer fuzziness, String searchText) {
-        return searchText.length() / 2 >= fuzziness;
+    private Integer adjustFuzziness(Integer fuzziness, String searchText) {
+        if (searchText.length() == 1 && fuzziness > 0) {
+            return 0;
+        }
+        Double fuzzy = Math.ceil(((double) searchText.length()) / 2);
+        return fuzzy.intValue() >= fuzziness ?fuzziness: fuzzy.intValue();
     }
 
     private Collection<String> tokenize(String searchText) {
