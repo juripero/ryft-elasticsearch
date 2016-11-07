@@ -1,0 +1,2 @@
+{"query": {"match": {"text_entry": {"query":"Lord Hamlet", "type": "phrase"}}}}
+{"query": {"fuzzy": {"text_entry" : {"value": "knight", "fuzziness" :2}}}}
