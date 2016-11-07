@@ -9,10 +9,13 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
 
+
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -26,6 +29,7 @@ import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
+
 
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.mappings.RyftResponse;
@@ -115,8 +119,8 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                         InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), hit.getUid(), new Text(
                                 hit.getType()), ImmutableMap.of());
                         // TODO: [imasternoy] change index name
-                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), NettyUtils
-                                .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex().toString(), 0));
+                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(),Arrays.toString(NettyUtils
+                                .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex()), 0));
 
                         if (hit.getDoc() == null && hit.getError() != null) {
                             searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""
