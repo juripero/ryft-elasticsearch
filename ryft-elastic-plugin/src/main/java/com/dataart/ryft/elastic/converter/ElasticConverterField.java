@@ -1,5 +1,6 @@
 package com.dataart.ryft.elastic.converter;
 
+import com.dataart.ryft.elastic.converter.ElasticConvertingContext.ElasticSearchType;
 import com.dataart.ryft.elastic.converter.entities.FuzzyQueryParameters;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
@@ -73,6 +74,26 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
                 return ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
+            });
+        }
+    }
+
+    public static class ElasticConverterType implements ElasticConvertingElement<Void> {
+
+        public static final String NAME = "type";
+        
+        private final String TYPE_PHRASE = "phrase";
+
+        @Override
+        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return Try.apply(() -> {
+                String type = ElasticConversionUtil.getString(convertingContext);
+                if (TYPE_PHRASE.equals(type.toLowerCase())
+                        && ElasticSearchType.MATCH.equals(convertingContext.getSearchType())) {
+                    convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
+                }
+                return null;
             });
         }
     }

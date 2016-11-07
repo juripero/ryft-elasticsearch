@@ -5,18 +5,18 @@ import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public class ElasticConverterRyftLimit implements ElasticConvertingElement<Integer> {
+public class ElasticConverterRyftLimit implements ElasticConvertingElement<Void> {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRyftEnabled.class);
     final static String NAME = "size";
 
     @Override
-    public Try<Integer> convert(ElasticConvertingContext convertingContext) {
+    public Try<Void> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         return Try.apply(() -> {
             Integer limit = ElasticConversionUtil.getInteger(convertingContext);
             convertingContext.getQueryProperties().put(SEARCH_QUERY_SIZE, limit);
-            return limit;
+            return null;
         });
     }
 

@@ -55,7 +55,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))");
+        assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -68,8 +69,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.doc.text_entry CONTAINS FEDS(\"good\", DIST=2)) AND (RECORD.doc.text_entry CONTAINS FEDS(\"mother\", DIST=2)))");
+        assertEquals("((RECORD.doc.text_entry CONTAINS FEDS(\"good\", DIST=2)) AND (RECORD.doc.text_entry CONTAINS FEDS(\"mother\", DIST=2)))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -82,8 +83,36 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))");
+        assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
+    }
+
+    @Test
+    public void MatchWithMatchPhraseTypeRequestTest() throws IOException {
+        String query = "{\"query\": {\"match\": {\"text_entry\": "
+                + "{\"query\": \"good mother\", \"fuzziness\" :2, \"metric\": \"FHS\", \"type\": \"phrase\"}}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
+    }
+
+    @Test
+    public void FuzzyWithMatchPhraseTypeRequestTest() throws IOException {
+        String query = "{\"query\": {\"fuzzy\": {\"text_entry\": "
+                + "{\"value\": \"good mother\", \"metric\": \"fhs\", \"fuzziness\": 2, \"type\": \"phrase\"}}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
+        assertNotNull(tryRyftRequest);
+        assertFalse(tryRyftRequest.hasError());
+        assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -97,8 +126,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\"))");
+        assertEquals("((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\"))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -112,8 +141,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\"))");
+        assertEquals("((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\"))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -151,8 +180,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry CONTAINS \"knight\"))");
+        assertEquals("((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry CONTAINS \"knight\"))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -168,10 +197,10 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\")) OR "
+        assertEquals("(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\")) OR "
                 + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\")) OR "
-                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))");
+                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -189,11 +218,11 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")) OR "
+        assertEquals("(((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")) OR "
                 + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")) OR "
                 + "((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")) OR "
-                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")))");
+                + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -214,17 +243,17 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(),
-                "((((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\"))"
+        assertEquals("((((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"romeo\"))"
                 + " OR ((RECORD.doc.text_entry CONTAINS \"juliet\") AND (RECORD.doc.text_entry CONTAINS \"knight\"))"
                 + " OR ((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))"
-                + " AND (RECORD.doc.text_entry NOT_CONTAINS \"love\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\"))");
+                + " AND (RECORD.doc.text_entry NOT_CONTAINS \"love\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\"))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
     public void ignoreUnknownPrimitives() throws IOException {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
-                + "{\"query\": \"good mother\", \"fuzziness\" :0}}}, \"from\": 500}";
+                + "{\"query\": \"good mother\", \"fuzziness\" :0}}}, \"unknown_property\": 500}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
@@ -240,7 +269,8 @@ public class ElasticConverterTest {
         tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"good mother\")");
+        assertEquals("(RECORD.doc.text_entry CONTAINS \"good mother\")",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -252,7 +282,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"good mother\")");
+        assertEquals("(RECORD.doc.text_entry CONTAINS \"good mother\")",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
@@ -264,7 +295,8 @@ public class ElasticConverterTest {
         Try<RyftRequestEvent> tryRyftRequest = elasticConverter.convert(context);
         assertNotNull(tryRyftRequest);
         assertFalse(tryRyftRequest.hasError());
-        assertEquals(tryRyftRequest.getResult().getQuery().buildRyftString(), "((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))");
+        assertEquals("((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))",
+                tryRyftRequest.getResult().getQuery().buildRyftString());
     }
 
     @Test
