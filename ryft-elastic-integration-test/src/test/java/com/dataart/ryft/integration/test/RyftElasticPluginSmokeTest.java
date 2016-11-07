@@ -50,7 +50,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * original phrase: To be, or not to be
      * 
      */
-    @Ignore
     @Test
     public void testSimpleFuzzyMatch() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builder = QueryBuilders.matchPhraseQuery("text_entry", "To be or not to be")//
@@ -71,7 +70,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * match-phrase-query: Fuzziness 1 looking for speaker: All the worlds a. 
      * original phrase: All the world's a stage
      */
-    @Ignore
     @Test
     public void testSimpleFuzzyMatch2() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builder = QueryBuilders.matchPhraseQuery("text_entry", "All the worlds a")//
@@ -92,7 +90,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * fuzzy-query: Fuzziness 1 looking for speaker: marcelus
      * original speaker: Marcellus
      */
-    @Ignore
     @Test
     public void testSimpleFuzzyQuery() throws InterruptedException, ExecutionException {
         FuzzyQueryBuilder builder = QueryBuilders.fuzzyQuery("speaker", "marcelus")//
@@ -112,7 +109,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * fuzzy-query: Fuzziness 2 looking for speaker: macelus
      * original speaker: Marcellus
      */
-    @Ignore
     @Test
     public void testSimpleFuzzyQuery2() throws InterruptedException, ExecutionException {
         FuzzyQueryBuilder builder = QueryBuilders.fuzzyQuery("speaker", "macelus")//
@@ -135,7 +131,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Match-query: Fuzziness 1 Looking for: Lord Hmlet
      * original : Lord Hamlet
      */
-    @Ignore
     @Test
     public void testMatchMust() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builder = QueryBuilders//
@@ -158,7 +153,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Match-query: Fuzziness 2 Looking for: Lord mlet
      * original : Lord Hamlet
      */
-    @Ignore
     @Test
     public void testMatchMust2() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builder = QueryBuilders//
@@ -181,7 +175,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-must-query: Fuzziness 1 Looking for: Lrd amlet and speaker: LRD PLONIU
      * original : Lord Hamlet, Lord POLONIU
      */
-    @Ignore
     @Test
     public void testBoolMatchMust() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -210,7 +203,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-must-query: Fuzziness 2 Looking for: Lrd mlet and speaker: LRD PLONIU
      * original : Lord Hamlet, Lord POLONIUS
      */
-    @Ignore
     @Test
     public void testBoolMatchMust2() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -239,7 +231,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-must-query: Fuzziness 1 Looking for: 'tht is qetion' and speaker: mlet
      * original : that is the question: Hamlet
      */
-    @Ignore
     @Test
     public void testBoolMatchMust3() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -268,7 +259,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-must-query: Fuzziness 2 Looking for: 'tht is qetion' and speaker: mlet
      * original : that is the question: Hamlet
      */
-    @Ignore
     @Test
     public void testBoolMatchMust4() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -297,7 +287,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-should-query: Fuzziness 1 Looking for: 'that is the quetion' OR 'all the world a stage'
      * original : that is the question, all the worlds a stage
      */
-   @Ignore
     @Test
     public void testBoolMatchShould() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -326,7 +315,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     * Bool-match-should-query: Fuzziness 2 Looking for: 'tht is th quetion' OR 'all the wld a stage'
     * original : that is the question, all the worlds a stage
     */
-   @Ignore
     @Test
     public void testBoolMatchShould2() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
@@ -352,22 +340,22 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
     
     /**
-     * Bool-match-should-query: Fuzziness 2 Looking for: 'Lrd Halet' and speaker 'PONIUS' or for 'Lrd Halet' and speaker 'Hlet'
-     * original : that is the question, all the worlds a stage, A horse! a horse! my kingdom for a horse!
+     * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
+     * Used minimum_should match parameter and type:'phrase'
      */
      @Test
      public void testBoolMatchShould3() throws InterruptedException, ExecutionException {
          MatchQueryBuilder builderSpeaker = QueryBuilders//
-                 .matchQuery("text_entry", "Lrd Halet")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.TWO).type(Type.PHRASE);//
+                 .matchQuery("text_entry", "my lord")//
+                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
          
          MatchQueryBuilder builderText = QueryBuilders//
                  .matchQuery("speaker", "PONIUS")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
+                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
          
          MatchQueryBuilder builder3 = QueryBuilders//
-                 .matchQuery("speaker", "HLET")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
+                 .matchQuery("speaker", "Mesenger")//
+                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
          
          //"A horse! a horse! my kingdom for a horse!"
          
@@ -379,11 +367,49 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
          SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                  .get();//
 
-         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"Lrd Halet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Hlet\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":2 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":2 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
          SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                  new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
          elasticSubsetRyft(searchResponse, ryftResponse);
      }
+     
+     
+     /**
+      * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
+      * Used minimum_should match parameter and type:'phrase' AND MUST NOT: 
+      */
+      @Ignore
+      @Test
+      public void testBoolMatchShouldMustNot4() throws InterruptedException, ExecutionException {
+          MatchQueryBuilder builderSpeaker = QueryBuilders//
+                  .matchQuery("text_entry", "my lord")//
+                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
+          
+          MatchQueryBuilder builderText = QueryBuilders//
+                  .matchQuery("speaker", "PONIUS")//
+                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
+          
+          MatchQueryBuilder builder3 = QueryBuilders//
+                  .matchQuery("speaker", "Mesenger")//
+                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
+          
+          MatchQueryBuilder builder4 = QueryBuilders.matchQuery("play_name", "King Lear").type(Type.PHRASE);
+          
+          //"A horse! a horse! my kingdom for a horse!"
+          
+          BoolQueryBuilder builder = QueryBuilders//
+                  .boolQuery().should(builderSpeaker).should(builder3).mustNot(builder4).minimumShouldMatch("2");
+
+          logger.info("Testing query: {}", builder.toString());
+          int total = getSize(builder);
+          SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
+                  .get();//
+
+          String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"play_name\":{\"query\":\"King Lear\",\"type\":\"phrase\"}}}], \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":2 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+          SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                  new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+          elasticSubsetRyft(searchResponse, ryftResponse);
+      }
 
 
     public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
