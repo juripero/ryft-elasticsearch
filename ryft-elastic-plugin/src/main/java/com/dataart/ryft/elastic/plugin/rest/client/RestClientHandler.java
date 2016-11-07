@@ -49,9 +49,6 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             logger.trace("Message received {}", msg);
         } else if (msg instanceof HttpContent) {
             HttpContent m = (HttpContent) msg;
-            byte[] bytes = new byte[m.content().readableBytes()];
-            ((io.netty.buffer.ByteBuf) m.content()).copy().readBytes(bytes);
-            logger.trace("Message received {}", new String(bytes));
             NettyUtils.getAttribute(ctx, ACCUMULATOR_ATTR).writeBytes(m.content());
         } else if (msg instanceof LastHttpContent) {
             logger.trace("Received lastHttpContent {}", msg);
