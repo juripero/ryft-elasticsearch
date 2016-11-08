@@ -378,34 +378,29 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
       * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
       * Used minimum_should match parameter and type:'phrase' AND MUST NOT: 
       */
-      @Ignore
       @Test
       public void testBoolMatchShouldMustNot4() throws InterruptedException, ExecutionException {
           MatchQueryBuilder builderSpeaker = QueryBuilders//
-                  .matchQuery("text_entry", "my lord")//
+                  .matchQuery("text_entry", "Hamlet hamlet")//
                   .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
           
           MatchQueryBuilder builderText = QueryBuilders//
-                  .matchQuery("speaker", "PONIUS")//
+                  .matchQuery("speaker", "LAERTES")//
                   .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
           
           MatchQueryBuilder builder3 = QueryBuilders//
-                  .matchQuery("speaker", "Mesenger")//
-                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-          
-          MatchQueryBuilder builder4 = QueryBuilders.matchQuery("play_name", "King Lear").type(Type.PHRASE);
-          
-          //"A horse! a horse! my kingdom for a horse!"
+                  .matchQuery("speaker", "QUEEN GERTRUDE")//
+                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
           
           BoolQueryBuilder builder = QueryBuilders//
-                  .boolQuery().should(builderSpeaker).should(builder3).mustNot(builder4).minimumShouldMatch("2");
+                  .boolQuery().should(builderSpeaker).should(builder3).mustNot(builder3).minimumShouldMatch("1");
 
           logger.info("Testing query: {}", builder.toString());
           int total = getSize(builder);
           SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                   .get();//
 
-          String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"play_name\":{\"query\":\"King Lear\",\"type\":\"phrase\"}}}], \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":2 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+          String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"speaker\":{\"query\":\"QUEEN GERTRUDE\",\"type\":\"phrase\"}}}], \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Hamlet hamlet\",\"fuzziness\": 1,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LAERTES\",\"fuzziness\": 1,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
           SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                   new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
           elasticSubsetRyft(searchResponse, ryftResponse);
