@@ -103,8 +103,8 @@ public class RyftQueryFactory {
         if (searchText.length() == 1 && fuzziness > 0) {
             return 0;
         }
-        Double fuzzy = Math.ceil(((double) searchText.length()) / 2);
-        return fuzzy.intValue() >= fuzziness ?fuzziness: fuzzy.intValue();
+        Double fuzzy = Math.ceil((double) searchText.length() / 2);
+        return fuzzy.intValue() >= fuzziness ? fuzziness : fuzzy.intValue();
     }
 
     private Collection<String> tokenize(String searchText) {
