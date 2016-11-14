@@ -33,30 +33,59 @@ public abstract class ElasticConversionUtil {
 
     static List getArray(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         XContentParser parser = convertingContext.getContentParser();
-        XContentParser.Token token = parser.currentToken();
         try {
-            if (XContentParser.Token.FIELD_NAME.equals(token)) {
-                token = parser.nextToken();
-            }
-            if (XContentParser.Token.START_ARRAY.equals(token)) {
-                List result = new ArrayList();
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
                 parser.nextToken();
-                while (!XContentParser.Token.END_ARRAY.equals(token)) {
-                    String currentName = getNextElasticPrimitive(convertingContext);
-                    Try tryArrayElement;
-                    if ((currentName != null) && (XContentParser.Token.FIELD_NAME.equals(parser.currentToken()))) {
-                        tryArrayElement = convertingContext.getElasticConverter(parser.currentName())
-                                .flatMap(converter -> converter.convert(convertingContext));
-                        result.add(tryArrayElement.getResultOrException());
-                    }
-                    token = parser.nextToken();
+            }
+            List<Object> result = new ArrayList<>();
+            if (XContentParser.Token.START_ARRAY.equals(parser.currentToken())) {
+                parser.nextToken();
+                while (!XContentParser.Token.END_ARRAY.equals(parser.currentToken())) {
+                    result.add(getObject(convertingContext));
+                    getNextElasticPrimitive(convertingContext);
                 }
                 return result;
+            }
+        } catch (IOException | ElasticConversionException ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
+        throw new ElasticConversionException("Can not extract array.");
+    }
+
+    static Object getObject(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
+                parser.nextToken();
+            }
+            if (XContentParser.Token.START_OBJECT.equals(parser.currentToken())) {
+                String currentName = getNextElasticPrimitive(convertingContext);
+                if ((currentName != null) && (XContentParser.Token.FIELD_NAME.equals(parser.currentToken()))) {
+                    Try tryArrayElement = convertingContext.getElasticConverter(currentName)
+                            .flatMap(converter -> converter.convert(convertingContext));
+                    parser.nextToken();
+                    return tryArrayElement.getResultOrException();
+                }
             }
         } catch (Exception ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
-        throw new ElasticConversionException("Can not extract array.");
+        throw new ElasticConversionException("Can not extract object.");
+    }
+
+    static <T> T getObject(ElasticConvertingContext convertingContext, ElasticConvertingElement<T> converter) throws Exception {
+        XContentParser parser = convertingContext.getContentParser();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
+                parser.nextToken();
+            }
+            getNextElasticPrimitive(convertingContext);
+            T result = converter.convert(convertingContext).getResultOrException();
+            convertingContext.getContentParser().nextToken();
+            return result;
+        } catch (Exception ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
     }
 
     static String getString(ElasticConvertingContext convertingContext) throws ElasticConversionException {

@@ -16,11 +16,10 @@ public class ElasticConverterFuzzy implements ElasticConvertingElement<RyftQuery
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         return Try.apply(() -> {
-            ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             convertingContext.setSearchType(ElasticSearchType.FUZZY);
-            return convertingContext.getElasticConverter(ElasticConverterField.NAME)
-                    .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
-                    .getResultOrException();
+            ElasticConvertingElement converter = 
+                    convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
+            return (RyftQuery) ElasticConversionUtil.getObject(convertingContext, converter);
         });
     }
 

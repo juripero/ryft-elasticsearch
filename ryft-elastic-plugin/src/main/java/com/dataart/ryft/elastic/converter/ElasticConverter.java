@@ -46,7 +46,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                 currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
                 if ((currentName != null) && (!ElasticConversionUtil.isClosePrimitive(convertingContext))) {
                     Object conversionResult = convertingContext.getElasticConverter(currentName)
-                            .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
+                            .flatMap(converter -> converter.convert(convertingContext))
                             .getResultOrException();
                     if (conversionResult instanceof RyftQuery) {
                         ryftQuery = (RyftQuery)conversionResult;

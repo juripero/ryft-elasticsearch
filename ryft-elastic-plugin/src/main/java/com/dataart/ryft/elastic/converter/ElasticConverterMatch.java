@@ -5,7 +5,6 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.utils.Try;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.common.xcontent.XContentParser;
 
 public class ElasticConverterMatch implements ElasticConvertingElement<RyftQuery> {
 
@@ -17,17 +16,10 @@ public class ElasticConverterMatch implements ElasticConvertingElement<RyftQuery
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         return Try.apply(() -> {
-            XContentParser parser = convertingContext.getContentParser();
-            XContentParser.Token token = parser.nextToken();
-            String currentName = parser.currentName();
-            if (XContentParser.Token.START_OBJECT.equals(token) && NAME.equals(currentName)) {
-                parser.nextToken();
-                convertingContext.setSearchType(ElasticSearchType.MATCH);
-                return convertingContext.getElasticConverter(ElasticConverterField.NAME)
-                        .flatMap(converter -> (Try<RyftQuery>) converter.convert(convertingContext))
-                        .getResultOrException();
-            }
-            throw new ElasticConversionException();
+            convertingContext.setSearchType(ElasticSearchType.MATCH);
+            ElasticConvertingElement converter = 
+                    convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
+            return (RyftQuery) ElasticConversionUtil.getObject(convertingContext, converter);
         });
     }
 

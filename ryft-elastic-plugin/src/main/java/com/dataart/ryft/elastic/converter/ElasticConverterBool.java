@@ -4,6 +4,7 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftOperator;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
 import com.dataart.ryft.utils.Try;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,12 +27,19 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
                 convertingContext.setRyftOperator(RyftOperator.CONTAINS);
-                List<RyftQuery> ryftQueryParts = ElasticConversionUtil.getArray(convertingContext);
+                List<RyftQuery> ryftQueryParts = new ArrayList<>();
+                XContentParser.Token token = convertingContext.getContentParser().nextToken();
+                if (XContentParser.Token.START_ARRAY.equals(token)) {
+                    ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
+                }
+                if (XContentParser.Token.START_OBJECT.equals(token)) {
+                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                }
                 return ryftQueryParts;
             });
         }
 
-        public static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
+        static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
                 List<RyftQuery> queryParts) {
             return convertingContext.getQueryFactory().buildComplexQuery(RyftLogicalOperator.AND, queryParts);
         }
@@ -47,12 +55,19 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
                 convertingContext.setRyftOperator(RyftOperator.NOT_CONTAINS);
-                List<RyftQuery> ryftQueryParts = ElasticConversionUtil.getArray(convertingContext);
+                List<RyftQuery> ryftQueryParts = new ArrayList<>();
+                XContentParser.Token token = convertingContext.getContentParser().nextToken();
+                if (XContentParser.Token.START_ARRAY.equals(token)) {
+                    ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
+                }
+                if (XContentParser.Token.START_OBJECT.equals(token)) {
+                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                }
                 return ryftQueryParts;
             });
         }
 
-        public static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
+        static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
                 List<RyftQuery> queryParts) {
             return convertingContext.getQueryFactory().buildComplexQuery(RyftLogicalOperator.OR, queryParts);
         }
@@ -67,12 +82,19 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
                 convertingContext.setRyftOperator(RyftOperator.CONTAINS);
-                List<RyftQuery> ryftQueryParts = ElasticConversionUtil.getArray(convertingContext);
+                List<RyftQuery> ryftQueryParts = new ArrayList<>();
+                XContentParser.Token token = convertingContext.getContentParser().nextToken();
+                if (XContentParser.Token.START_ARRAY.equals(token)) {
+                    ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
+                }
+                if (XContentParser.Token.START_OBJECT.equals(token)) {
+                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                }
                 return ryftQueryParts;
             });
         }
 
-        public static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
+        static RyftQuery buildQuery(ElasticConvertingContext convertingContext,
                 List<RyftQuery> queryParts) {
             List<List<RyftQuery>> queryCombinationsList = getSublists(queryParts, convertingContext.getMinimumShouldMatch());
             List<RyftQuery> shouldQueryCombinedList = queryCombinationsList.stream()
@@ -137,27 +159,33 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
                 }
                 currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             } while (!XContentParser.Token.END_OBJECT.equals(parser.currentToken()));
-            RyftQuery result = getRyftQuery(convertingContext, boolQueryMap);
-            return result;
+            return getRyftQuery(convertingContext, boolQueryMap);
         });
     }
 
-    private RyftQuery getRyftQuery(ElasticConvertingContext convertingContext, Map<String, List<RyftQuery>> boolQueryMap) {
-        List<RyftQuery> boolQueryList = new ArrayList<>();
-        boolQueryMap.forEach((name, queryParts) -> {
-            switch (name) {
-                case ElasticConverterMust.NAME:
-                    boolQueryList.add(ElasticConverterMust.buildQuery(convertingContext, queryParts));
-                    break;
-                case ElasticConverterMustNot.NAME:
-                    boolQueryList.add(ElasticConverterMustNot.buildQuery(convertingContext, queryParts));
-                    break;
-                case ElasticConverterShould.NAME:
-                    boolQueryList.add(ElasticConverterShould.buildQuery(convertingContext, queryParts));
-                    break;
-            }
-        });
-        return convertingContext.getQueryFactory().buildComplexQuery(RyftLogicalOperator.AND, boolQueryList);
+    private RyftQuery getRyftQuery(ElasticConvertingContext convertingContext, Map<String, List<RyftQuery>> queryPartsMap) {
+        Map<String, RyftQuery> resultQueryMap
+                = queryPartsMap.entrySet().stream().map(entry -> {
+                    switch (entry.getKey()) {
+                        case ElasticConverterMust.NAME:
+                            return new SimpleEntry<String, RyftQuery>(entry.getKey(),
+                                    ElasticConverterMust.buildQuery(convertingContext, entry.getValue()));
+                        case ElasticConverterMustNot.NAME:
+                            return new SimpleEntry<String, RyftQuery>(entry.getKey(),
+                                    ElasticConverterMustNot.buildQuery(convertingContext, entry.getValue()));
+                        case ElasticConverterShould.NAME:
+                            return new SimpleEntry<String, RyftQuery>(entry.getKey(),
+                                    ElasticConverterShould.buildQuery(convertingContext, entry.getValue()));
+                        default:
+                            return null;
+                    }
+                }).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+        if (resultQueryMap.containsKey(ElasticConverterShould.NAME)
+                && (resultQueryMap.containsKey(ElasticConverterMust.NAME)
+                || resultQueryMap.containsKey(ElasticConverterMustNot.NAME))) {
+            resultQueryMap.remove(ElasticConverterShould.NAME);
+        }
+        return convertingContext.getQueryFactory().buildComplexQuery(RyftLogicalOperator.AND, resultQueryMap.values());
     }
 
 }
