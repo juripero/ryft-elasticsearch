@@ -33,11 +33,11 @@ import com.google.common.collect.Lists;
 public class RyftRequestProcessor extends RyftProcessor {
     private final ESLogger logger = Loggers.getLogger(getClass());
     RyftRestClient channelProvider;
-    PropertiesProvider props;
+    RyftProperties props;
 
     @Inject
-    public RyftRequestProcessor(PropertiesProvider provider, RyftRestClient channelProvider) {
-        this.props = provider;
+    public RyftRequestProcessor(RyftProperties properties, RyftRestClient channelProvider) {
+        this.props = properties;
         this.channelProvider = channelProvider;
     }
 
@@ -54,10 +54,10 @@ public class RyftRequestProcessor extends RyftProcessor {
             NettyUtils.setAttribute(RestClientHandler.REQUEST_EVENT_ATTR, requestEvent, ryftChannel);
             NettyUtils.setAttribute(RestClientHandler.ACCUMULATOR_ATTR, Unpooled.buffer(), ryftChannel);
             ryftChannel.pipeline().addLast("client", new RestClientHandler());
-            String searchUri = props.get().getStr(PropertiesProvider.RYFT_SEARCH_URL) + requestEvent.getRyftSearchUrl();
+            String searchUri = requestEvent.getRyftSearchUrl();
             logger.info("Ryft rest query has been generated: \n{}", searchUri);
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri);
-            request.headers().add(HttpHeaders.Names.AUTHORIZATION,"Basic "+props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
+            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.getStr(PropertiesProvider.RYFT_REST_AUTH));
             ryftChannel.writeAndFlush(request)
                     .addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture future) throws Exception {
@@ -74,7 +74,7 @@ public class RyftRequestProcessor extends RyftProcessor {
 
     @Override
     public int getPoolSize() {
-        return props.get().getInt(PropertiesProvider.REQ_THREAD_NUM);
+        return props.getInt(PropertiesProvider.REQ_THREAD_NUM);
     }
 
     @Override

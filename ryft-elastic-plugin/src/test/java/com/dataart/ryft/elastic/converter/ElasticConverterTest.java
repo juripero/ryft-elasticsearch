@@ -44,6 +44,19 @@ public class ElasticConverterTest {
     }
 
     @Test
+    public void MatchWithDefaultRequestTest() throws Exception {
+        String query = "{\"query\": {\"match\": " +
+                "{\"text_entry\": {\"query\": \"good mother\"}}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
     public void MatchPhraseWithFuzzyRequestTest() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
                 + "{\"query\": \"good mother\", \"fuzziness\" :2, \"metric\": \"FHS\"}}}}";

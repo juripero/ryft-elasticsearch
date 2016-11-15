@@ -24,12 +24,11 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String SEARCH_QUERY_SIZE = "ryft_query_limit";
     //Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
-    public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_cpacity";
+    public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
     public static final String WROKER_THREAD_COUNT = "ryft_rest_client_thread_num";
     public static final String HOST = "ryft_rest_client_host";
     public static final String PORT = "ryft_rest_client_port";
     public static final String RYFT_REST_AUTH = "ryft_rest_auth";
-    public static final String RYFT_SEARCH_URL = "ryft_search_url";
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
 
@@ -47,7 +46,6 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(PORT, "8765");
         defaults.put(REQ_THREAD_NUM, "2");
         defaults.put(RESP_THREAD_NUM, "2");
-        defaults.put(RYFT_SEARCH_URL, "http://172.16.13.3:8765");
         defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRtaW4=");
 
         props = new RyftProperties();

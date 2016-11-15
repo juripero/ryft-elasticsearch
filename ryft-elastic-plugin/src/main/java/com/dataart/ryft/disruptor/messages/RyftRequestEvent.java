@@ -29,7 +29,10 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     public String getRyftSearchUrl() {
-        StringBuilder sb = new StringBuilder("/search?query=");
+        StringBuilder sb = new StringBuilder("http://");
+        sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
+        sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
+        sb.append("/search?query=");
         try {
             sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
         } catch (UnsupportedEncodingException e) {
