@@ -81,7 +81,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         Map<String, Object> parsedQuery = mapper.readValue(queryString, new TypeReference<Map<String, Object>>() {
         });
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
-        parsedQuery.remove(ElasticConverterRyftLimit.NAME);
+//        parsedQuery.remove(ElasticConverterRyftLimit.NAME);
         request.source(parsedQuery);
     }
 
