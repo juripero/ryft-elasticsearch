@@ -1,100 +1,162 @@
 ##Supported elastic search API requests:
 
 ###Match query syntax:
-
+Full form:
 ```javascript
 {
     "query": {
-        "match" : {
-           	 "field_name": {
-		        "query":"search query",
-		        "operator":<"and","or">
-		        "fuzziness":[1..2] #supported by ES
-		        "type":"phrase" #Looking for whole phrase in search query
-		      }
-        }
-    }
-}
-```
-
-###Simple fuzzy match query:
-
-We are looking for speaker MARCELLUS with one mistake in his name 
-```javascript
-{
-    "query": {
-        "match" : {
-           	 "speaker": {
-		        "query":"MRCELLUS",
-		        "fuzziness":1,
-		      }
-        }
-    }
-}
-```
-
-We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'  
-The query below would be devided in couple of queries with AND operator in between.
-```javascript
-{
-    "query": {
-        "match" : {
-           	 "text_entry": {
-		        "query":     "To be or not to be",
-		        "fuzziness": "3", 
-		        "operator":"and" 
-		      }
-        }
-    }
-}
-```
-
-Resulting ryft query: 
-```javascript
-((RECORD.text_entry CONTAINS FEDS("To", DIST=0)) AND 
-					   (RECORD.text_entry CONTAINS FEDS("be", DIST=0)) AND 
-					   (RECORD.text_entry CONTAINS FEDS("or", DIST=0)) AND 
-				   	   (RECORD.text_entry CONTAINS FEDS("not", DIST=1)) AND 
-					   (RECORD.text_entry CONTAINS FEDS("to", DIST=0)) AND 
-					   (RECORD.text_entry CONTAINS FEDS("tht", DIST=1)))
-```
-
-
-
-Phrase matching is different from simple match because it will try to find the whole phrase.
-```javascript
-{
-    "query": {
-        "match_phrase": {
-            "doc.text_entry":{
-            "query":"To be or not to be",
-            "fuzziness":"3"
+        "match": {
+            "field_name": {
+                "query": "search query",
+                "operator": <"and","or">,
+                "fuzziness": <"AUTO", 0, 1, 2>,
+                "type": "phrase",
+                "metric": <"FEDS", "FHS">
             }
         }
     }
 }
 ```
-
-As the result we will get only one result.
-User can rewrite match_phrase query as simple match query like:
-
+Simplified form:
 ```javascript
 {
     "query": {
         "match" : {
-           	 "text_entry": {
-		        "query":     "To be or not to be: tht",
-		        "fuzziness": "2",
-		        "type":"phrase"
-		      }
+            "field_name": "search query"
         }
     }
-}'
+}
 ```
+| Property  | RYFT possible values | Elasticsearch possible values | Notes                                    |
+|-----------|----------------------|-------------------------------|------------------------------------------|
+| query     | string               | string                        | Search query.                            |
+| operator  | <"and", "or">        | <"and", "or">                 | Default "or".                            |
+| fuzziness | <"auto", Integer>    | <"AUTO", 0, 1, 2>             | Default 0.                               |
+| metric    | <"FEDS", "FHS">      |                               | Available only for RYFT. Default "feds". |
+| type      | "phrase"             | "phrase"                      | Change query type to phrase.             |
 
+#####Simple fuzzy match query example:
+We are looking for speaker "MARCELLUS" with one mistake in his name 
+```javascript
+{
+    "query": {
+        "match" : {
+            "speaker": {
+                "query": "MRCELLUS",
+                "fuzziness": 1,
+                "metric": "fhs"
+            }
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+(RECORD.doc.speaker CONTAINS FHS("MRCELLUS", DIST=1))
+```
+In the case when fuzziness equal 0 request translates to the exact search query.
+```javascript
+{
+    "query": {
+        "match" : {
+            "speaker": {
+                "query": "MARCELLUS",
+                "fuzziness": 0
+            }
+        }
+    }
+}
+```
+The same in simplified form
+```javascript
+{
+    "query": {
+        "match" : {
+            "speaker": "MARCELLUS"
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+(RECORD.doc.speaker CONTAINS "MARCELLUS")
+```
+We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'
+The query below would be divided in couple of queries with AND operator in between.
+```javascript
+{
+    "query": {
+        "match" : {
+            "text_entry": {
+                "query": "To be or not to be tht",
+                "fuzziness": "AUTO", 
+                "operator": "and" 
+            }
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+((RECORD.doc.text_entry CONTAINS FEDS("To", DIST=0)) AND 
+(RECORD.doc.text_entry CONTAINS FEDS("be", DIST=0)) AND 
+(RECORD.doc.text_entry CONTAINS FEDS("or", DIST=0)) AND 
+(RECORD.doc.text_entry CONTAINS FEDS("not", DIST=1)) AND 
+(RECORD.doc.text_entry CONTAINS FEDS("to", DIST=0)) AND 
+(RECORD.doc.text_entry CONTAINS FEDS("tht", DIST=1)))
+```
+Phrase matching is different from simple match because it will try to find the whole phrase.
+```javascript
+{
+    "query": {
+        "match_phrase": {
+            "text_entry": {
+            "query": "To be or not to be",
+            "fuzziness": "3"
+            }
+        }
+    }
+}
+```
+As the result we will get only one result.
+User can rewrite ```match_phrase``` query as ```match``` query like:
+```javascript
+{
+    "query": {
+        "match" : {
+            "text_entry": {
+                "query": "To be or not to be",
+                "fuzziness": "3",
+                "type":"phrase"
+            }
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+(RECORD.doc.text_entry CONTAINS FEDS("To be or not to be", DIST=3))
+```
+Fuzzy search also possible to do in following way:
+```javascript
+{
+    "query": {
+        "fuzzy" : {
+            "text_entry": {
+                "value": "knight",
+                "fuzziness": "2"
+            }
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+(RECORD.doc.text_entry CONTAINS FEDS("knight", DIST=2))
+```
 ###Boolean query syntax:
 
-Must and Must not queries would be combined with AND operator 'should queries' would be combined with operator OR 
+```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
 ```javascript
 {
   "query": {
@@ -108,35 +170,116 @@ Must and Must not queries would be combined with AND operator 'should queries' w
 }
 ```
 
-Resulting query: 
-
-```javascript
-(must1 AND must2 AND NOT mustNot1 AND NOT mustNot2) AND ( (should1 and should2) OR (should1 and should3) OR (should2 and should3) OR .. )
-```
-
-Boolean query example:
+#####Boolean query example:
 ```javascript
 {
-  "query": {
-    "bool" : {
-      "must" : [
-         {
-          "match_phrase": { 
-           "text_entry": {
-              "query":     "To be or not to",
-              "fuzziness": "2"
-            }
-          }
-         },
-         {
-          "match":{
-             "speaker":{
-              "query":"HAMLET"
-          }
-         }
-        }]
-      }
+    "query": {
+        "bool": {
+            "must": [
+                {
+                    "match_phrase": { 
+                        "text_entry": {
+                            "query": "To be or not to be",
+                            "fuzziness": "2"
+                        }
+                    }
+                },
+                {
+                    "match": {
+                        "speaker": "HAMLET"
+                    }
+                }
+            ]
+        }
     }
-  }
+}
+```
+Resulting RYFT query: 
+```
+((RECORD.doc.text_entry CONTAINS FEDS("To be or not to be", DIST=2)) AND 
+ (RECORD.doc.speaker CONTAINS "HAMLET"))
+```
+Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
+Queries in section ```should``` are taken into account if no queries in other sections exists (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
+```javascript
+{
+    "query": {
+        "bool": {
+            "must":     { "match": { "title": "quick" }},
+            "must_not": { "match": { "title": "lazy"  }},
+            "should": [
+                { "match": { "title": "brown" }},
+                { "match": { "title": "dog"   }}
+            ]
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+((RECORD.doc.title CONTAINS "quick") AND (RECORD.doc.title NOT_CONTAINS "lazy"))
+```
+```javascript
+{
+    "query": {
+        "bool": {
+            "should": [
+                { "match": { "title": "brown" }},
+                { "match": { "title": "dog"   }}
+            ]
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+((RECORD.doc.title CONTAINS "brown") OR (RECORD.doc.title NOT_CONTAINS "dog"))
+```
+We can control how many should clauses need to match by using the ```minimum_should_match```
+```javascript
+{
+    "query": {
+        "bool": {
+            "should": [
+                { "match": { "title": "brown" }},
+                { "match": { "title": "fox"   }},
+                { "match": { "title": "dog"   }}
+            ],
+            "minimum_should_match": 2 
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+((RECORD.doc.title CONTAINS "brown") AND (RECORD.doc.title NOT_CONTAINS "dog")) OR 
+((RECORD.doc.title CONTAINS "brown") AND (RECORD.doc.title NOT_CONTAINS "fox")) OR
+((RECORD.doc.title CONTAINS "fox") AND (RECORD.doc.title NOT_CONTAINS "dog")))
+```
+###Plugin configuration
+Plugin has several configuration levels: configuration file, settings index, query properties.
+All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
+
+| Property                            | Meaning                               |
+|-------------------------------------|---------------------------------------|
+| ryft_rest_client_host               | RYFT service host                     |
+| ryft_rest_client_port               | RYFT service port                     |
+| ryft_rest_auth                      | RYFT auth string                      |
+| ryft_request_processing_thread_num  | Thread number for request processing  |
+| ryft_response_processing_thread_num | Thread number for response processing |
+| ryft_query_limit                    | Results limit                         |
+| ryft_integration_enabled            | Integration with RYFT                 |
+| ryft_plugin_settings_index          | Settings index name                   |
+
+```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
+```javascript
+{
+    "query": {
+        "match" : {
+            "speaker": "MARCELLUS"
+        }
+    },
+    "ryft_enabled": true,
+    "size": 100
 }
 ```
