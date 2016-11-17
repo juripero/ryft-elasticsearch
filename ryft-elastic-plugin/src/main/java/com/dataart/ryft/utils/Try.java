@@ -44,18 +44,6 @@ public class Try<T> {
         }
     }
 
-    public <R> Try<R> flatMap(ThrowingFunction<T, Try<R>> function) {
-        if (hasError()) {
-            return new Try<>(null, error);
-        } else {
-            try {
-                return function.apply(this.result);
-            } catch (Exception ex) {
-                return new Try<>(null, ex);
-            }
-        }
-    }
-
     public void throwException() throws Exception {
         throw error;
     }

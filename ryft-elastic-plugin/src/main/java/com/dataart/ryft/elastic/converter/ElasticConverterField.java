@@ -126,7 +126,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                 currentName = ElasticConverterValue.NAME;
             }
             Object parameterValue = convertingContext.getElasticConverter(currentName)
-                    .flatMap(converter -> converter.convert(convertingContext))
+                    .map(converter -> converter.convert(convertingContext).getResultOrException())
                     .getResultOrException();
             fieldParametersMap.put(currentName, parameterValue);
             currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);

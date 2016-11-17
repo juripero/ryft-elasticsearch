@@ -19,7 +19,7 @@ public class ElasticConverterMatchPhrase implements ElasticConvertingElement<Ryf
             convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
             ElasticConvertingElement converter = 
                     convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
-            return (RyftQuery) ElasticConversionUtil.getObject(convertingContext, converter);
+            return ElasticConversionUtil.getObject(convertingContext, converter);
         });
     }
 

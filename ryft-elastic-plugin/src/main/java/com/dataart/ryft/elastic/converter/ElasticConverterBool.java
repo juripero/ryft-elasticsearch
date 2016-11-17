@@ -33,7 +33,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
                     ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
                 }
                 if (XContentParser.Token.START_OBJECT.equals(token)) {
-                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                    ryftQueryParts.add(ElasticConversionUtil.getObject(convertingContext));
                 }
                 return ryftQueryParts;
             });
@@ -61,7 +61,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
                     ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
                 }
                 if (XContentParser.Token.START_OBJECT.equals(token)) {
-                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                    ryftQueryParts.add(ElasticConversionUtil.getObject(convertingContext));
                 }
                 return ryftQueryParts;
             });
@@ -88,7 +88,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
                     ryftQueryParts.addAll(ElasticConversionUtil.getArray(convertingContext));
                 }
                 if (XContentParser.Token.START_OBJECT.equals(token)) {
-                    ryftQueryParts.add((RyftQuery) ElasticConversionUtil.getObject(convertingContext));
+                    ryftQueryParts.add(ElasticConversionUtil.getObject(convertingContext));
                 }
                 return ryftQueryParts;
             });
@@ -153,7 +153,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
             String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
             do {
                 Object conversionResult = convertingContext.getElasticConverter(currentName)
-                        .flatMap(converter -> converter.convert(convertingContext)).getResultOrException();
+                        .map(converter -> converter.convert(convertingContext).getResultOrException()).getResultOrException();
                 if (conversionResult instanceof List) {
                     boolQueryMap.put(currentName, (List) conversionResult);
                 }

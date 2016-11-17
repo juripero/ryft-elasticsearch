@@ -31,6 +31,8 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_REST_AUTH = "ryft_rest_auth";
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
+    //Query properties
+    public static final String RYFT_FILES_TO_SEARCH = "ryft_files_to_search";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();

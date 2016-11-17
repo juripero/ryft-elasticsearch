@@ -19,7 +19,7 @@ public class ElasticConverterFuzzy implements ElasticConvertingElement<RyftQuery
             convertingContext.setSearchType(ElasticSearchType.FUZZY);
             ElasticConvertingElement converter = 
                     convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
-            return (RyftQuery) ElasticConversionUtil.getObject(convertingContext, converter);
+            return ElasticConversionUtil.getObject(convertingContext, converter);
         });
     }
 

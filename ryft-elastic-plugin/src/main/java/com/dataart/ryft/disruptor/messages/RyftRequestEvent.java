@@ -7,6 +7,8 @@ import com.dataart.ryft.elastic.plugin.RyftProperties;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.search.SearchResponse;
@@ -28,24 +30,16 @@ public class RyftRequestEvent extends InternalEvent {
         this.ryftProperties.putAll(ryftProperties);
     }
 
-    public String getRyftSearchUrl() {
+    public String getRyftSearchUrl() throws UnsupportedEncodingException {
         StringBuilder sb = new StringBuilder("http://");
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
         sb.append("/search?query=");
-        try {
-            sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        for (String indexName : index) {
+        sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
+        getFilenames().stream().forEach((filename) -> {
             sb.append("&file=");
-            sb.append("elasticsearch/elasticsearch/nodes/0/indices/");
-            sb.append(indexName);
-            sb.append("/0/index/*.");
-            sb.append(indexName).append("jsonfld");
-        }
+            sb.append(filename);
+        });
         sb.append("&mode=es&format=json&local=true&stats=true");
         sb.append("&limit=");
         sb.append(getLimit());
@@ -82,6 +76,17 @@ public class RyftRequestEvent extends InternalEvent {
 
     public RyftProperties getRyftProperties() {
         return ryftProperties;
+    }
+
+    private List<String> getFilenames() {
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)) {
+            if (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List) {
+                return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
+            }
+        }
+        return Arrays.stream(index)
+                .map(indexName -> String.format("elasticsearch/elasticsearch/nodes/0/indices/%1$s/0/index/*.%1$sjsonfld", indexName))
+                .collect(Collectors.toList());
     }
 
     @Override

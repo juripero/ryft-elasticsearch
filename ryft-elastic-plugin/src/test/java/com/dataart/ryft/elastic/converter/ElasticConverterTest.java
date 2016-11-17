@@ -21,13 +21,13 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ElasticConverterTest {
-
+    
     @Inject
     public ElasticConverter elasticConverter;
-
+    
     @Inject
     public ContextFactory contextFactory;
-
+    
     @Before
     public void setUp() {
         Guice.createInjector(
@@ -42,11 +42,11 @@ public class ElasticConverterTest {
             }
         }).injectMembers(this);
     }
-
+    
     @Test
     public void MatchWithDefaultRequestTest() throws Exception {
-        String query = "{\"query\": {\"match\": " +
-                "{\"text_entry\": {\"query\": \"good mother\"}}}}";
+        String query = "{\"query\": {\"match\": "
+                + "{\"text_entry\": {\"query\": \"good mother\"}}}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
@@ -55,7 +55,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void MatchPhraseWithFuzzyRequestTest() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
@@ -68,7 +68,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void MatchWithFuzzyRequestTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": "
@@ -81,7 +81,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry CONTAINS FEDS(\"good\", DIST=2)) AND (RECORD.doc.text_entry CONTAINS FEDS(\"mother\", DIST=2)))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void FuzzyRequestTest() throws Exception {
         String query = "{\"query\": {\"fuzzy\": {\"text_entry\": "
@@ -94,7 +94,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void MatchWithMatchPhraseTypeRequestTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": "
@@ -107,7 +107,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"good mother\", DIST=2))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void FuzzyWithMatchPhraseTypeRequestTest() throws Exception {
         String query = "{\"query\": {\"fuzzy\": {\"text_entry\": "
@@ -120,7 +120,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS FHS(\"goodmother\", DIST=2))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolMustRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"must\": ["
@@ -134,7 +134,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) AND (RECORD.doc.text_entry CONTAINS \"knight\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolMustNotRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"must_not\": ["
@@ -148,7 +148,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolMustAndMustNotRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"must\": ["
@@ -171,7 +171,7 @@ public class ElasticConverterTest {
                         + "((RECORD.doc.text_entry NOT_CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry NOT_CONTAINS \"knight\")))")
         );
     }
-
+    
     @Test
     public void BoolShouldRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"should\": ["
@@ -185,7 +185,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry CONTAINS FHS(\"Would nat be\", DIST=1)) OR (RECORD.doc.text_entry CONTAINS \"knight\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolShouldWithMinimumShouldMatch2RequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"should\": ["
@@ -203,7 +203,7 @@ public class ElasticConverterTest {
                 + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\")))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolShouldWithMinimumShouldMatch3RequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {"
@@ -224,7 +224,7 @@ public class ElasticConverterTest {
                 + "((RECORD.doc.text_entry CONTAINS \"romeo\") AND (RECORD.doc.text_entry CONTAINS \"knight\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\")))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolShouldWithMinimumShouldMatch2AndMustAndMustNotRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {"
@@ -245,7 +245,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry NOT_CONTAINS \"love\") AND (RECORD.doc.text_entry CONTAINS \"hamlet\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void BoolNotArrayPrimitiveRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {\"must\": {\"match_phrase\": {\"text_entry\": \"Would not be\"}},"
@@ -259,7 +259,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry NOT_CONTAINS \"queen\") AND (RECORD.doc.text_entry CONTAINS \"Would not be\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void ignoreUnknownPrimitives() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": "
@@ -280,7 +280,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS \"good mother\")",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void ExactSearchMatchPhraseRequestTest() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": {\"query\": \"good mother\"}}}}";
@@ -292,7 +292,7 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.doc.text_entry CONTAINS \"good mother\")",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void ExactSearchMatchRequestTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": {\"query\": \"good mother\"}}}}";
@@ -304,7 +304,7 @@ public class ElasticConverterTest {
         assertEquals("((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-
+    
     @Test
     public void DefaultFuzzySearchRequestTest() throws Exception {
         String query = "{\"query\": {\"fuzzy\": {\"text_entry\": {\"value\": \"mother\"}}}}";
@@ -315,7 +315,7 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals(ryftRequest.getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS FEDS(\"mother\", DIST=2))");
     }
-
+    
     @Test
     public void SimpilfiedExactSearchMatchPhraseRequestTest() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": \"good mother\"}}}";
@@ -326,7 +326,7 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals(ryftRequest.getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"good mother\")");
     }
-
+    
     @Test
     public void SimpilfiedExactSearchMatchRequestTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": \"good mother\"}}}";
@@ -337,7 +337,7 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals(ryftRequest.getQuery().buildRyftString(), "((RECORD.doc.text_entry CONTAINS \"good\") OR (RECORD.doc.text_entry CONTAINS \"mother\"))");
     }
-
+    
     @Test
     public void SimpilfiedFuzzySearchRequestTest() throws Exception {
         String query = "{\"query\": {\"fuzzy\": {\"text_entry\": \"good mother\"}}}";
@@ -347,5 +347,17 @@ public class ElasticConverterTest {
         RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
         assertNotNull(ryftRequest);
         assertEquals(ryftRequest.getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS FEDS(\"goodmother\", DIST=2))");
+    }
+    
+    @Test
+    public void CustomFilesRequestTest() throws Exception {
+        String query = "{\"query\": {\"match_phrase\": {\"text_entry\": \"test\"}}, \"ryft_files\": [\"1.txt\", \"2.json\"]}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals(ryftRequest.getQuery().buildRyftString(), "(RECORD.doc.text_entry CONTAINS \"test\")");
+        assertTrue(ryftRequest.getRyftSearchUrl().contains("file=1.txt&file=2.json"));
     }
 }
