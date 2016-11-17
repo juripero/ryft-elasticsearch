@@ -13,14 +13,14 @@ public class RyftQuerySimple implements RyftQuery {
     }
 
     @Override
-    public String buildRyftString() {
-        return String.format("(%s %s %s)", inputSpecifier.buildRyftString(),
-                operator.buildRyftString(), expression.buildRyftString());
+    public String buildRyftString(Boolean isIndexedSearch) {
+        return String.format("(%s %s %s)", inputSpecifier.buildRyftString(isIndexedSearch),
+                operator.buildRyftString(isIndexedSearch), expression.buildRyftString(isIndexedSearch));
     }
 
     @Override
     public String toString() {
-        return "RyftQuerySimple{" + buildRyftString() + '}';
+        return "RyftQuerySimple{" + buildRyftString(false) + '}';
     }
 
 }

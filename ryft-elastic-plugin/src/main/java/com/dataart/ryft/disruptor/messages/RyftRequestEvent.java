@@ -35,7 +35,7 @@ public class RyftRequestEvent extends InternalEvent {
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
         sb.append("/search?query=");
-        sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
+        sb.append(URLEncoder.encode(query.buildRyftString(isIndexedSearch()), "UTF-8"));
         getFilenames().stream().forEach((filename) -> {
             sb.append("&file=");
             sb.append(filename);
@@ -79,14 +79,17 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     private List<String> getFilenames() {
-        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)) {
-            if (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List) {
-                return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
-            }
+        if (!isIndexedSearch()) {
+            return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
         }
         return Arrays.stream(index)
                 .map(indexName -> String.format("elasticsearch/elasticsearch/nodes/0/indices/%1$s/0/index/*.%1$sjsonfld", indexName))
                 .collect(Collectors.toList());
+    }
+
+    private Boolean isIndexedSearch() {
+        return !(ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List));
     }
 
     @Override

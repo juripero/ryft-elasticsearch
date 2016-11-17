@@ -9,7 +9,7 @@ public class RyftExpressionExactSearch extends RyftExpression {
     }
 
     @Override
-    public String buildRyftString() {
+    public String buildRyftString(Boolean isIndexedSearch) {
         return "\"" + searchString + "\"";
     }
 }
