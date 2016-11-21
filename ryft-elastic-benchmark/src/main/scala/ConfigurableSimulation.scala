@@ -4,7 +4,7 @@ import io.gatling.core.body.StringBody
 import io.gatling.core.structure.ScenarioBuilder
 import io.gatling.http.Predef._
 
-class ElasticSimulation extends Simulation {
+class ConfigurableSimulation extends Simulation {
 
   val httpConf = http.baseURL(BenchmarkConfig.baseUrl)
   setUp(getScenario.inject(atOnceUsers(BenchmarkConfig.threads)).protocols(httpConf))
