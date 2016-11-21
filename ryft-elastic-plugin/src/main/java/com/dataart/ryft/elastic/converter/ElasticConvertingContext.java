@@ -52,12 +52,10 @@ public class ElasticConvertingContext {
         return Try.apply(() -> {
             ElasticConvertingElement result = elasticConverters.get(name);
             if (result == null) {
-                LOGGER.warn("Failed to find appropriate converter for token: '{}'", name);
+                LOGGER.debug("Failed to find appropriate converter for token: '{}'", name);
                 result = elasticConverters.get(ElasticConverterUnknown.NAME);
-                LOGGER.info("Use default converter: {}", result.getClass().getSimpleName());
-            } else {
-                LOGGER.debug("Return converter {}", result.getClass().getSimpleName());
             }
+            LOGGER.debug("Return converter {}", result.getClass().getSimpleName());
             return result;
         });
     }
