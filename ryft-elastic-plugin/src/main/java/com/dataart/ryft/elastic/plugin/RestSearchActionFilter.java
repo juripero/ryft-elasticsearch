@@ -43,7 +43,7 @@ public class RestSearchActionFilter implements ActionFilter {
     @Override
     public void apply(Task task, String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
         ActionInterceptor interceptor = interceptors.get(task.getAction());
-        if (task.getAction().equals(IndexAction.INSTANCE.name())) {
+        if (request instanceof IndexRequest) {
             // We are updating global settings
             String settingsIndex = provider.get().getStr(PropertiesProvider.PLUGIN_SETTINGS_INDEX);
             IndexRequest req = (IndexRequest) request;
