@@ -35,7 +35,7 @@ public class RyftRequestEvent extends InternalEvent {
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
         sb.append("/search?query=");
-        sb.append(URLEncoder.encode(query.buildRyftString(isIndexedSearch()), "UTF-8"));
+        sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
         getFilenames().stream().forEach((filename) -> {
             sb.append("&file=");
             sb.append(filename);

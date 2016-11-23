@@ -32,7 +32,8 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
     //Query properties
-    public static final String RYFT_FILES_TO_SEARCH = "ryft_files_to_search";
+    public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
+    public static final String RYFT_FORMAT = "ryft_format";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();
@@ -49,6 +50,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(REQ_THREAD_NUM, "2");
         defaults.put(RESP_THREAD_NUM, "2");
         defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRtaW4=");
+        defaults.put(RYFT_FORMAT, "json");
 
         props = new RyftProperties();
         props.putAll(defaults);

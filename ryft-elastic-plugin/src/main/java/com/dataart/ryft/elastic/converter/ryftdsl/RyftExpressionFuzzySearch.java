@@ -6,7 +6,7 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
         FEDS, FHS;
 
         @Override
-        public String buildRyftString(Boolean isIndexedSearch) {
+        public String buildRyftString() {
             return name();
         }
     }
@@ -28,8 +28,8 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
     }
 
     @Override
-    public String buildRyftString(Boolean isIndexedSearch) {
-        StringBuilder result = new StringBuilder(metric.buildRyftString(isIndexedSearch));
+    public String buildRyftString() {
+        StringBuilder result = new StringBuilder(metric.buildRyftString());
         result.append("(\"").append(searchString).append("\", DIST=").append(distance);
         if (width != null) {
             result.append(", WIDTH=").append(width);
@@ -40,7 +40,7 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
 
     @Override
     public String toString() {
-        return "RyftExpressionFuzzySearch{" + buildRyftString(false) + '}';
+        return "RyftExpressionFuzzySearch{" + buildRyftString() + '}';
     }
 
 }

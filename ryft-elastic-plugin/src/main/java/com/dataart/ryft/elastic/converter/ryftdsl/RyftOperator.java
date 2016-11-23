@@ -5,7 +5,7 @@ public enum RyftOperator implements RyftDslToken {
     EQUALS, NOT_EQUALS, CONTAINS, NOT_CONTAINS;
 
     @Override
-    public String buildRyftString(Boolean isIndexedSearch) {
+    public String buildRyftString() {
         return name();
     }
 

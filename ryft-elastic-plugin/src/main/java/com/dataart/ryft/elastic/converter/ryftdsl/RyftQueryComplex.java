@@ -10,7 +10,7 @@ public class RyftQueryComplex implements RyftQuery {
         AND, OR, XOR;
 
         @Override
-        public String buildRyftString(Boolean isIndexedSearch) {
+        public String buildRyftString() {
             return name();
         }
     }
@@ -32,20 +32,20 @@ public class RyftQueryComplex implements RyftQuery {
     }
 
     @Override
-    public String buildRyftString(Boolean isIndexedSearch) {
+    public String buildRyftString() {
         if (operands.size() == 1) {
-            return operands.iterator().next().buildRyftString(isIndexedSearch);
+            return operands.iterator().next().buildRyftString();
         } else {
             String queryString = operands.stream()
-                    .map(operand -> operand.buildRyftString(isIndexedSearch))
-                    .collect(Collectors.joining(" " + operator.buildRyftString(isIndexedSearch) + " "));
+                    .map(operand -> operand.buildRyftString())
+                    .collect(Collectors.joining(" " + operator.buildRyftString() + " "));
             return String.format("(%s)", queryString);
         }
     }
 
     @Override
     public String toString() {
-        return "RyftQueryComplex{" + buildRyftString(false) + '}';
+        return "RyftQueryComplex{" + buildRyftString() + '}';
     }
 
 }

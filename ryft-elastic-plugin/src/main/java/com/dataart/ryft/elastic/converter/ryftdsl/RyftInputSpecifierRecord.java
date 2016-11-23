@@ -14,11 +14,8 @@ public class RyftInputSpecifierRecord extends RyftInputSpecifier {
     }
 
     @Override
-    public String buildRyftString(Boolean isIndexedSearch) {
+    public String buildRyftString() {
         StringBuilder result = new StringBuilder(INPUT_SPECIFIER);
-        if (isIndexedSearch) {
-            result.append(".doc");
-        }
         if (!fieldName.isEmpty()) {
             result.append(".").append(fieldName);
         }

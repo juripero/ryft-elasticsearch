@@ -195,7 +195,7 @@ public class RestClientHandlerTest {
                 assertTrue(new String(response.getHits()
                         .getAt(0)
                         .source())
-                        .equals("{\"error\": \"failed to parse JSON data: invalid character '\\x1a' after object key\"}"));
+                        .equals("{\"_error\":\"failed to parse JSON data: invalid character '\\\\x1a' after object key\"}"));
             }
 
             @Override
