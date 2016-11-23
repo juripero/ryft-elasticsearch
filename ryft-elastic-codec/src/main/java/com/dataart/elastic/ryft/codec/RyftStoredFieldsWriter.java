@@ -1,11 +1,7 @@
 package com.dataart.elastic.ryft.codec;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,16 +13,11 @@ import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.MergeState;
 import org.apache.lucene.index.SegmentInfo;
-import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
-import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.TrackingDirectoryWrapper;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.IOUtils;
-
-import com.dataart.elastic.ryft.codec.utils.SimpleTextUtil;
 
 /**
  * 
@@ -36,7 +27,6 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     Logger log = Logger.getLogger(RyftStoredFieldsWriter.class.getName());
     public final static String FIELDS_EXTENSION = "jsonfld";
     private OutputStreamWriter out;
-    private int numDocsWritten = 0;
     StoredFieldsWriter writer;
 
     public RyftStoredFieldsWriter(StoredFieldsWriter delegate, Directory directory, SegmentInfo segment,
@@ -55,7 +45,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
             String dirname = dir.substring(start, end);
             String fileName = IndexFileNames.segmentFileName(segment.name, "", indexName + FIELDS_EXTENSION);
             out = new OutputStreamWriter(new FileOutputStream(dirname + "/" + fileName, true));
-            //Hooking directory to manage(delete when needed) our file too
+            // Hooking directory to manage(delete when needed) our file too
             dirWrapper.getCreatedFiles().add(fileName);
             success = true;
         } finally {
@@ -68,15 +58,13 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public void startDocument() throws IOException {
         writer.startDocument();
-        write("{\"doc\":");
-        numDocsWritten++;
     }
 
     @Override
     public int merge(MergeState mergeState) throws IOException {
         long time = System.currentTimeMillis();
         int merged = super.merge(mergeState);
-        log.log(Level.FINE,"Merged finished elapsed: {0}",new Object[]{System.currentTimeMillis()-time});
+        log.log(Level.FINE, "Merged finished elapsed: {0}", new Object[] { System.currentTimeMillis() - time });
         return merged;
     }
 
@@ -93,8 +81,14 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
                 break;
             }
             String fieldToWrite = new String(field.binaryValue().utf8ToString());
-            write(fieldToWrite);
-            write(",");
+            int closing = fieldToWrite.lastIndexOf("}");
+            if (closing == -1) {
+                log.log(Level.SEVERE, "Failed to find closing bracket for JSON " + fieldToWrite);
+                write(fieldToWrite);
+            } else {
+                write(fieldToWrite.substring(0, closing)); // removed last curly
+                                                           // bracket
+            }
             break;
         case "_uid":
             String fieldValue = field.stringValue();
@@ -104,6 +98,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
             }
             int pos = fieldValue.indexOf("#");
             if (pos != -1) {
+                write(",");
                 write("\"" + field.name() + "\"" + ":" + " \"");
                 write(fieldValue.substring(pos + 1));
                 write("\",");
@@ -135,8 +130,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public void close() throws IOException {
         try {
-            writer.close();
-            out.close();
+            IOUtils.close(writer, out);
         } finally {
             IOUtils.closeWhileHandlingException(writer);
             IOUtils.closeWhileHandlingException(out);
@@ -148,5 +142,5 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     private void write(String s) throws IOException {
         out.write(s);
     }
-    
+
 }
