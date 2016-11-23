@@ -9,13 +9,11 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
 
-
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -30,10 +28,10 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 
-
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.mappings.RyftResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -116,17 +114,22 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
             results.getResults().forEach(
                     hit -> {
-                        InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), hit.getUid(), new Text(
-                                hit.getType()), ImmutableMap.of());
+                        ObjectNode hitObj = (ObjectNode) hit;
+                        String uid = hitObj.has("_uid") ? hitObj.get("_uid").asText() : "";
+                        String type = hitObj.has("type") ? hitObj.get("type").asText() : "";
+
+                        InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), uid, new Text(type),
+                                ImmutableMap.of());
                         // TODO: [imasternoy] change index name
-                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(),Arrays.toString(NettyUtils
+                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), Arrays.toString(NettyUtils
                                 .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex()), 0));
 
-                        if (hit.getDoc() == null && hit.getError() != null) {
-                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \""
-                                    + hit.getError().toString() + "\"}")));
+                        String error = hitObj.has("error") ? hitObj.get("error").asText() : "";
+                        if (!error.isEmpty()) {
+                            searchHit.sourceRef(((BytesReference) new BytesArray("{\"error\": \"" + error + "\"}")));
                         } else {
-                            searchHit.sourceRef(((BytesReference) new BytesArray(hit.getDoc().toString())));
+                            hitObj.remove("_index");
+                            searchHit.sourceRef(((BytesReference) new BytesArray(hitObj.toString())));
                         }
                         searchHits.add(searchHit);
                     });
