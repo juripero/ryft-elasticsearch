@@ -11,7 +11,6 @@ import com.dataart.ryft.elastic.converter.ElasticConversionModule;
 import com.dataart.ryft.elastic.plugin.interceptors.ActionInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.IndexInterceptor;
 import com.dataart.ryft.elastic.plugin.interceptors.SearchInterceptor;
-import com.dataart.ryft.elastic.plugin.mappings.RyftHit;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
 import com.dataart.ryft.processors.ProcessorsModule;
 
@@ -28,7 +27,6 @@ public class RyftElasticModule extends AbstractModule {
         bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
         // TODO: [imasternoy] Think about provider for this
         // bind(RyftRestClient.class);
-        bind(RyftHit.class);
         bind(RestSearchActionFilter.class);
 
         MapBinder<String, ActionInterceptor> interceptors = MapBinder.newMapBinder(binder(), String.class,

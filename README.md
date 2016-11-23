@@ -284,17 +284,25 @@ All configuration properties can be defined in config file and some properties c
 }
 ```
 ###Search on non-indexed files
-RYFT plugin able to perform record search on non-indexed json files. To do this ```ryft_files``` property should be used. It accepts array of paths to the files for search.
+RYFT plugin able to perform record search on non-indexed json files. To do this ```ryft``` property should be used. It accepts object with configuration parameters.
+
+| Parameter                           | Meaning                               |
+|-------------------------------------|---------------------------------------|
+| enabled                             | The same as ```ryft_enabled```        |
+| files                               | List of files to search               |
+| format                              | Input data format                     |
 ```javascript
 {
     "query": {
-        "match_phrase" : {
-            "text_entry": "test"
-        }
+        "match": {"Description": "vehicle"}
     },
-    "ryft_enabled": true,
-    "ryft_files": ["1.json", "2.json"]
+    "ryft": {
+        "enabled": true,
+        "files": ["chicago.crimestat"],
+        "format": "Xml"
+    },
+    "size": 10
 }
 ```
-Such search query produce following request to RYFT
-```http://<host>:<port>/search?query=(RECORD.text_entry CONTAINS \"test\")&file=1.txt&file=2.json&format=json&local=true&stats=true```
+Such search query produce following request to RYFT: 
+```http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10```

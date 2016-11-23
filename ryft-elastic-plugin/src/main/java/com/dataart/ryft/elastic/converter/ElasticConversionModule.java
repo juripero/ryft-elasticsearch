@@ -2,6 +2,7 @@ package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.converter.ElasticConverterBool.*;
 import com.dataart.ryft.elastic.converter.ElasticConverterField.*;
+import com.dataart.ryft.elastic.converter.ElasticConverterRyft.*;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Singleton;
@@ -34,10 +35,13 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterType.NAME).to(ElasticConverterType.class);
 
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
-        convertersBinder.addBinding(ElasticConverterRyftLimit.NAME).to(ElasticConverterRyftLimit.class);
+        convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);
+        convertersBinder.addBinding(ElasticConverterRyft.NAME).to(ElasticConverterRyft.class);
+        convertersBinder.addBinding(ElasticConverterEnabled.NAME).to(ElasticConverterEnabled.class);
+        convertersBinder.addBinding(ElasticConverterFiles.NAME).to(ElasticConverterFiles.class);
+        convertersBinder.addBinding(ElasticConverterFormat.NAME).to(ElasticConverterFormat.class);
 
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
-        convertersBinder.addBinding(ElasticConverterRyftFiles.NAME).to(ElasticConverterRyftFiles.class);
 
         bind(RyftQueryFactory.class).in(Singleton.class);
     }

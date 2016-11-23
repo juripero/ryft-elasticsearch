@@ -88,7 +88,7 @@ public abstract class ElasticConversionUtil {
             }
             getNextElasticPrimitive(convertingContext);
             T result = converter.convert(convertingContext).getResultOrException();
-            convertingContext.getContentParser().nextToken();
+            parser.nextToken();
             return result;
         } catch (Exception ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);

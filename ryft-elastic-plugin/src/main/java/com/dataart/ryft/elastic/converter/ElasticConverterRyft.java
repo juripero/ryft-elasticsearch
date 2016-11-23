@@ -1,8 +1,7 @@
 package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
-import static com.dataart.ryft.elastic.plugin.PropertiesProvider.RYFT_FILES_TO_SEARCH;
-import static com.dataart.ryft.elastic.plugin.PropertiesProvider.RYFT_INTEGRATION_ENABLED;
+import static com.dataart.ryft.elastic.plugin.PropertiesProvider.*;
 import com.dataart.ryft.utils.Try;
 import java.util.List;
 import org.elasticsearch.common.logging.ESLogger;

@@ -40,14 +40,18 @@ public class RyftRequestEvent extends InternalEvent {
             sb.append("&file=");
             sb.append(filename);
         });
-        sb.append("&mode=es&format=json&local=true&stats=true");
-        sb.append("&limit=");
-        sb.append(getLimit());
+        sb.append("&mode=es&local=true&stats=true");
+        sb.append("&format=").append(getFormat());
+        sb.append("&limit=").append(getLimit());
         return sb.toString();
     }
 
     public int getLimit() {
         return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
+    }
+
+    public String getFormat() {
+        return ryftProperties.getStr(PropertiesProvider.RYFT_FORMAT);
     }
 
     public String[] getIndex() {

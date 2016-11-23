@@ -356,7 +356,8 @@ public class ElasticConverterTest {
 
     @Test
     public void CustomFilesRequestTest() throws Exception {
-        String query = "{\"query\": {\"match_phrase\": {\"text_entry\": \"test\"}}, \"ryft_files\": [\"1.txt\", \"2.json\"]}";
+        String query = "{\"query\": {\"match_phrase\": {\"text_entry\": \"test\"}}, "
+                + "\"ryft\": {\"files\": [\"1.txt\", \"2.json\"], \"format\": \"Xml\"}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
@@ -365,5 +366,6 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.text_entry CONTAINS \"test\")",
                 ryftRequest.getQuery().buildRyftString());
         assertTrue(ryftRequest.getRyftSearchUrl().contains("file=1.txt&file=2.json"));
+        assertTrue(ryftRequest.getRyftSearchUrl().contains("format=xml"));
     }
 }

@@ -3,7 +3,6 @@ package com.dataart.ryft.elastic.converter;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
-import static com.dataart.ryft.elastic.plugin.PropertiesProvider.RYFT_FILES_TO_SEARCH;
 import com.dataart.ryft.utils.Try;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -50,7 +49,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                             .map(converter -> converter.convert(convertingContext).getResultOrException())
                             .getResultOrException();
                     if (conversionResult instanceof RyftQuery) {
-                        ryftQuery = (RyftQuery)conversionResult;
+                        ryftQuery = (RyftQuery) conversionResult;
                     }
                 }
             } while (currentName != null);
@@ -82,7 +81,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         Map<String, Object> parsedQuery = mapper.readValue(queryString, new TypeReference<Map<String, Object>>() {
         });
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
-        parsedQuery.remove(ElasticConverterRyftFiles.NAME);
+        parsedQuery.remove(ElasticConverterRyft.NAME);
         request.source(parsedQuery);
     }
 
