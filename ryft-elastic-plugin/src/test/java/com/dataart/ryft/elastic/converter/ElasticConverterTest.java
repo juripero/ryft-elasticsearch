@@ -319,6 +319,18 @@ public class ElasticConverterTest {
     }
 
     @Test
+    public void SimpilfiedExactSearchMatchPhraseAllRequestTest() throws Exception {
+        String query = "{\"query\": {\"match_phrase\": {\"_all\": \"good mother\"}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD CONTAINS \"good mother\")",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
     public void SimpilfiedExactSearchMatchPhraseRequestTest() throws Exception {
         String query = "{\"query\": {\"match_phrase\": {\"text_entry\": \"good mother\"}}}";
         BytesArray bytes = new BytesArray(query);

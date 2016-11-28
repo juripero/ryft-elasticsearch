@@ -52,7 +52,7 @@ We are looking for speaker "MARCELLUS" with one mistake in his name
 ```
 Resulting RYFT query: 
 ```
-(RECORD.doc.speaker CONTAINS FHS("MRCELLUS", DIST=1))
+(RECORD.speaker CONTAINS FHS("MRCELLUS", DIST=1))
 ```
 In the case when fuzziness equal 0 request translates to the exact search query.
 ```javascript
@@ -79,7 +79,7 @@ The same in simplified form
 ```
 Resulting RYFT query: 
 ```
-(RECORD.doc.speaker CONTAINS "MARCELLUS")
+(RECORD.speaker CONTAINS "MARCELLUS")
 ```
 We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'
 The query below would be divided in couple of queries with AND operator in between.
@@ -98,12 +98,12 @@ The query below would be divided in couple of queries with AND operator in betwe
 ```
 Resulting RYFT query: 
 ```
-((RECORD.doc.text_entry CONTAINS FEDS("To", DIST=0)) AND 
-(RECORD.doc.text_entry CONTAINS FEDS("be", DIST=0)) AND 
-(RECORD.doc.text_entry CONTAINS FEDS("or", DIST=0)) AND 
-(RECORD.doc.text_entry CONTAINS FEDS("not", DIST=1)) AND 
-(RECORD.doc.text_entry CONTAINS FEDS("to", DIST=0)) AND 
-(RECORD.doc.text_entry CONTAINS FEDS("tht", DIST=1)))
+((RECORD.text_entry CONTAINS FEDS("To", DIST=0)) AND 
+(RECORD.text_entry CONTAINS FEDS("be", DIST=0)) AND 
+(RECORD.text_entry CONTAINS FEDS("or", DIST=0)) AND 
+(RECORD.text_entry CONTAINS FEDS("not", DIST=1)) AND 
+(RECORD.text_entry CONTAINS FEDS("to", DIST=0)) AND 
+(RECORD.text_entry CONTAINS FEDS("tht", DIST=1)))
 ```
 Phrase matching is different from simple match because it will try to find the whole phrase.
 ```javascript
@@ -135,7 +135,7 @@ User can rewrite ```match_phrase``` query as ```match``` query like:
 ```
 Resulting RYFT query: 
 ```
-(RECORD.doc.text_entry CONTAINS FEDS("To be or not to be", DIST=3))
+(RECORD.text_entry CONTAINS FEDS("To be or not to be", DIST=3))
 ```
 Fuzzy search also possible to do in following way:
 ```javascript
@@ -152,7 +152,22 @@ Fuzzy search also possible to do in following way:
 ```
 Resulting RYFT query: 
 ```
-(RECORD.doc.text_entry CONTAINS FEDS("knight", DIST=2))
+(RECORD.text_entry CONTAINS FEDS("knight", DIST=2))
+```
+###Search on all record fields
+It is possible to do search request on all record fields using keyword ```_all```.
+```javascript
+{
+    "query": {
+        "match_phrase" : {
+            "_all": "To be or not to be"
+        }
+    }
+}
+```
+Resulting RYFT query: 
+```
+(RECORD CONTAINS "To be or not to be")
 ```
 ###Boolean query syntax:
 
@@ -196,8 +211,8 @@ Resulting RYFT query:
 ```
 Resulting RYFT query: 
 ```
-((RECORD.doc.text_entry CONTAINS FEDS("To be or not to be", DIST=2)) AND 
- (RECORD.doc.speaker CONTAINS "HAMLET"))
+((RECORD.text_entry CONTAINS FEDS("To be or not to be", DIST=2)) AND 
+ (RECORD.speaker CONTAINS "HAMLET"))
 ```
 Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
 Queries in section ```should``` are taken into account if no queries in other sections exists (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
@@ -217,7 +232,7 @@ Queries in section ```should``` are taken into account if no queries in other se
 ```
 Resulting RYFT query: 
 ```
-((RECORD.doc.title CONTAINS "quick") AND (RECORD.doc.title NOT_CONTAINS "lazy"))
+((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy"))
 ```
 ```javascript
 {
@@ -233,7 +248,7 @@ Resulting RYFT query:
 ```
 Resulting RYFT query: 
 ```
-((RECORD.doc.title CONTAINS "brown") OR (RECORD.doc.title NOT_CONTAINS "dog"))
+((RECORD.title CONTAINS "brown") OR (RECORD.title NOT_CONTAINS "dog"))
 ```
 We can control how many should clauses need to match by using the ```minimum_should_match```
 ```javascript
@@ -252,9 +267,9 @@ We can control how many should clauses need to match by using the ```minimum_sho
 ```
 Resulting RYFT query: 
 ```
-((RECORD.doc.title CONTAINS "brown") AND (RECORD.doc.title NOT_CONTAINS "dog")) OR 
-((RECORD.doc.title CONTAINS "brown") AND (RECORD.doc.title NOT_CONTAINS "fox")) OR
-((RECORD.doc.title CONTAINS "fox") AND (RECORD.doc.title NOT_CONTAINS "dog")))
+((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "dog")) OR 
+((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "fox")) OR
+((RECORD.title CONTAINS "fox") AND (RECORD.title NOT_CONTAINS "dog")))
 ```
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.

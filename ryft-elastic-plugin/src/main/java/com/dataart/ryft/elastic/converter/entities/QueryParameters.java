@@ -37,9 +37,6 @@ public abstract class QueryParameters<T> {
         if (searchValue == null) {
             throw new ElasticConversionException("Search value should be defined.");
         }
-        if ((fieldName == null) || (fieldName.isEmpty())) {
-            throw new ElasticConversionException("Field name should be defined.");
-        }
         if (ryftOperator == null) {
             throw new ElasticConversionException("ryftOperator should be defined.");
         }

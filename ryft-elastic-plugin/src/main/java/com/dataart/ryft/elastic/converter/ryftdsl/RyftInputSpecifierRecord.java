@@ -6,6 +6,9 @@ public class RyftInputSpecifierRecord extends RyftInputSpecifier {
     private static final String INPUT_SPECIFIER = "RECORD";
 
     public RyftInputSpecifierRecord(String fieldName) {
+        if (fieldName == null) {
+            fieldName = "";
+        }
         this.fieldName = fieldName;
     }
 

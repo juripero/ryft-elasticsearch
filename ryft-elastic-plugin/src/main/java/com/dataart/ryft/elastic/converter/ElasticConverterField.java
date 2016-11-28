@@ -81,7 +81,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     public static class ElasticConverterType implements ElasticConvertingElement<Void> {
 
         public static final String NAME = "type";
-        
+
         private final String TYPE_PHRASE = "phrase";
 
         @Override
@@ -99,6 +99,8 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     }
 
     static final String NAME = "field_name";
+
+    private static final String ALL_FIELDS = "_all";
 
     @Override
     public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
@@ -161,7 +163,10 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     private RyftQuery getRyftFuzzyQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws IOException, ElasticConversionException {
         FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
         fieldParameters.setRyftOperator(convertingContext.getRyftOperator());
-        fieldParameters.setFieldName(convertingContext.getContentParser().currentName());
+        String fieldName = convertingContext.getContentParser().currentName();
+        if (!fieldName.equals(ALL_FIELDS)) {
+            fieldParameters.setFieldName(fieldName);
+        }
         fieldParameters.setSearchType(convertingContext.getSearchType());
         fieldQueryMap.forEach((key, value) -> {
             switch (key) {
