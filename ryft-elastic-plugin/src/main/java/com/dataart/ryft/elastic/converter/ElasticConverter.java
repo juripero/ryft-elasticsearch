@@ -52,7 +52,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                         ryftQuery = (RyftQuery) conversionResult;
                     }
                 }
-            } while (currentName != null);
+            } while (convertingContext.getContentParser().currentToken() != null);
             if (ryftQuery == null) {
                 return null;
             }
@@ -66,6 +66,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                 SearchRequest searchRequest = (SearchRequest) request;
                 BytesReference searchContent = searchRequest.source();
                 String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
+                LOGGER.debug("Request: {}", queryString);
                 XContentParser parser = XContentFactory.xContent(queryString).createParser(queryString);
                 ElasticConvertingContext convertingContext = contextFactory.create(parser, queryString);
                 RyftRequestEvent result = convert(convertingContext).getResultOrException();
@@ -87,6 +88,11 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         });
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
         parsedQuery.remove(ElasticConverterRyft.NAME);
+        if (parsedQuery.containsKey(ElasticConverterQuery.NAME)) {
+            Map<String, Object> innerQuery = ((Map<String, Object>) parsedQuery.get(ElasticConverterQuery.NAME));
+            innerQuery.remove(ElasticConverterRyftEnabled.NAME);
+            innerQuery.remove(ElasticConverterRyft.NAME);
+        }
         request.source(parsedQuery);
     }
 
