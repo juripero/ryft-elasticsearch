@@ -52,14 +52,15 @@ public class SearchInterceptor implements ActionInterceptor {
                 return true;
             } else {
                 Exception ex = tryRyftRequest.getError();
-                if(ex != null){
+                if (ex != null) {
                     LOGGER.error("Convertion exception.", ex);
+                    return ex instanceof ElasticConversionCriticalException;
+                } else {
+                    return false;
                 }
-                return ex instanceof ElasticConversionCriticalException;
             }
-        } else {
-            return false;
         }
+        return false;
     }
 
 }

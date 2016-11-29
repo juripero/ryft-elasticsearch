@@ -53,6 +53,9 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                     }
                 }
             } while (currentName != null);
+            if (ryftQuery == null) {
+                return null;
+            }
             return getRyftRequestEvent(convertingContext, ryftQuery);
         });
     }
@@ -66,7 +69,9 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                 XContentParser parser = XContentFactory.xContent(queryString).createParser(queryString);
                 ElasticConvertingContext convertingContext = contextFactory.create(parser, queryString);
                 RyftRequestEvent result = convert(convertingContext).getResultOrException();
-                result.setIndex(searchRequest.indices());
+                if (result != null) {
+                    result.setIndex(searchRequest.indices());
+                }
                 adjustRequest(searchRequest);
                 return result;
             } else {

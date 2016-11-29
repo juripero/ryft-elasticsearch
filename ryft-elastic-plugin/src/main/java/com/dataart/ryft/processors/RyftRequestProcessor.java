@@ -14,7 +14,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -23,20 +22,18 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import com.dataart.ryft.disruptor.messages.InternalEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
-import com.dataart.ryft.elastic.plugin.RyftProperties;
 import com.dataart.ryft.elastic.plugin.rest.client.NettyUtils;
 import com.dataart.ryft.elastic.plugin.rest.client.RestClientHandler;
 import com.dataart.ryft.elastic.plugin.rest.client.RyftRestClient;
-import com.google.common.collect.Lists;
 
 @Singleton
 public class RyftRequestProcessor extends RyftProcessor {
     private final ESLogger logger = Loggers.getLogger(getClass());
     RyftRestClient channelProvider;
-    RyftProperties props;
+    PropertiesProvider props;
 
     @Inject
-    public RyftRequestProcessor(RyftProperties properties, RyftRestClient channelProvider) {
+    public RyftRequestProcessor(PropertiesProvider properties, RyftRestClient channelProvider) {
         this.props = properties;
         this.channelProvider = channelProvider;
     }
@@ -57,7 +54,7 @@ public class RyftRequestProcessor extends RyftProcessor {
             String searchUri = requestEvent.getRyftSearchUrl();
             logger.info("Ryft rest query has been generated: \n{}", searchUri);
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET, searchUri);
-            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.getStr(PropertiesProvider.RYFT_REST_AUTH));
+            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
             ryftChannel.writeAndFlush(request)
                     .addListener(new ChannelFutureListener() {
                         public void operationComplete(ChannelFuture future) throws Exception {
@@ -74,7 +71,7 @@ public class RyftRequestProcessor extends RyftProcessor {
 
     @Override
     public int getPoolSize() {
-        return props.getInt(PropertiesProvider.REQ_THREAD_NUM);
+        return props.get().getInt(PropertiesProvider.REQ_THREAD_NUM);
     }
 
     @Override
