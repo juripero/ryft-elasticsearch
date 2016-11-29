@@ -33,7 +33,6 @@ docs/_site
 docs/api
 target/
 reports/
-results/
 .project
 .classpath
 .scala_dependencies
