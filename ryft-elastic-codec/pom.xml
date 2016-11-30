@@ -10,11 +10,13 @@
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-codecs</artifactId>
 			<version>5.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
 			<version>5.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	<build>
