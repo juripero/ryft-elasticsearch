@@ -14,6 +14,7 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -115,14 +116,16 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
             results.getResults().forEach(
                     hit -> {
                         ObjectNode hitObj = (ObjectNode) hit;
-                        String uid = hitObj.has("_uid") ? hitObj.get("_uid").asText() : "";
+                        String uid = hitObj.has("_uid") ? hitObj.get("_uid").asText() : UUID.randomUUID().toString();
                         String type = hitObj.has("type") ? hitObj.get("type").asText() : "";
 
                         InternalSearchHit searchHit = new InternalSearchHit(searchHits.size(), uid, new Text(type),
                                 ImmutableMap.of());
                         // TODO: [imasternoy] change index name
+                        String[] indexes = new String[]{"tempIndex"};
                         searchHit.shard(new SearchShardTarget(results.getStats().getHost(), Arrays.toString(NettyUtils
-                                .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex()), 0));
+                                .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex() == null ? indexes : NettyUtils
+                                        .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex()), 0));
 
                         String error = hitObj.has("error") ? hitObj.get("error").asText() : "";
                         if (!error.isEmpty()) {
