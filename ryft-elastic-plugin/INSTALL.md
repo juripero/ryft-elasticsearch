@@ -1,9 +1,11 @@
 #Ryft elastic plugin installation
 
-To install ryft-elastic-plugin please consider to do the folowing: * [ES docker installation](../../elastic-search/README.md)
+To install ryft-elastic-plugin please consider to do the folowing: [ES docker installation](https://github.com/getryft/elastic-search)
 
 After completing installation of ES. Stop docker container if you started it previously. 
-Clone this repository to build machine and build codec with plugin executing folowing command in the project root directory
+Clone this repository to build machine and build codec with plugin executing folowing command in the project directories:
+ - ryft-elastic-codec
+ - ryft-elastic-plugin
 
 ```bash
 mvn clean install
