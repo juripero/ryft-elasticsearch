@@ -32,6 +32,7 @@ public class ElasticConvertingContext {
     private RyftOperator ryftOperator = RyftOperator.CONTAINS;
     private final Map<String, Object> queryProperties;
     private Integer minimumShouldMatch = 1;
+    private Boolean minimumShouldMatchDefined = false;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
@@ -86,8 +87,13 @@ public class ElasticConvertingContext {
 
     public void setMinimumShouldMatch(Integer minimumShouldMatch) {
         if ((minimumShouldMatch != null) && (minimumShouldMatch >= 1)) {
+            minimumShouldMatchDefined = true;
             this.minimumShouldMatch = minimumShouldMatch;
         }
+    }
+
+    public Boolean isMinimumShouldMatchDefined() {
+        return minimumShouldMatchDefined;
     }
 
     public Map<String, Object> getQueryProperties() {

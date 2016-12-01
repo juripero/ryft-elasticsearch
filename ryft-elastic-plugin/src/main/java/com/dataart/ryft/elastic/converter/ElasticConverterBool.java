@@ -181,6 +181,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
                     }
                 }).collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
         if (resultQueryMap.containsKey(ElasticConverterShould.NAME)
+                && (!convertingContext.isMinimumShouldMatchDefined())
                 && (resultQueryMap.containsKey(ElasticConverterMust.NAME)
                 || resultQueryMap.containsKey(ElasticConverterMustNot.NAME))) {
             resultQueryMap.remove(ElasticConverterShould.NAME);
