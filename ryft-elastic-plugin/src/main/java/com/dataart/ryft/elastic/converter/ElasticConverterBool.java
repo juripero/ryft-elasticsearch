@@ -128,6 +128,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
     public static class ElasticConverterMinimumShouldMatch implements ElasticConvertingElement<Integer> {
 
         final static String NAME = "minimum_should_match";
+        final static String NAME_ALTERNATIVE = "minimum_number_should_match";
 
         @Override
         public Try<Integer> convert(ElasticConvertingContext convertingContext) {

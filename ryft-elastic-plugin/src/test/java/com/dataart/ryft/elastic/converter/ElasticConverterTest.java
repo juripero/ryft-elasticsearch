@@ -226,6 +226,21 @@ public class ElasticConverterTest {
     }
 
     @Test
+    public void BoolShouldWithMinimumShouldMatch1AndMustRequestTest() throws Exception {
+        String query = "{\"bool\": {"
+                + "\"must\": {\"match\": {\"text_entry\": {\"query\": \"Domsday\", \"fuzziness\": 1}}}, "
+                + "\"should\": [{\"match\": {\"play_name\": \"Julius\"}}, {\"match\": {\"play_name\": \"Henry\"}}], "
+                + "\"minimum_number_should_match\": 1}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.play_name CONTAINS \"Julius\") OR (RECORD.play_name CONTAINS \"Henry\")) AND (RECORD.text_entry CONTAINS FEDS(\"Domsday\", DIST=1)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
     public void BoolShouldWithMinimumShouldMatch2AndMustAndMustNotRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {"
                 + "\"should\": ["
@@ -247,8 +262,8 @@ public class ElasticConverterTest {
                 + "((RECORD.text_entry CONTAINS \"romeo\") AND (RECORD.text_entry CONTAINS \"knight\"))) AND (RECORD.text_entry CONTAINS \"hamlet\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
-    
-        @Test
+
+    @Test
     public void BoolShouldWithoutMinimumShouldMatchAndMustAndMustNotRequestTest() throws Exception {
         String query = "{\"query\": {\"bool\": {"
                 + "\"should\": ["
