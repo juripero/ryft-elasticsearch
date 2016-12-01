@@ -58,4 +58,28 @@ kibana:
     - elasticsearch
 ```
 
-Now you are ready to start elastic search with codec and plugin.
+Now you are ready to start elastic search with codec and plugin. 
+To setup initial plugin settings you have to execute next command:
+
+```bash
+curl -XPUT "http://<ryft-sever>:9200/ryftpluginsettings/def/1" -d'
+{
+  "ryft_integration_enabled": "false",
+  "ryft_query_limit":"100"
+}'
+```
+
+##Troubleshooting 
+
+In case of system failure restart elastic search using command in ~/ELK/docker-elk folder
+
+```bash
+sudo docker-compose stop
+sudo docker-compose start
+```
+
+Attention all data that was indexed via ES would be deleted completely!
+Remove all indices via next command:
+```bash
+ curl -XDELETE "http://<ryft-sever>:9200/_all"
+```
