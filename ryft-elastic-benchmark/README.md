@@ -19,7 +19,8 @@ Queries are stored [here, in the configs](https://github.com/getryft/ryft-elasti
 
 
 
-Test1 - Searching original Elasticsearch. All queries use Fuzzy edit distance 2.
+###Test1 
+Searching original Elasticsearch. All queries use Fuzzy edit distance 2.
 
 | Users count |  1gb  | 6.6GB | 9.6GB | 12GB  |
 |-------------|-------|-------|-------|-------|
@@ -28,7 +29,8 @@ Test1 - Searching original Elasticsearch. All queries use Fuzzy edit distance 2.
 |      10     | 4.717 | 3.623 | 2.538 | 3.378 |
 |      20     | 5.319 | 3.717 | 3.333 | 5.025 |
 
-Test2 - Searching Elasticsearch with Ryft integration enbaled. All queries uses Fuzzy edit distance 2.
+###Test2 
+Searching Elasticsearch with Ryft integration enbaled. All queries uses Fuzzy edit distance 2.
 
 | Users count | 1GB   | 6.6GB | 9.6GB | 12GB  |
 |-------------|-------|-------|-------|-------|
@@ -40,9 +42,6 @@ Test2 - Searching Elasticsearch with Ryft integration enbaled. All queries uses 
 First column describes amount of user that are simultaneously sending requests to the ES.\n
 Float values in table describes request rate per second in other words amount of queries processed in a second.\n 
 Symbol '-' means that some requests failed with timeout error, so the results for that cells are not representative. That can be explained by the nature of Ryft BOX. Current Ryft searh imlementation puts all search tasks into the queue and process them synchronyously, but Elasticsearch shares tasks between some amount of threads and process all tasks in parallel. That's why after reaching some constant request per second rate (0.298 in our case) requests would reach timeout.
-
-Test3 - In this test we tested all queries with fuzzy distance 4. Elasticsearch doesn't support such edit distance, so all request went through elasticearch to Ryft REST.
-
 
 
 
