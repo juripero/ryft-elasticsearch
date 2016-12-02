@@ -1,6 +1,6 @@
 ##Elsticsearch integration with RYFT
 
-* [Plugin integration benchmarks](ryft-elastic-plugin/README.md)
+* [Plugin integration benchmarks](ryft-elastic-benchmark/README.md)
 
 * [Plugin and codec installation](ryft-elastic-plugin/INSTALL.md)
 
