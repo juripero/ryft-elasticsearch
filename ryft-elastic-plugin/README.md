@@ -322,21 +322,22 @@ RYFT plugin able to perform record search on non-indexed json files. To do this 
 
 
 Such search query produce following request to RYFT: 
-```http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 ```
-
-Example to do fuzzy search on non indexed files
+http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
+```
+Example to do fuzzy search on non indexed files:
 
 ```javascript
 {
     "query": {
          "match_phrase": {
-          "Description": {
-            "query": "reckles conduct",
-            "metric": "Feds",
-            "fuzziness": 3
+            "Description": {
+                "query": "reckles conduct",
+                "metric": "Feds",   
+                "fuzziness": 3
+            }
           }
-        },
+    },
     "ryft": {
         "enabled": true,
         "files": ["chicago.crimestat"],
