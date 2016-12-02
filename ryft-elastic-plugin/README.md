@@ -349,5 +349,5 @@ Example to do fuzzy search on non indexed files:
 Such search query produce following request to RYFT: 
 
 ```
-http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=2))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
+http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 ```
