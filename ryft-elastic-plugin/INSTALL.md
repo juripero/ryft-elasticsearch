@@ -37,7 +37,7 @@ elasticsearch:
     - /home/ryftuser/ELK/ryft.elastic.plugin.properties:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/ryft.elastic.plugin.properties
     - /home/ryftuser/ELK/plugin-security.policy:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/plugin-security.policy
     - /var/log/elasticsearch:/usr/share/elasticsearch/logs
-    - /home/ryftuser/ELK/logging.yml:/usr/share/elasticsearch/config/logging.yml
+    - ./elasticsearch/config/logging.yml:/usr/share/elasticsearch/config/logging.yml
     - /tmp/elasticsearch:/host_tmp
     - /ryftone/elasticsearch:/data
   command: elasticsearch -Des.network.host=0.0.0.0 -Djna.tmpdir=/host_tmp/ -Des.path.data=/data -Des.index.refresh_interval=5s

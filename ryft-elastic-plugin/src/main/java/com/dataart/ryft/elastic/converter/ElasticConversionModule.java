@@ -28,6 +28,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterMustNot.NAME).to(ElasticConverterMustNot.class);
         convertersBinder.addBinding(ElasticConverterShould.NAME).to(ElasticConverterShould.class);
         convertersBinder.addBinding(ElasticConverterMinimumShouldMatch.NAME).to(ElasticConverterMinimumShouldMatch.class);
+        convertersBinder.addBinding(ElasticConverterMinimumShouldMatch.NAME_ALTERNATIVE).to(ElasticConverterMinimumShouldMatch.class);
         convertersBinder.addBinding(ElasticConverterValue.NAME).to(ElasticConverterValue.class);
         convertersBinder.addBinding(ElasticConverterMetric.NAME).to(ElasticConverterMetric.class);
         convertersBinder.addBinding(ElasticConverterFuzziness.NAME).to(ElasticConverterFuzziness.class);
