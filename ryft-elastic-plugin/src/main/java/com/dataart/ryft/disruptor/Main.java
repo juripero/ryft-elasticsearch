@@ -8,9 +8,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Main {
-    private static final int READ_CHARS = 43554432;
     private final static int DOCUMENT_COUNT = 18000;
-    private final static int FILES_COUNT = 100;
+    private final static int FILES_COUNT = 1200;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -21,53 +20,40 @@ public class Main {
         FileInputStream fileInputStream = null;
         BufferedReader bufferedReader = null;
 
-        File file = null;
-        FileWriter fileWriter = null;
         try {
-
             fileInputStream = new FileInputStream(new File(fileName));
             bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
 
-            char[] charsAr = new char[READ_CHARS];
-            int res = bufferedReader.read(charsAr, 0, READ_CHARS);
-            // String line = new String(charsAr);
-            // int position = 0;
+            String line = bufferedReader.readLine();
+            int position = 0;
 
             for (int i = 1; i < FILES_COUNT; ++i) {
-                file = new File("/ryftone/simpleTest/reddit.redditjsonfld");
-                // position = 1;
-//                 file = new
-//                 File("/Users/imasternoy/RyftElastic/reddit.redditjsonfld");
-                fileWriter = new FileWriter(file, true);
+                File file = new File("/ryftone/esRedditJson/esRedditJson" + i);
+                FileWriter fileWriter = null;
                 try {
-                    // while (position % 19 != 0 || res != -1) {
-                    // fileWriter.write("{\"index\":{\"_index\":\"reddit\",\"_type\":\"redditType\",\"_id\":"
-                    // + position
-                    // + "}}");
-                    // fileWriter.flush();
-                    // fileWriter.write("\n");
-                    // fileWriter.flush();
-                    fileWriter.write(charsAr);
-                    // fileWriter.flush();
-                    // fileWriter.write("\n");
-                    // fileWriter.flush();
-                    // line = new String(charsAr);
-                    // position += 1;
-                    charsAr = new char[READ_CHARS];
-                    res = bufferedReader.read(charsAr);
-                    if (res == -1) {
-                        return;
+                    fileWriter = new FileWriter(file, true);
+                    while (line != null && position != DOCUMENT_COUNT * i) {
+                        fileWriter.write("{\"index\":{\"_index\":\"reddit\",\"_type\":\"redditType\",\"_id\":"
+                                + position + "}}");
+                        fileWriter.flush();
+                        fileWriter.write("\n");
+                        fileWriter.flush();
+                        fileWriter.write(line);
+                        fileWriter.flush();
+                        fileWriter.write("\n");
+                        fileWriter.flush();
+
+                        line = bufferedReader.readLine();
+                        ++position;
                     }
-                    // }
+                    if(i % 100 == 0){
+                        System.out.println("Generated"+ i +" files");
+                    }
                 } finally {
                     fileWriter.close();
                 }
-                if (i % 10 == 0) {
-                    System.out.println("Generated" + i + " files");
-                }
             }
         } finally {
-            fileWriter.close();
             fileInputStream.close();
             bufferedReader.close();
         }
