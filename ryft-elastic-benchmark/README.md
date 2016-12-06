@@ -20,7 +20,7 @@ Queries are stored [here, in the configs](https://github.com/getryft/ryft-elasti
 
 First column describes amount of user that are simultaneously sending requests to the ES.
 Float values in table describes request rate per second in other words amount of queries processed in a second.
-Symbol '-' means that some requests failed with timeout error, so the results for that cells are not representative. That can be explained by the nature of Ryft BOX. Current Ryft search implementation puts all search tasks into the queue and process them sequentially, but Elasticsearch shares tasks between some amount of threads and process all tasks in parallel. That's why after reaching some constant request per second rate (0.298 in our case) requests would reach timeout.
+Symbol '-' means that some requests failed with timeout error, so the results for that cells are not representative. That can be explained by the nature of Ryft BOX. Current Ryft search implementation puts all search tasks into the queue and process them sequentially, but Elasticsearch shares tasks between some amount of threads and process all tasks in parallel. That's why after reaching some constant request per second rate requests would reach timeout (in our case timeout was equal 1 minute).
 
 ### Elasticsearch results
 Searching original Elasticsearch. All queries use Fuzzy edit distance 2. Index consists of 5 fragments.
