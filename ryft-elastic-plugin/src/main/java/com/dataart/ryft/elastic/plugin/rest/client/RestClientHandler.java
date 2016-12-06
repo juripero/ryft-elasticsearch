@@ -136,8 +136,16 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                         }
                         searchHits.add(searchHit);
                     });
+            
+            long totalHits = 0l;
+            if(results.getStats() != null){
+                if(results.getStats().getMatches() != null){
+                    totalHits = results.getStats().getMatches();
+                }
+            }
+            
             InternalSearchHits hits = new InternalSearchHits(
-                    searchHits.toArray(new InternalSearchHit[searchHits.size()]), searchHits.size(), 1.0f);
+                    searchHits.toArray(new InternalSearchHit[searchHits.size()]), totalHits == 0 ? searchHits.size() : totalHits, 1.0f);
 
             InternalSearchResponse searchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY, null,
                     null, false, false);
