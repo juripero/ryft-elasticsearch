@@ -279,12 +279,29 @@ All configuration properties can be defined in config file and some properties c
 |-------------------------------------|---------------------------------------|
 | ryft_rest_client_host               | RYFT service host                     |
 | ryft_rest_client_port               | RYFT service port                     |
-| ryft_rest_auth                      | RYFT auth string                      |
+| ryft_rest_auth                      | RYFT auth string/base64 encoded pair login:pass   |
 | ryft_request_processing_thread_num  | Thread number for request processing  |
 | ryft_response_processing_thread_num | Thread number for response processing |
 | ryft_query_limit                    | Results limit                         |
 | ryft_integration_enabled            | Integration with RYFT                 |
 | ryft_plugin_settings_index          | Settings index name                   |
+| ryft_disruptor_capacity             | Capacity of internal queue            |
+| ryft_rest_client_thread_num         |  NETTY internal number of threads to access Ryft REST|
+
+
+To change property value using settings index you have to execute next call:
+
+```bash
+curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
+{
+  "ryft_integration_enabled": "false",
+  "ryft_query_limit":"100",
+  "ryft_rest_client_host":"172.16.14.3",
+  "ryft_rest_client_port":"8765"
+  
+}'
+```
+Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
 
 ```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
 ```javascript
