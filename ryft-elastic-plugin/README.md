@@ -215,7 +215,7 @@ Resulting RYFT query:
  (RECORD.speaker CONTAINS "HAMLET"))
 ```
 Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
-Queries in section ```should``` are taken into account if no queries in other sections exists (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
+Queries in section ```should``` are taken into account if no queries in other sections exists or defined ```minimum_should_match``` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
 ```javascript
 {
     "query": {
@@ -249,6 +249,25 @@ Resulting RYFT query:
 Resulting RYFT query: 
 ```
 ((RECORD.title CONTAINS "brown") OR (RECORD.title NOT_CONTAINS "dog"))
+```
+```javascript
+{
+    "query": {
+        "bool": {
+            "must":     { "match": { "title": "quick" }},
+            "must_not": { "match": { "title": "lazy"  }},
+            "should": [
+                { "match": { "title": "brown" }},
+                { "match": { "title": "dog"   }}
+            ],
+            "minimum_should_match": 1
+        }
+    }
+}
+```
+Resulting RYFT query:
+```
+((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy") AND ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog")))
 ```
 We can control how many should clauses need to match by using the ```minimum_should_match```
 ```javascript
