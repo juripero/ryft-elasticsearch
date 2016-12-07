@@ -1,5 +1,7 @@
 package com.dataart.ryft.elastic.plugin;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.AccessController;
@@ -19,10 +21,10 @@ import com.dataart.ryft.disruptor.PostConstruct;
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
 
     private static final ESLogger LOGGER = Loggers.getLogger(PropertiesProvider.class);
-    //Global properties
+    // Global properties
     public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
     public static final String SEARCH_QUERY_SIZE = "ryft_query_limit";
-    //Local
+    // Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
     public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
     public static final String WROKER_THREAD_COUNT = "ryft_rest_client_thread_num";
@@ -31,7 +33,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_REST_AUTH = "ryft_rest_auth";
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
-    //Query properties
+    // Query properties
     public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
     public static final String RYFT_FORMAT = "ryft_format";
 
@@ -49,18 +51,29 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(PORT, "8765");
         defaults.put(REQ_THREAD_NUM, "2");
         defaults.put(RESP_THREAD_NUM, "2");
-        defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRtaW4=");
+        defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRt  aW4=");
         defaults.put(RYFT_FORMAT, "json");
 
         props = new RyftProperties();
         props.putAll(defaults);
         try {
-            InputStream file = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> this.getClass()
-                    .getClassLoader().getResourceAsStream("ryft.elastic.plugin.properties"));
+            FileInputStream file = AccessController.doPrivileged((PrivilegedAction<FileInputStream>) () -> {
+                File jarPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+                String propertiesPath = jarPath.getParentFile().getAbsolutePath();
+                System.out.println(" propertiesPath-" + propertiesPath);
+                try {
+                    return new FileInputStream(propertiesPath + "/ryft.elastic.plugin.properties");
+                } catch (Exception e) {
+                    LOGGER.error("Failed to load properties");
+                    return null;
+                }
+            });
             if (file != null) {
                 Properties fileProps = new Properties();
                 fileProps.load(file);
                 props.putAll(fileProps);
+            } else {
+                LOGGER.warn("Failed to read properties from file");
             }
         } catch (IOException e) {
             LOGGER.error("Failed to load properties", e);
