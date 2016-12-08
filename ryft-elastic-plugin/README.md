@@ -248,7 +248,7 @@ Resulting RYFT query:
 ```
 Resulting RYFT query: 
 ```
-((RECORD.title CONTAINS "brown") OR (RECORD.title NOT_CONTAINS "dog"))
+((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog"))
 ```
 ```javascript
 {
@@ -286,9 +286,9 @@ We can control how many should clauses need to match by using the ```minimum_sho
 ```
 Resulting RYFT query: 
 ```
-((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "dog")) OR 
-((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "fox")) OR
-((RECORD.title CONTAINS "fox") AND (RECORD.title NOT_CONTAINS "dog")))
+((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "dog")) OR
+((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "fox")) OR
+((RECORD.title CONTAINS "fox") AND (RECORD.title CONTAINS "dog")))
 ```
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
@@ -305,7 +305,7 @@ All configuration properties can be defined in config file and some properties c
 | ryft_integration_enabled            | Integration with RYFT                 |
 | ryft_plugin_settings_index          | Settings index name                   |
 | ryft_disruptor_capacity             | Capacity of internal queue            |
-| ryft_rest_client_thread_num         |  NETTY internal number of threads to access Ryft REST|
+| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST|
 
 
 To change property value using settings index you have to execute next call:
