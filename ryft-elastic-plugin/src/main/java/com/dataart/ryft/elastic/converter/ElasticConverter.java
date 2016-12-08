@@ -71,6 +71,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                 ElasticConvertingContext convertingContext = contextFactory.create(parser, queryString);
                 RyftRequestEvent result = convert(convertingContext).getResultOrException();
                 if (result != null) {
+                    LOGGER.info("Constructed query: {}", result.getQuery().buildRyftString());
                     result.setIndex(searchRequest.indices());
                 }
                 adjustRequest(searchRequest);
