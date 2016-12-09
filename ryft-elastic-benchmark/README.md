@@ -1,5 +1,7 @@
 # Benchmarking
 
+* [Data upload](https://github.com/getryft/ryft-elasticsearch/blob/master/ryft-elastic-benchmark/DATAUPLOAD.md)
+
 ## Test scenario
 
 [Gatling stress tool](http://gatling.io/#/) for each test generates configurable amount of virtual Elasticsearch user. 
