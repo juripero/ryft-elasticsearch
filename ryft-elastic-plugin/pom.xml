@@ -18,11 +18,12 @@
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-codecs</artifactId>
 			<version>5.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.lucene</groupId>
-			<artifactId>lucene-core</artifactId>
-			<version>5.5.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.lucene</groupId>
+                    <artifactId>lucene-core</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>

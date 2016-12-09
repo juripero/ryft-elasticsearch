@@ -215,7 +215,7 @@ Resulting RYFT query:
  (RECORD.speaker CONTAINS "HAMLET"))
 ```
 Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
-Queries in section ```should``` are taken into account if no queries in other sections exists (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
+Queries in section ```should``` are taken into account if no queries in other sections exists or defined ```minimum_should_match``` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
 ```javascript
 {
     "query": {
@@ -248,7 +248,26 @@ Resulting RYFT query:
 ```
 Resulting RYFT query: 
 ```
-((RECORD.title CONTAINS "brown") OR (RECORD.title NOT_CONTAINS "dog"))
+((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog"))
+```
+```javascript
+{
+    "query": {
+        "bool": {
+            "must":     { "match": { "title": "quick" }},
+            "must_not": { "match": { "title": "lazy"  }},
+            "should": [
+                { "match": { "title": "brown" }},
+                { "match": { "title": "dog"   }}
+            ],
+            "minimum_should_match": 1
+        }
+    }
+}
+```
+Resulting RYFT query:
+```
+((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy") AND ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog")))
 ```
 We can control how many should clauses need to match by using the ```minimum_should_match```
 ```javascript
@@ -267,9 +286,9 @@ We can control how many should clauses need to match by using the ```minimum_sho
 ```
 Resulting RYFT query: 
 ```
-((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "dog")) OR 
-((RECORD.title CONTAINS "brown") AND (RECORD.title NOT_CONTAINS "fox")) OR
-((RECORD.title CONTAINS "fox") AND (RECORD.title NOT_CONTAINS "dog")))
+((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "dog")) OR
+((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "fox")) OR
+((RECORD.title CONTAINS "fox") AND (RECORD.title CONTAINS "dog")))
 ```
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
@@ -279,12 +298,29 @@ All configuration properties can be defined in config file and some properties c
 |-------------------------------------|---------------------------------------|
 | ryft_rest_client_host               | RYFT service host                     |
 | ryft_rest_client_port               | RYFT service port                     |
-| ryft_rest_auth                      | RYFT auth string                      |
+| ryft_rest_auth                      | RYFT auth string/base64 encoded pair login:pass   |
 | ryft_request_processing_thread_num  | Thread number for request processing  |
 | ryft_response_processing_thread_num | Thread number for response processing |
 | ryft_query_limit                    | Results limit                         |
 | ryft_integration_enabled            | Integration with RYFT                 |
 | ryft_plugin_settings_index          | Settings index name                   |
+| ryft_disruptor_capacity             | Capacity of internal queue            |
+| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST|
+
+
+To change property value using settings index you have to execute next call:
+
+```bash
+curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
+{
+  "ryft_integration_enabled": "false",
+  "ryft_query_limit":"100",
+  "ryft_rest_client_host":"172.16.14.3",
+  "ryft_rest_client_port":"8765"
+  
+}'
+```
+Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
 
 ```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
 ```javascript
