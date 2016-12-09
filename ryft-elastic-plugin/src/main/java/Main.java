@@ -1,5 +1,3 @@
-package com.dataart.ryft.disruptor;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +14,19 @@ public class Main {
             System.err.println("Pass the input file as the argument");
             System.exit(1);
         }
+        if(args.length == 1){
+            System.err.println("Pass the output directory/filePrefix as the argument");
+            System.exit(1); 
+        }
+        if(args.length == 2){
+            System.err.println("Pass fileCount as the argument");
+            System.exit(1); 
+        }
+        
         String fileName = args[0];
+        String outputFileName = args[1];
+        int fileCount = Integer.valueOf(args[2]);
+        
         FileInputStream fileInputStream = null;
         BufferedReader bufferedReader = null;
 
@@ -27,8 +37,8 @@ public class Main {
             String line = bufferedReader.readLine();
             int position = 0;
 
-            for (int i = 1; i < FILES_COUNT; ++i) {
-                File file = new File("/ryftone/esRedditJson/esRedditJson" + i);
+            for (int i = 1; i < fileCount; ++i) {
+                File file = new File(outputFileName+ i);
                 FileWriter fileWriter = null;
                 try {
                     fileWriter = new FileWriter(file, true);
@@ -44,6 +54,9 @@ public class Main {
                         fileWriter.flush();
 
                         line = bufferedReader.readLine();
+                        if(line == null){
+                            return;
+                        }
                         ++position;
                     }
                     if(i % 100 == 0){
