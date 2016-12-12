@@ -69,6 +69,28 @@ curl -XPUT "http://<ryft-sever>:9200/ryftpluginsettings/def/1" -d'
 }'
 ```
 
+##RDF 
+
+ In order to provide ability to search indexed data Ryft Elasticsearch search integration uses codec that stores data in JSON format. Each file has special extension:
+
+ ```sh
+ <segment_name>.<index_name>jsonfld
+ ```
+
+For these type of files folowing RDF should be created and installed via Ryft API:
+
+```sh
+# JSON File RDF
+#
+data_type = "JSON";
+rdf_name = "Elasticsearch index RDF"
+chunk_size_mb = 64;
+file_glob = "*.*json";
+record_path = ".";
+ ```
+
+
+
 ##Troubleshooting 
 
 In case of system failure restart elastic search using command in ~/ELK/docker-elk folder
