@@ -26,10 +26,10 @@ elasticsearch:
   image: elasticsearch:2.4.1
   volumes:
     - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-    - /home/ryftuser/ELK/ryft-elastic-codec-1.0.0-SNAPSHOT.jar:/usr/share/elasticsearch/lib/ryft-elastic-codec-1.0.0-SNAPSHOT.jar
+    - /home/ryftuser/ELK/ryft-elastic-codec-1.0.0.jar:/usr/share/elasticsearch/lib/ryft-elastic-codec-1.0.0.jar
     - /home/ryftuser/ELK/lucene-codecs-5.5.2.jar:/usr/share/elasticsearch/lib/lucene-codecs-5.5.2.jar
     - /home/ryftuser/ELK/plugin-descriptor.properties:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/plugin-descriptor.properties
-    - /home/ryftuser/ELK/ryft-elastic-plugin-0.0.1-SNAPSHOT.jar:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/ryft-elastic-plugin-0.0.1-SNAPSHOT.jar
+    - /home/ryftuser/ELK/ryft-elastic-plugin-1.0.0.jar:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/ryft-elastic-plugin-1.0.0.jar
     - /home/ryftuser/ELK/jackson-annotations-2.8.0.jar:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/jackson-annotations-2.8.0.jar
     - /home/ryftuser/ELK/jackson-databind-2.8.1.jar:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/jackson-databind-2.8.1.jar
     - /home/ryftuser/ELK/netty-all-4.0.33.Final.jar:/usr/share/elasticsearch/plugins/ryft-elastic-plugin/netty-all-4.0.33.Final.jar
