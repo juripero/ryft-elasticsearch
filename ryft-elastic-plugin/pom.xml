@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.dataart</groupId>
 	<artifactId>ryft-elastic-plugin</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<properties>
 		<elasticsearch.version>2.4.1</elasticsearch.version>
 		<fasterxml.jackson>2.8.1</fasterxml.jackson>

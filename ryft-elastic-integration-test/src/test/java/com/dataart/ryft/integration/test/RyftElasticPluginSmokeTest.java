@@ -367,7 +367,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
          SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                  .get();//
 
-         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":2 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
          SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                  new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
          elasticSubsetRyft(searchResponse, ryftResponse);
