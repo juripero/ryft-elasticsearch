@@ -432,13 +432,25 @@ public class ElasticConverterTest {
 
     @Test
     public void WildcardInMatchRequestTest() throws Exception {
-        String query = "{\"query\": {\"match\": {\"text_entry\": \"go\\\"?\\\"d m\\\"?\\\"ther\"}}}";
+        String query = "{\"query\": {\"match\": {\"text_entry\": \"\\\"?o\\\"?\\\"d m\\\"?\\\"the\\\"?\"}}}";
         BytesArray bytes = new BytesArray(query);
         XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
         ElasticConvertingContext context = contextFactory.create(parser, query);
         RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
         assertNotNull(ryftRequest);
-        assertEquals("((RECORD.text_entry CONTAINS \"go\"?\"d\") OR (RECORD.text_entry CONTAINS \"m\"?\"ther\"))",
+        assertEquals("((RECORD.text_entry CONTAINS \"\"?o\"?\"d\") OR (RECORD.text_entry CONTAINS \"m\"?\"the\"?\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void WildcardInMatchRequestUnescapedTest() throws Exception {
+        String query = "{\"query\": {\"match\": {\"text_entry\": \"go?d m?ther\"}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.text_entry CONTAINS \"go?d\") OR (RECORD.text_entry CONTAINS \"m?ther\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
