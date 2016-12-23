@@ -22,6 +22,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterFuzzy.NAME).to(ElasticConverterFuzzy.class);
         convertersBinder.addBinding(ElasticConverterMatch.NAME).to(ElasticConverterMatch.class);
         convertersBinder.addBinding(ElasticConverterMatchPhrase.NAME).to(ElasticConverterMatchPhrase.class);
+        convertersBinder.addBinding(ElasticConverterWildcard.NAME).to(ElasticConverterWildcard.class);
         convertersBinder.addBinding(ElasticConverterField.NAME).to(ElasticConverterField.class);
         convertersBinder.addBinding(ElasticConverterBool.NAME).to(ElasticConverterBool.class);
         convertersBinder.addBinding(ElasticConverterMust.NAME).to(ElasticConverterMust.class);

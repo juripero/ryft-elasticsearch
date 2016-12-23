@@ -15,13 +15,9 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.unit.Fuzziness;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.FuzzyQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.index.query.MatchQueryBuilder.Type;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -46,9 +42,8 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     /**
-     * match-phrase-query: Fuzziness 1 looking for speaker: All the worlds a. 
+     * match-phrase-query: Fuzziness 1 looking for speaker: All the worlds a.
      * original phrase: To be, or not to be
-     * 
      */
     @Test
     public void testSimpleFuzzyMatch() throws InterruptedException, ExecutionException {
@@ -62,12 +57,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 + "\"query\":\"To be or not to be\"," + "\"fuzziness\":\"1\"" + "}" + "}" + "},"
                 + "\"ryft_enabled\":true" + "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     /**
-     * match-phrase-query: Fuzziness 1 looking for speaker: All the worlds a. 
+     * match-phrase-query: Fuzziness 1 looking for speaker: All the worlds a.
      * original phrase: All the world's a stage
      */
     @Test
@@ -82,7 +77,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 + "\"query\":\"All the worlds a\"," + "\"fuzziness\":\"1\"" + "}" + "}" + "},"
                 + "\"ryft_enabled\":true" + "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -101,7 +96,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 + "{\"value\": \"marcelus\", \"fuzziness\": 1}}}, \"ryft_enabled\":true }";
 
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -123,7 +118,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 + "{\"value\": \"macelus\", \"fuzziness\": 2}}}, \"ryft_enabled\":true }";
 
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -144,7 +139,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\r\n\"query\": {\r\n\"match\" : {\r\n \"text_entry\": {\r\n\"query\":\"Lord Hmlet\",\r\n\"fuzziness\": \"1\",\r\n\"operator\":\"and\"\r\n}\r\n}\r\n},\r\n \"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
 
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
@@ -166,11 +161,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\r\n\"query\": {\r\n\"match\" : {\r\n \"text_entry\": {\r\n\"query\":\"Lord mlet\",\r\n\"fuzziness\": \"2\",\r\n\"operator\":\"and\"\r\n}\r\n}\r\n},\r\n\"size\":30000,\r\n \"ryft_enabled\": true}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
-    
+
+
     /**
      * Bool-match-must-query: Fuzziness 1 Looking for: Lrd amlet and speaker: LRD PLONIU
      * original : Lord Hamlet, Lord POLONIU
@@ -180,11 +175,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("speaker", "LRD POLONIU")//
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("text_entry", "Lrd amlet")//
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().must(builderSpeaker).must(builderText);
 
@@ -195,10 +190,10 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Lrd amlet\",\"fuzziness\": 1,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LRD POLONIU\",\"fuzziness\": 1,\"operator\": \"and\"}}}]}},\r\n\"size\":10000, \"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
+
     /**
      * Bool-match-must-query: Fuzziness 2 Looking for: Lrd mlet and speaker: LRD PLONIU
      * original : Lord Hamlet, Lord POLONIUS
@@ -208,11 +203,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("speaker", "LRD PLONIU")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("text_entry", "Lrd mlet")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().must(builderSpeaker).must(builderText);
 
@@ -223,10 +218,10 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Lrd mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LRD PLONIU\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
+
     /**
      * Bool-match-must-query: Fuzziness 1 Looking for: 'tht is qetion' and speaker: mlet
      * original : that is the question: Hamlet
@@ -236,11 +231,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("text_entry", "tht is qetion")//
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("speaker", "mlet")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().must(builderSpeaker).must(builderText);
 
@@ -251,7 +246,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"speaker\": {\"query\": \"mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"tht is qetion\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -264,11 +259,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("text_entry", "th is te qution")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("speaker", "mlet")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().must(builderSpeaker).must(builderText);
 
@@ -279,10 +274,10 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"speaker\": {\"query\": \"mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"th is te qution\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
+
     /**
      * Bool-match-should-query: Fuzziness 1 Looking for: 'that is the quetion' OR 'all the world a stage'
      * original : that is the question, all the worlds a stage
@@ -292,11 +287,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("text_entry", "that is the quetion")//
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("text_entry", "all the world a stage")//
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().should(builderSpeaker).should(builderText).minimumShouldMatch("1");
 
@@ -307,24 +302,24 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"that is the quetion\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"all the world a stage\",\"fuzziness\": 1,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
-   /**
-    * Bool-match-should-query: Fuzziness 2 Looking for: 'tht is th quetion' OR 'all the wld a stage'
-    * original : that is the question, all the worlds a stage
-    */
+
+    /**
+     * Bool-match-should-query: Fuzziness 2 Looking for: 'tht is th quetion' OR 'all the wld a stage'
+     * original : that is the question, all the worlds a stage
+     */
     @Test
     public void testBoolMatchShould2() throws InterruptedException, ExecutionException {
         MatchQueryBuilder builderSpeaker = QueryBuilders//
                 .matchQuery("text_entry", "tht is th quetion")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         MatchQueryBuilder builderText = QueryBuilders//
                 .matchQuery("text_entry", "all the wld a stage")//
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);//
-        
+
         BoolQueryBuilder builder = QueryBuilders//
                 .boolQuery().should(builderSpeaker).should(builderText).minimumShouldMatch("1");
 
@@ -335,84 +330,102 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"tht is th quetion\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"all the wld a stage\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
-    
+
     /**
      * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
      * Used minimum_should match parameter and type:'phrase'
      */
-     @Test
-     public void testBoolMatchShould3() throws InterruptedException, ExecutionException {
-         MatchQueryBuilder builderSpeaker = QueryBuilders//
-                 .matchQuery("text_entry", "my lord")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
-         
-         MatchQueryBuilder builderText = QueryBuilders//
-                 .matchQuery("speaker", "PONIUS")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-         
-         MatchQueryBuilder builder3 = QueryBuilders//
-                 .matchQuery("speaker", "Mesenger")//
-                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-         
-         //"A horse! a horse! my kingdom for a horse!"
-         
-         BoolQueryBuilder builder = QueryBuilders//
-                 .boolQuery().should(builderSpeaker).should(builderText).should(builder3).minimumShouldMatch("2");
+    @Test
+    public void testBoolMatchShould3() throws InterruptedException, ExecutionException {
+        MatchQueryBuilder builderSpeaker = QueryBuilders//
+                .matchQuery("text_entry", "my lord")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
 
-         logger.info("Testing query: {}", builder.toString());
-         int total = getSize(builder);
-         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
-                 .get();//
+        MatchQueryBuilder builderText = QueryBuilders//
+                .matchQuery("speaker", "PONIUS")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
 
-         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
-         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                 new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
-         elasticSubsetRyft(searchResponse, ryftResponse);
-     }
-     
-     
-     /**
-      * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
-      * Used minimum_should match parameter and type:'phrase' AND MUST NOT: 
-      */
-      @Test
-      public void testBoolMatchShouldMustNot4() throws InterruptedException, ExecutionException {
-          MatchQueryBuilder builderSpeaker = QueryBuilders//
-                  .matchQuery("text_entry", "Hamlet hamlet")//
-                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
-          
-          MatchQueryBuilder builderText = QueryBuilders//
-                  .matchQuery("speaker", "LAERTES")//
-                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
-          
-          MatchQueryBuilder builder3 = QueryBuilders//
-                  .matchQuery("speaker", "QUEEN GERTRUDE")//
-                  .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
-          
-          BoolQueryBuilder builder = QueryBuilders//
-                  .boolQuery().should(builderSpeaker).should(builder3).mustNot(builder3).minimumShouldMatch("1");
+        MatchQueryBuilder builder3 = QueryBuilders//
+                .matchQuery("speaker", "Mesenger")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
 
-          logger.info("Testing query: {}", builder.toString());
-          int total = getSize(builder);
-          SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
-                  .get();//
+        //"A horse! a horse! my kingdom for a horse!"
 
-          String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"speaker\":{\"query\":\"QUEEN GERTRUDE\",\"type\":\"phrase\"}}}], \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Hamlet hamlet\",\"fuzziness\": 1,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LAERTES\",\"fuzziness\": 1,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
-          SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                  new SearchRequest(new String[] { INDEX_NAME }, ryftQuery.getBytes())).get();
-          elasticSubsetRyft(searchResponse, ryftResponse);
-      }
+        BoolQueryBuilder builder = QueryBuilders//
+                .boolQuery().should(builderSpeaker).should(builderText).should(builder3).minimumShouldMatch("2");
 
+        logger.info("Testing query: {}", builder.toString());
+        int total = getSize(builder);
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
+                .get();//
+
+        String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+
+    /**
+     * Bool-match-should-query: Fuzziness 2 Looking for: 'my lord' and speaker 'PONIUS' or for 'my lord' and speaker 'Mesenger'
+     * Used minimum_should match parameter and type:'phrase' AND MUST NOT:
+     */
+    @Test
+    public void testBoolMatchShouldMustNot4() throws InterruptedException, ExecutionException {
+        MatchQueryBuilder builderSpeaker = QueryBuilders//
+                .matchQuery("text_entry", "Hamlet hamlet")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
+
+        MatchQueryBuilder builderText = QueryBuilders//
+                .matchQuery("speaker", "LAERTES")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO);//
+
+        MatchQueryBuilder builder3 = QueryBuilders//
+                .matchQuery("speaker", "QUEEN GERTRUDE")//
+                .operator(Operator.AND).fuzziness(Fuzziness.AUTO).type(Type.PHRASE);//
+
+        BoolQueryBuilder builder = QueryBuilders//
+                .boolQuery().should(builderSpeaker).should(builder3).mustNot(builder3).minimumShouldMatch("1");
+
+        logger.info("Testing query: {}", builder.toString());
+        int total = getSize(builder);
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
+                .get();//
+
+        String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"speaker\":{\"query\":\"QUEEN GERTRUDE\",\"type\":\"phrase\"}}}], \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Hamlet hamlet\",\"fuzziness\": 1,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LAERTES\",\"fuzziness\": 1,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testWildcardMatch() throws InterruptedException, ExecutionException {
+        WildcardQueryBuilder builder = QueryBuilders.wildcardQuery("text_entry", "All the w?rlds a");
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();//
+
+        String elasticQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match_phrase\": {\n" +
+                "      \"text_entry\": \"All the w?rlds a\"\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft_enabled\":true\n" +
+                "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
 
     public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
         String elasticQuery = "{\"query\":{" + "\"match_phrase\": { " + "\"doc.text_entry\": {"
                 + "\"query\":\"To be, or not to be\"," + "\"metric\": \"Fhs\"," + "\"fuzziness\": 5" + "}" + "}" + "}}";
         logger.info("Testing query: {}", elasticQuery);
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[] { INDEX_NAME }, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         assertNotNull(ryftResponse);
     }
 
@@ -442,7 +455,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         for (int i = 0; i < ryftHits.length; i++) {
             hitMap.remove(ryftHits[i].getId());
         }
-        
+
         if (!hitMap.isEmpty()) {
             hitMap.forEach((k, v) -> {
                 logger.info("Not in Ryft response {}", v.getSourceAsString());
