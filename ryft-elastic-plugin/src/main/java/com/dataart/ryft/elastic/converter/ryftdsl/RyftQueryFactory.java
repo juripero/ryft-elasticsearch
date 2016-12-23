@@ -55,9 +55,6 @@ public class RyftQueryFactory {
                 return buildQueryWildcard(
                         fuzzyQueryParameters.getSearchValue(),
                         fuzzyQueryParameters.getFieldName(),
-                        fuzzyQueryParameters.getOperator(),
-                        fuzzyQueryParameters.getMetric(),
-                        fuzzyQueryParameters.getFuzziness(),
                         fuzzyQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown search type");
@@ -90,13 +87,11 @@ public class RyftQueryFactory {
     }
 
     private RyftQuery buildQueryWildcard(String searchText, String fieldName,
-                                         RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness,
                                          RyftOperator ryftOperator) {
         String searchTextFormatted = searchText.replace("?", "\"?\"");
-        Collection<RyftQuery> operands = tokenize(searchTextFormatted).stream()
-                .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator))
-                .collect(Collectors.toList());
-        return buildComplexQuery(operator, operands);
+        RyftExpression ryftExpression = new RyftExpressionExactSearch(searchTextFormatted);
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
+                ryftOperator, ryftExpression);
     }
 
     private RyftQuery buildQueryFuzzy(String searchText, String fieldName,
