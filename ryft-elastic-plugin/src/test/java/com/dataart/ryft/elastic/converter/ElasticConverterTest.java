@@ -417,4 +417,40 @@ public class ElasticConverterTest {
         assertTrue(ryftRequest.getRyftSearchUrl().contains("file=1.txt&file=2.json"));
         assertTrue(ryftRequest.getRyftSearchUrl().contains("format=xml"));
     }
+
+    @Test
+    public void WildcardSearchRequestTest() throws Exception {
+        String query = "{\"query\": {\"wildcard\": {\"text_entry\": \"m?ther\"}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.text_entry CONTAINS \"m\"?\"ther\")",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void WildcardInMatchRequestTest() throws Exception {
+        String query = "{\"query\": {\"match\": {\"text_entry\": \"go\\\"?\\\"d m\\\"?\\\"ther\"}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.text_entry CONTAINS \"go\"?\"d\") OR (RECORD.text_entry CONTAINS \"m\"?\"ther\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void WildcardInMatchPhraseRequestTest() throws Exception {
+        String query = "{\"query\": {\"match_phrase\": {\"text_entry\": {\"query\":\"go\\\"?\\\"d m\\\"?\\\"ther\", \"fuzziness\": 1}}}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.text_entry CONTAINS FEDS(\"go\"?\"d m\"?\"ther\", DIST=1))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

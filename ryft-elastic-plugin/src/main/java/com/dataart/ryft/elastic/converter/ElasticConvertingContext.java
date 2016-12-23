@@ -15,7 +15,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 public class ElasticConvertingContext {
 
     public static enum ElasticSearchType {
-        MATCH, MATCH_PHRASE, FUZZY
+        MATCH, MATCH_PHRASE, FUZZY, WILDCARD
     }
 
     public static enum ElasticBoolSearchType {

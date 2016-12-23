@@ -4,12 +4,15 @@ import com.dataart.ryft.elastic.converter.ElasticConversionException;
 import com.dataart.ryft.elastic.converter.entities.FuzzyQueryParameters;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
+
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.elasticsearch.common.logging.ESLogger;
@@ -48,13 +51,21 @@ public class RyftQueryFactory {
                         fuzzyQueryParameters.getMetric(),
                         fuzzyQueryParameters.getFuzziness(),
                         fuzzyQueryParameters.getRyftOperator());
+            case WILDCARD:
+                return buildQueryWildcard(
+                        fuzzyQueryParameters.getSearchValue(),
+                        fuzzyQueryParameters.getFieldName(),
+                        fuzzyQueryParameters.getOperator(),
+                        fuzzyQueryParameters.getMetric(),
+                        fuzzyQueryParameters.getFuzziness(),
+                        fuzzyQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown search type");
         }
     }
 
     private RyftQuery buildQueryMatchPhrase(String searchText, String fieldName,
-            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+                                            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
         RyftExpression ryftExpression;
         if (FUZZYNESS_AUTO_VALUE.equals(fuzziness)) {
             fuzziness = getFuzzinessAuto(searchText);
@@ -70,15 +81,26 @@ public class RyftQueryFactory {
     }
 
     private RyftQuery buildQueryMatch(String searchText, String fieldName,
-            RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+                                      RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness,
+                                      RyftOperator ryftOperator) {
         Collection<RyftQuery> operands = tokenize(searchText).stream()
                 .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator))
                 .collect(Collectors.toList());
         return buildComplexQuery(operator, operands);
     }
 
+    private RyftQuery buildQueryWildcard(String searchText, String fieldName,
+                                         RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness,
+                                         RyftOperator ryftOperator) {
+        String searchTextFormatted = searchText.replace("?", "\"?\"");
+        Collection<RyftQuery> operands = tokenize(searchTextFormatted).stream()
+                .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator))
+                .collect(Collectors.toList());
+        return buildComplexQuery(operator, operands);
+    }
+
     private RyftQuery buildQueryFuzzy(String searchText, String fieldName,
-            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+                                      RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
         String splitSearchText = tokenize(searchText).stream()
                 .collect(Collectors.joining());
         return buildQueryMatchPhrase(splitSearchText, fieldName, metric, fuzziness, ryftOperator);
@@ -109,7 +131,7 @@ public class RyftQueryFactory {
 
     private Collection<String> tokenize(String searchText) {
         Collection<String> result = new ArrayList<>();
-        try (Tokenizer tokenizer = new StandardTokenizer()) {
+        try (Tokenizer tokenizer = new WhitespaceTokenizer()) {
             tokenizer.setReader(new StringReader(searchText));
             CharTermAttribute charTermAttrib = tokenizer.getAttribute(CharTermAttribute.class);
             tokenizer.reset();
