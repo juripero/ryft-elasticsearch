@@ -43,7 +43,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
             int start = dir.indexOf("/");
             int end = dir.indexOf(")");
             String dirname = dir.substring(start, end);
-            String fileName = IndexFileNames.segmentFileName(segment.name, "", indexName + FIELDS_EXTENSION);
+            String fileName = segmentFileName(segment.name, "",  indexName + FIELDS_EXTENSION);
             out = new OutputStreamWriter(new FileOutputStream(dirname + "/" + fileName, true));
             // Hooking directory to manage(delete when needed) our file too
             dirWrapper.getCreatedFiles().add(fileName);
@@ -142,5 +142,19 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     private void write(String s) throws IOException {
         out.write(s);
     }
-
+    public static String segmentFileName(String segmentName, String segmentSuffix, String ext) {
+        if (ext.length() > 0 || segmentSuffix.length() > 0) {
+          StringBuilder sb = new StringBuilder(segmentName.length() + 2 + segmentSuffix.length() + ext.length());
+          sb.append(segmentName);
+          if (segmentSuffix.length() > 0) {
+            sb.append('_').append(segmentSuffix);
+          }
+          if (ext.length() > 0) {
+            sb.append('.').append(ext);
+          }
+          return sb.toString();
+        } else {
+          return segmentName;
+        }
+      }
 }
