@@ -23,4 +23,9 @@ public class RyftQuerySimple implements RyftQuery {
         return "RyftQuerySimple{" + buildRyftString() + '}';
     }
 
+    @Override
+    public RyftQuery toRawTextQuery() {
+        return new RyftQuerySimple(new RyftInputSpecifierRawText(), operator, expression);
+    }
+
 }
