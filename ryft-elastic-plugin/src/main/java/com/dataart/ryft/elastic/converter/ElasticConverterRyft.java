@@ -47,8 +47,8 @@ public class ElasticConverterRyft implements ElasticConvertingElement<Void> {
 
         final static String NAME = "format";
 
-        private enum RyftFormat {
-            JSON, XML;
+        public static enum RyftFormat {
+            JSON, XML, UTF8, RAW;
         }
 
         @Override
@@ -56,7 +56,7 @@ public class ElasticConverterRyft implements ElasticConvertingElement<Void> {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
                 RyftFormat format = ElasticConversionUtil.getEnum(convertingContext, RyftFormat.class);
-                convertingContext.getQueryProperties().put(PropertiesProvider.RYFT_FORMAT, format.name().toLowerCase());
+                convertingContext.getQueryProperties().put(PropertiesProvider.RYFT_FORMAT, format);
                 return null;
             });
         }
