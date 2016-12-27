@@ -477,4 +477,64 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.text_entry CONTAINS FEDS(\"go\"?\"d m\"?\"ther\", DIST=1))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void RawTextMatchSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"good mother\",\n" +
+                "        \"fuzziness\": 1,\n" +
+                "        \"operator\": \"AND\",\n" +
+                "        \"width\": 30\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"goodmother.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", DIST=1)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RawTextMatchPhraseSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match_phrase\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"good mother\",\n" +
+                "        \"fuzziness\": 1,\n" +
+                "        \"width\": \"line\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"goodmother.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS FEDS(\"good mother\", DIST=1))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RawTextTermSearchTest() throws Exception {
+
+    }
 }

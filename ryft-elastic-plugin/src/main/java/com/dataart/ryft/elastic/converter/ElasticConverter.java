@@ -2,7 +2,9 @@ package com.dataart.ryft.elastic.converter;
 
 import com.dataart.ryft.disruptor.messages.RyftRequestEvent;
 import com.dataart.ryft.disruptor.messages.RyftRequestEventFactory;
+import com.dataart.ryft.elastic.converter.ElasticConverterRyft.ElasticConverterFormat.RyftFormat;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
+import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.utils.Try;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -56,6 +58,13 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
             if (ryftQuery == null) {
                 return null;
             }
+
+            RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
+
+            if (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW)) {
+                ryftQuery = ryftQuery.toRawTextQuery();
+            }
+
             return getRyftRequestEvent(convertingContext, ryftQuery);
         });
     }
