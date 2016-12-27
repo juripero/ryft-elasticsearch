@@ -44,6 +44,11 @@ public class RyftQueryComplex implements RyftQuery {
     }
 
     @Override
+    public RyftQuery toRawTextQuery() {
+        return new RyftQueryComplex(operator, operands.stream().map(ryftQuery -> ryftQuery.toRawTextQuery()).collect(Collectors.toList()));
+    }
+
+    @Override
     public String toString() {
         return "RyftQueryComplex{" + buildRyftString() + '}';
     }
