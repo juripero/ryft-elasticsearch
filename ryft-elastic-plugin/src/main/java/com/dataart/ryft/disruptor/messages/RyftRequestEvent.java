@@ -32,13 +32,11 @@ public class RyftRequestEvent extends InternalEvent {
         this.ryftProperties.putAll(ryftProperties);
     }
 
-    public String getRyftSearchUrl() throws UnsupportedEncodingException, ElasticConversionCriticalException {
+    public String getRyftSearchUrl() throws ElasticConversionCriticalException {
         StringBuilder sb = new StringBuilder("http://");
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
-        sb.append("/search?query=");
-        sb.append(buildRyftQuery());
-        sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
+        sb.append("/search?query=").append(getQueryString());
         getFilenames().stream().forEach((filename) -> {
             sb.append("&file=");
             sb.append(filename);
@@ -49,13 +47,22 @@ public class RyftRequestEvent extends InternalEvent {
         return sb.toString();
     }
 
-    private String buildRyftQuery() throws ElasticConversionCriticalException {
+    private String getQueryString() throws ElasticConversionCriticalException {
         if (!isIndexedSearch()) {
             if ((getFilenames() == null) || (getFilenames().isEmpty()))  {
                 throw new ElasticConversionCriticalException("Filenames should be defined for non indexed search.");
+            } else {
+                if (getFormat().equals(RyftFormat.UTF8) ||
+                        getFormat().equals(RyftFormat.RAW)) {
+                    query = query.toRawTextQuery();
+                }
             }
         }
-        return query.buildRyftString();
+        try {
+            return URLEncoder.encode(query.buildRyftString(), "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new ElasticConversionCriticalException(ex);
+        }
     }
 
     public int getLimit() {
