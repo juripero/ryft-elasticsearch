@@ -51,11 +51,6 @@ public class RyftRequestEvent extends InternalEvent {
         if (!isIndexedSearch()) {
             if ((getFilenames() == null) || (getFilenames().isEmpty()))  {
                 throw new ElasticConversionCriticalException("Filenames should be defined for non indexed search.");
-            } else {
-                if (getFormat().equals(RyftFormat.UTF8) ||
-                        getFormat().equals(RyftFormat.RAW)) {
-                    query = query.toRawTextQuery();
-                }
             }
         }
         try {

@@ -493,7 +493,7 @@ public class ElasticConverterTest {
                 "  },\n" +
                 "  \"ryft\": {\n" +
                 "    \"enabled\": true,\n" +
-                "    \"files\": [\"goodmother.txt\"],\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
                 "    \"format\": \"utf8\"\n" +
                 "  }\n" +
                 "}";
@@ -502,7 +502,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
         assertNotNull(ryftRequest);
-        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", DIST=1)))",
+        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", WIDTH=30, DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", WIDTH=30, DIST=1)))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
@@ -520,7 +520,7 @@ public class ElasticConverterTest {
                 "  },\n" +
                 "  \"ryft\": {\n" +
                 "    \"enabled\": true,\n" +
-                "    \"files\": [\"goodmother.txt\"],\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
                 "    \"format\": \"utf8\"\n" +
                 "  }\n" +
                 "}\n";
@@ -529,12 +529,32 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
         assertNotNull(ryftRequest);
-        assertEquals("(RAW_TEXT CONTAINS FEDS(\"good mother\", DIST=1))",
+        assertEquals("(RAW_TEXT CONTAINS FEDS(\"good mother\", LINE=true, DIST=1))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
     @Test
     public void RawTextTermSearchTest() throws Exception {
-
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"wildcard\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"value\": \"m?ther\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS \"m\"?\"ther\")",
+                ryftRequest.getQuery().buildRyftString());
     }
 }

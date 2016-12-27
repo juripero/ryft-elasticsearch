@@ -61,7 +61,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
 
             RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
 
-            if (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW)) {
+            if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
                 ryftQuery = ryftQuery.toRawTextQuery();
             }
 
