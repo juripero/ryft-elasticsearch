@@ -48,7 +48,7 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     private String getQueryString() throws ElasticConversionCriticalException {
-        if (!isIndexedSearch()) {
+        if (isNonIndexedSearch()) {
             if ((getFilenames() == null) || (getFilenames().isEmpty()))  {
                 throw new ElasticConversionCriticalException("Filenames should be defined for non indexed search.");
             }
@@ -97,7 +97,7 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     private List<String> getFilenames() {
-        if (!isIndexedSearch()) {
+        if (isNonIndexedSearch()) {
             return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
         }
         return Arrays.stream(index)
@@ -105,8 +105,8 @@ public class RyftRequestEvent extends InternalEvent {
                 .collect(Collectors.toList());
     }
 
-    private Boolean isIndexedSearch() {
-        return !(ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
+    private Boolean isNonIndexedSearch() {
+        return (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
                 && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List));
     }
 
