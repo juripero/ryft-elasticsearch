@@ -48,14 +48,20 @@ public class ElasticConverterRyft implements ElasticConvertingElement<Void> {
         final static String NAME = "format";
 
         public static enum RyftFormat {
-            JSON, XML, UTF8, RAW;
+            JSON, XML, UTF8, RAW, UNKNOWN_FORMAT
         }
 
         @Override
         public Try<Void> convert(ElasticConvertingContext convertingContext) {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
             return Try.apply(() -> {
-                RyftFormat format = ElasticConversionUtil.getEnum(convertingContext, RyftFormat.class);
+                RyftFormat format;
+                try {
+                    format = ElasticConversionUtil.getEnum(convertingContext, RyftFormat.class);
+                } catch (Exception e) {
+                    LOGGER.warn("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
+                    format = RyftFormat.UNKNOWN_FORMAT;
+                }
                 convertingContext.getQueryProperties().put(PropertiesProvider.RYFT_FORMAT, format);
                 return null;
             });

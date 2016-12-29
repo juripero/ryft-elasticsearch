@@ -33,6 +33,7 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     public String getRyftSearchUrl() throws ElasticConversionCriticalException {
+        validateRequest();
         StringBuilder sb = new StringBuilder("http://");
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
@@ -47,12 +48,20 @@ public class RyftRequestEvent extends InternalEvent {
         return sb.toString();
     }
 
-    private String getQueryString() throws ElasticConversionCriticalException {
+    private void validateRequest() throws ElasticConversionCriticalException {
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
+                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
+            throw new ElasticConversionCriticalException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
+        }
+
         if (isNonIndexedSearch()) {
             if ((getFilenames() == null) || (getFilenames().isEmpty()))  {
-                throw new ElasticConversionCriticalException("Filenames should be defined for non indexed search.");
+                throw new ElasticConversionCriticalException("File names should be defined for non indexed search.");
             }
         }
+    }
+
+    private String getQueryString() throws ElasticConversionCriticalException {
         try {
             return URLEncoder.encode(query.buildRyftString(), "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -106,8 +115,16 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     private Boolean isNonIndexedSearch() {
-        return (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
-                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List));
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List)) {
+            return true;
+        } else if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.RAW)
+                    || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UTF8))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
