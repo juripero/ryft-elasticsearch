@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import com.dataart.ryft.elastic.converter.ElasticConverterRyft;
 import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
@@ -52,7 +53,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(REQ_THREAD_NUM, "2");
         defaults.put(RESP_THREAD_NUM, "2");
         defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRt  aW4=");
-        defaults.put(RYFT_FORMAT, "json");
+        defaults.put(RYFT_FORMAT, ElasticConverterRyft.ElasticConverterFormat.RyftFormat.JSON);
 
         props = new RyftProperties();
         props.putAll(defaults);

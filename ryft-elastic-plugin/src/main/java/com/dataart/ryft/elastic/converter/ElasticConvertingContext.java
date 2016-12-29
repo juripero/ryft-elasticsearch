@@ -33,6 +33,8 @@ public class ElasticConvertingContext {
     private final Map<String, Object> queryProperties;
     private Integer minimumShouldMatch = 1;
     private Boolean minimumShouldMatchDefined = false;
+    private Boolean line;
+    private Integer width;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
@@ -94,6 +96,22 @@ public class ElasticConvertingContext {
 
     public Boolean isMinimumShouldMatchDefined() {
         return minimumShouldMatchDefined;
+    }
+
+    public Boolean getLine() {
+        return line;
+    }
+
+    public void setLine(Boolean line) {
+        this.line = line;
+    }
+
+    public Integer getWidth() {
+        return width;
+    }
+
+    public void setWidth(Integer width) {
+        this.width = width;
     }
 
     public Map<String, Object> getQueryProperties() {

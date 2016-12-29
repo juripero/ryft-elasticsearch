@@ -15,6 +15,8 @@ public class FuzzyQueryParameters extends QueryParameters<String> {
     protected Integer fuzziness = FUZZINESS_DEFAULT;
     protected RyftQueryComplex.RyftLogicalOperator operator = RyftQueryComplex.RyftLogicalOperator.OR;
     protected ElasticConvertingContext.ElasticSearchType searchType = ElasticConvertingContext.ElasticSearchType.MATCH_PHRASE;
+    protected Integer width;
+    protected Boolean line;
 
     public void setMetric(RyftFuzzyMetric metric) {
         this.metric = metric;
@@ -31,6 +33,13 @@ public class FuzzyQueryParameters extends QueryParameters<String> {
     public void setSearchType(ElasticConvertingContext.ElasticSearchType searchType) {
         this.searchType = searchType;
     }
+    public void setWidth(Integer width) {
+        this.width = width;
+    }
+
+    public void setLine(Boolean line) {
+        this.line = line;
+    }
 
     public RyftFuzzyMetric getMetric() {
         return metric;
@@ -46,6 +55,14 @@ public class FuzzyQueryParameters extends QueryParameters<String> {
 
     public ElasticConvertingContext.ElasticSearchType getSearchType() {
         return searchType;
+    }
+
+    public Integer getWidth() {
+        return width;
+    }
+
+    public Boolean getLine() {
+        return line;
     }
 
     @Override

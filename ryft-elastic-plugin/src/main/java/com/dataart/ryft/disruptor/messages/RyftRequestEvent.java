@@ -1,5 +1,7 @@
 package com.dataart.ryft.disruptor.messages;
 
+import com.dataart.ryft.elastic.converter.ElasticConversionCriticalException;
+import com.dataart.ryft.elastic.converter.ElasticConverterRyft.ElasticConverterFormat.RyftFormat;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.plugin.PropertiesProvider;
 import com.dataart.ryft.elastic.plugin.RyftProperties;
@@ -30,28 +32,49 @@ public class RyftRequestEvent extends InternalEvent {
         this.ryftProperties.putAll(ryftProperties);
     }
 
-    public String getRyftSearchUrl() throws UnsupportedEncodingException {
+    public String getRyftSearchUrl() throws ElasticConversionCriticalException {
+        validateRequest();
         StringBuilder sb = new StringBuilder("http://");
         sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
         sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
-        sb.append("/search?query=");
-        sb.append(URLEncoder.encode(query.buildRyftString(), "UTF-8"));
+        sb.append("/search?query=").append(getQueryString());
         getFilenames().stream().forEach((filename) -> {
             sb.append("&file=");
             sb.append(filename);
         });
         sb.append("&mode=es&local=true&stats=true");
-        sb.append("&format=").append(getFormat());
+        sb.append("&format=").append(getFormat().name().toLowerCase());
         sb.append("&limit=").append(getLimit());
         return sb.toString();
+    }
+
+    private void validateRequest() throws ElasticConversionCriticalException {
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
+                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
+            throw new ElasticConversionCriticalException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
+        }
+
+        if (isNonIndexedSearch()) {
+            if ((getFilenames() == null) || (getFilenames().isEmpty()))  {
+                throw new ElasticConversionCriticalException("File names should be defined for non indexed search.");
+            }
+        }
+    }
+
+    private String getQueryString() throws ElasticConversionCriticalException {
+        try {
+            return URLEncoder.encode(query.buildRyftString(), "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new ElasticConversionCriticalException(ex);
+        }
     }
 
     public int getLimit() {
         return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
     }
 
-    public String getFormat() {
-        return ryftProperties.getStr(PropertiesProvider.RYFT_FORMAT);
+    public RyftFormat getFormat() {
+        return (RyftFormat)ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
     }
 
     public String[] getIndex() {
@@ -83,7 +106,7 @@ public class RyftRequestEvent extends InternalEvent {
     }
 
     private List<String> getFilenames() {
-        if (!isIndexedSearch()) {
+        if (isNonIndexedSearch()) {
             return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
         }
         return Arrays.stream(index)
@@ -91,9 +114,17 @@ public class RyftRequestEvent extends InternalEvent {
                 .collect(Collectors.toList());
     }
 
-    private Boolean isIndexedSearch() {
-        return !(ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
-                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List));
+    private Boolean isNonIndexedSearch() {
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List)) {
+            return true;
+        } else if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.RAW)
+                    || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UTF8))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

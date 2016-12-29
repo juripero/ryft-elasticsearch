@@ -35,7 +35,9 @@ public class RyftQueryFactory {
                         fuzzyQueryParameters.getFieldName(),
                         fuzzyQueryParameters.getMetric(),
                         fuzzyQueryParameters.getFuzziness(),
-                        fuzzyQueryParameters.getRyftOperator());
+                        fuzzyQueryParameters.getRyftOperator(),
+                        fuzzyQueryParameters.getWidth(),
+                        fuzzyQueryParameters.getLine());
             case MATCH:
                 return buildQueryMatch(
                         fuzzyQueryParameters.getSearchValue(),
@@ -43,35 +45,54 @@ public class RyftQueryFactory {
                         fuzzyQueryParameters.getOperator(),
                         fuzzyQueryParameters.getMetric(),
                         fuzzyQueryParameters.getFuzziness(),
-                        fuzzyQueryParameters.getRyftOperator());
+                        fuzzyQueryParameters.getRyftOperator(),
+                        fuzzyQueryParameters.getWidth(),
+                        fuzzyQueryParameters.getLine());
             case MATCH_PHRASE:
                 return buildQueryMatchPhrase(
                         fuzzyQueryParameters.getSearchValue(),
                         fuzzyQueryParameters.getFieldName(),
                         fuzzyQueryParameters.getMetric(),
                         fuzzyQueryParameters.getFuzziness(),
-                        fuzzyQueryParameters.getRyftOperator());
+                        fuzzyQueryParameters.getRyftOperator(),
+                        fuzzyQueryParameters.getWidth(),
+                        fuzzyQueryParameters.getLine());
             case WILDCARD:
                 return buildQueryWildcard(
                         fuzzyQueryParameters.getSearchValue(),
                         fuzzyQueryParameters.getFieldName(),
-                        fuzzyQueryParameters.getRyftOperator());
+                        fuzzyQueryParameters.getRyftOperator(),
+                        fuzzyQueryParameters.getWidth(),
+                        fuzzyQueryParameters.getLine());
             default:
                 throw new ElasticConversionException("Unknown search type");
         }
     }
 
     private RyftQuery buildQueryMatchPhrase(String searchText, String fieldName,
-                                            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+                                            RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator,
+                                            Integer width, Boolean line) {
         RyftExpression ryftExpression;
         if (FUZZYNESS_AUTO_VALUE.equals(fuzziness)) {
             fuzziness = getFuzzinessAuto(searchText);
         }
         if (fuzziness == 0) {
-            ryftExpression = new RyftExpressionExactSearch(searchText);
+            if (line != null) {
+                ryftExpression = new RyftExpressionExactSearch(searchText, line);
+            } else if (width != null) {
+                ryftExpression = new RyftExpressionExactSearch(searchText, width);
+            } else {
+                ryftExpression = new RyftExpressionExactSearch(searchText);
+            }
         } else {
             fuzziness = adjustFuzziness(fuzziness, searchText);
-            ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
+            if (line != null) {
+                ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness, line);
+            } else if (width != null) {
+                ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness, width);
+            } else {
+                ryftExpression = new RyftExpressionFuzzySearch(searchText, metric, fuzziness);
+            }
         }
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
                 ryftOperator, ryftExpression);
@@ -79,15 +100,17 @@ public class RyftQueryFactory {
 
     private RyftQuery buildQueryMatch(String searchText, String fieldName,
                                       RyftLogicalOperator operator, RyftFuzzyMetric metric, Integer fuzziness,
-                                      RyftOperator ryftOperator) {
+                                      RyftOperator ryftOperator,
+                                      Integer width, Boolean line) {
         Collection<RyftQuery> operands = tokenize(searchText).stream()
-                .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator))
+                .map(searchToken -> buildQueryMatchPhrase(searchToken, fieldName, metric, fuzziness, ryftOperator, width, line))
                 .collect(Collectors.toList());
         return buildComplexQuery(operator, operands);
     }
 
     private RyftQuery buildQueryWildcard(String searchText, String fieldName,
-                                         RyftOperator ryftOperator) {
+                                         RyftOperator ryftOperator,
+                                         Integer width, Boolean line) {
         String searchTextFormatted = searchText.replace("?", "\"?\"");
         RyftExpression ryftExpression = new RyftExpressionExactSearch(searchTextFormatted);
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
@@ -95,10 +118,11 @@ public class RyftQueryFactory {
     }
 
     private RyftQuery buildQueryFuzzy(String searchText, String fieldName,
-                                      RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator) {
+                                      RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator,
+                                      Integer width, Boolean line) {
         String splitSearchText = tokenize(searchText).stream()
                 .collect(Collectors.joining());
-        return buildQueryMatchPhrase(splitSearchText, fieldName, metric, fuzziness, ryftOperator);
+        return buildQueryMatchPhrase(splitSearchText, fieldName, metric, fuzziness, ryftOperator, width, line);
     }
 
     public RyftQuery buildComplexQuery(RyftLogicalOperator operator, Collection<RyftQuery> operands) {

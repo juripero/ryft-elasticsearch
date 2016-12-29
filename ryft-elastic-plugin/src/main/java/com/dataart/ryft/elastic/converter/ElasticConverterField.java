@@ -7,9 +7,11 @@ import com.dataart.ryft.elastic.converter.ryftdsl.RyftQuery;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
 import com.dataart.ryft.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.dataart.ryft.utils.Try;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -98,6 +100,25 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         }
     }
 
+    public static class ElasticConverterWidth implements ElasticConvertingElement<Void> {
+
+        public static final String NAME = "width";
+
+        @Override
+        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return Try.apply(() -> {
+                Object width = ElasticConversionUtil.getObject(convertingContext);
+                if (width instanceof String && width.equals("line")) {
+                    convertingContext.setLine(true);
+                } else if (width instanceof Integer) {
+                    convertingContext.setWidth((Integer) width);
+                }
+                return null;
+            });
+        }
+    }
+
     static final String NAME = "field_name";
 
     private static final String ALL_FIELDS = "_all";
@@ -121,7 +142,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     }
 
     private RyftQuery convertFromObject(ElasticConvertingContext convertingContext,
-            Map<String, Object> fieldParametersMap) throws Exception {
+                                        Map<String, Object> fieldParametersMap) throws Exception {
         String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
         do {
             if (currentName.equals(ElasticConverterValue.NAME_ALTERNATIVE)) {
@@ -137,7 +158,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     }
 
     private RyftQuery convertFromString(ElasticConvertingContext convertingContext,
-            Map<String, Object> fieldParametersMap) throws Exception {
+                                        Map<String, Object> fieldParametersMap) throws Exception {
         String value = ElasticConversionUtil.getString(convertingContext);
         fieldParametersMap.put(ElasticConverterValue.NAME, value);
         return getRyftQuery(convertingContext, fieldParametersMap);
@@ -168,6 +189,13 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
             fieldParameters.setFieldName(fieldName);
         }
         fieldParameters.setSearchType(convertingContext.getSearchType());
+
+        if (convertingContext.getLine() != null) {
+            fieldParameters.setLine(convertingContext.getLine());
+        } else if (convertingContext.getWidth() != null) {
+            fieldParameters.setWidth(convertingContext.getWidth());
+        }
+
         fieldQueryMap.forEach((key, value) -> {
             switch (key) {
                 case ElasticConverterOperator.NAME:

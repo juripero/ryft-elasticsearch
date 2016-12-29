@@ -35,6 +35,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterFuzziness.NAME).to(ElasticConverterFuzziness.class);
         convertersBinder.addBinding(ElasticConverterOperator.NAME).to(ElasticConverterOperator.class);
         convertersBinder.addBinding(ElasticConverterType.NAME).to(ElasticConverterType.class);
+        convertersBinder.addBinding(ElasticConverterWidth.NAME).to(ElasticConverterWidth.class);
 
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
         convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);

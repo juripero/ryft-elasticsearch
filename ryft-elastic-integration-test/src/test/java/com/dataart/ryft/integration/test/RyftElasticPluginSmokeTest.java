@@ -403,21 +403,45 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @Test
     public void testWildcardMatch() throws InterruptedException, ExecutionException {
-        WildcardQueryBuilder builder = QueryBuilders.wildcardQuery("text_entry", "All the w?rlds a");
+        WildcardQueryBuilder builder = QueryBuilders.wildcardQuery("text_entry", "w?rlds");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();//
 
-        String elasticQuery = "{\n" +
+        String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"match_phrase\": {\n" +
-                "      \"text_entry\": \"All the w?rlds a\"\n" +
+                "      \"text_entry\": \"w\\\"?\\\"rlds\"\n" +
                 "    }\n" +
                 "  },\n" +
                 "  \"ryft_enabled\":true\n" +
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testRawTextSearch() throws InterruptedException, ExecutionException {
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match_phrase\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"Jones\",\n" +
+                "        \"fuzziness\": 1,\n" +
+                "        \"width\": \"line\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"passengers.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        assertResponse(ryftResponse);
+        assertTrue(ryftResponse.getHits().getHits().length > 0);
     }
 
     public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
