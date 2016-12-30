@@ -28,4 +28,9 @@ public class RyftQuerySimple implements RyftQuery {
         return new RyftQuerySimple(new RyftInputSpecifierRawText(), operator, expression);
     }
 
+    @Override
+    public RyftQuery toLineQuery() {
+        return new RyftQuerySimple(inputSpecifier, operator, expression.toLineExpression());
+    }
+
 }

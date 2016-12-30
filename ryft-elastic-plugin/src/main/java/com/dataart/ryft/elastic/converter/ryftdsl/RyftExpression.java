@@ -43,4 +43,5 @@ public abstract class RyftExpression implements RyftDslToken {
         }
     }
 
+    public abstract RyftExpression toLineExpression();
 }

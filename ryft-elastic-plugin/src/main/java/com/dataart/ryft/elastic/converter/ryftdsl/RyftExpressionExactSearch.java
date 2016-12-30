@@ -2,8 +2,11 @@ package com.dataart.ryft.elastic.converter.ryftdsl;
 
 public class RyftExpressionExactSearch extends RyftExpression {
 
+    private String searchString;
+
     private RyftExpressionExactSearch(String expressionName, String searchString) {
         super(expressionName, String.format("\"%s\"", searchString));
+        this.searchString = searchString;
     }
 
     public RyftExpressionExactSearch(String searchString) {
@@ -20,4 +23,8 @@ public class RyftExpressionExactSearch extends RyftExpression {
         this.line = line;
     }
 
+    @Override
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionExactSearch(searchString, true);
+    }
 }
