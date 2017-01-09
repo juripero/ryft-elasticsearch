@@ -51,13 +51,13 @@ public class RyftDslTest {
         RyftQuery query2 = new RyftQuerySimple(new RyftInputSpecifierRecord("test"),
                 NOT_CONTAINS, new RyftExpressionExactSearch("test2"));
         RyftQuery complexQuery1 = new RyftQueryComplex(query1, AND, query2);
-        assertEquals("((RAW_TEXT CONTAINS \"test1\") AND (RAW_TEXT NOT_CONTAINS \"test2\"))",
+        assertEquals("((RAW_TEXT CONTAINS ES(\"test1\", LINE=true)) AND (RAW_TEXT NOT_CONTAINS ES(\"test2\", LINE=true)))",
                 complexQuery1.toRawTextQuery().buildRyftString());
         RyftQuery complexQuery2 = new RyftQueryComplex(query1, OR, complexQuery1);
-        assertEquals("((RAW_TEXT CONTAINS \"test1\") OR ((RAW_TEXT CONTAINS \"test1\") AND (RAW_TEXT NOT_CONTAINS \"test2\")))",
+        assertEquals("((RAW_TEXT CONTAINS \"test1\") OR ((RAW_TEXT CONTAINS ES(\"test1\", LINE=true)) AND (RAW_TEXT NOT_CONTAINS ES(\"test2\", LINE=true))))",
                 complexQuery2.toRawTextQuery().buildRyftString());
         RyftQuery complexQuery3 = new RyftQueryComplex(complexQuery1, XOR, query2);
-        assertEquals("(((RAW_TEXT CONTAINS \"test1\") AND (RAW_TEXT NOT_CONTAINS \"test2\")) XOR (RAW_TEXT NOT_CONTAINS \"test2\"))",
+        assertEquals("(((RAW_TEXT CONTAINS ES(\"test1\", LINE=true)) AND (RAW_TEXT NOT_CONTAINS ES(\"test2\", LINE=true))) XOR (RAW_TEXT NOT_CONTAINS \"test2\"))",
                 complexQuery3.toRawTextQuery().buildRyftString());
     }
 }

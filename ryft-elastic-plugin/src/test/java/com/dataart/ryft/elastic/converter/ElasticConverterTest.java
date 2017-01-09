@@ -486,6 +486,33 @@ public class ElasticConverterTest {
                 "      \"_all\": {\n" +
                 "        \"query\": \"good mother\",\n" +
                 "        \"fuzziness\": 1,\n" +
+                "        \"width\": 30\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", WIDTH=30, DIST=1)) OR (RAW_TEXT CONTAINS FEDS(\"mother\", WIDTH=30, DIST=1)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RawTextMatchWithAndOperatorTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"match\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"good mother\",\n" +
+                "        \"fuzziness\": 1,\n" +
                 "        \"operator\": \"AND\",\n" +
                 "        \"width\": 30\n" +
                 "      }\n" +
@@ -502,7 +529,7 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
         assertNotNull(ryftRequest);
-        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", WIDTH=30, DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", WIDTH=30, DIST=1)))",
+        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", LINE=true, DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", LINE=true, DIST=1)))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
@@ -556,5 +583,70 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals("(RAW_TEXT CONTAINS \"m\"?\"ther\")",
                 ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RawTextComplexQueryTest() throws Exception {
+        String query = "{\n" +
+                "   \"query\" : {\n" +
+                "      \"filtered\" : {\n" +
+                "         \"query\" : {\n" +
+                "            \"bool\" : {\n" +
+                "               \"must\" : [\n" +
+                "                  {\n" +
+                "                     \"match_phrase\" : {\n" +
+                "                        \"first_name\" : \"mary jane\"\n" +
+                "                     }\n" +
+                "                  },\n" +
+                "                  {\n" +
+                "                     \"match_phrase\" : {\n" +
+                "                        \"last_name\" : \"smith\"\n" +
+                "                     }\n" +
+                "                  }\n" +
+                "               ]\n" +
+                "            }\n" +
+                "         },\n" +
+                "         \"ryft\": {\n" +
+                "           \"enabled\": true,\n" +
+                "           \"files\": [\"passengers.txt\"],\n" +
+                "           \"format\": \"utf8\"\n" +
+                "         }\n" +
+                "      }\n" +
+                "   }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context).getResultOrException();
+        assertNotNull(ryftRequest);
+        assertEquals("((RAW_TEXT CONTAINS ES(\"mary jane\", LINE=true)) AND (RAW_TEXT CONTAINS ES(\"smith\", LINE=true)))",
+                ryftRequest.getQuery().buildRyftString());
+
+        String query2 = "{\"query\": " +
+                "   {\"bool\": {" +
+                "       \"should\": [" +
+                "           {\"match_phrase\": {\"text_entry\": {\"query\":\"juliet\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, " +
+                "           {\"match_phrase\": {\"text_entry\": {\"query\":\"romeo\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, " +
+                "           {\"match_phrase\": {\"text_entry\": {\"query\":\"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], " +
+                "       \"must\": [" +
+                "           {\"fuzzy\": {\"text_entry\" : {\"value\": \"hamlet\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], " +
+                "       \"must_not\": [" +
+                "           {\"fuzzy\": {\"text_entry\" : {\"value\": \"love\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], " +
+                "       \"minimum_should_match\": 2}},\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"passengers.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }}";
+        BytesArray bytes2 = new BytesArray(query2);
+        XContentParser parser2 = XContentFactory.xContent(bytes).createParser(bytes2);
+        ElasticConvertingContext context2 = contextFactory.create(parser2, query2);
+        RyftRequestEvent ryftRequest2 = elasticConverter.convert(context2).getResultOrException();
+        assertNotNull(ryftRequest2);
+        assertEquals("((RAW_TEXT NOT_CONTAINS \"love\") AND (((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) " +
+                        "AND (RAW_TEXT CONTAINS ES(\"romeo\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) " +
+                        "AND (RAW_TEXT CONTAINS ES(\"knight\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"romeo\", LINE=true)) " +
+                        "AND (RAW_TEXT CONTAINS ES(\"knight\", LINE=true)))) AND (RAW_TEXT CONTAINS ES(\"hamlet\", LINE=true)))",
+                ryftRequest2.getQuery().buildRyftString());
     }
 }

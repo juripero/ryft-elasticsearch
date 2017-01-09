@@ -2,7 +2,7 @@
 
 ###Match query syntax:
 Full form:
-```javascript
+```json
 {
     "query": {
         "match": {
@@ -18,7 +18,7 @@ Full form:
 }
 ```
 Simplified form:
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -37,7 +37,7 @@ Simplified form:
 
 #####Simple fuzzy match query example:
 We are looking for speaker "MARCELLUS" with one mistake in his name 
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -55,7 +55,7 @@ Resulting RYFT query:
 (RECORD.speaker CONTAINS FHS("MRCELLUS", DIST=1))
 ```
 In the case when fuzziness equal 0 request translates to the exact search query.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -68,7 +68,7 @@ In the case when fuzziness equal 0 request translates to the exact search query.
 }
 ```
 The same in simplified form
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -83,7 +83,7 @@ Resulting RYFT query:
 ```
 We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'
 The query below would be divided in couple of queries with AND operator in between.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -106,7 +106,7 @@ Resulting RYFT query:
 (RECORD.text_entry CONTAINS FEDS("tht", DIST=1)))
 ```
 Phrase matching is different from simple match because it will try to find the whole phrase.
-```javascript
+```json
 {
     "query": {
         "match_phrase": {
@@ -120,7 +120,7 @@ Phrase matching is different from simple match because it will try to find the w
 ```
 As the result we will get only one result.
 User can rewrite ```match_phrase``` query as ```match``` query like:
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -138,7 +138,7 @@ Resulting RYFT query:
 (RECORD.text_entry CONTAINS FEDS("To be or not to be", DIST=3))
 ```
 Fuzzy search also possible to do in following way:
-```javascript
+```json
 {
     "query": {
         "fuzzy" : {
@@ -156,7 +156,7 @@ Resulting RYFT query:
 ```
 ###Search on all record fields
 It is possible to do search request on all record fields using keyword ```_all```.
-```javascript
+```json
 {
     "query": {
         "match_phrase" : {
@@ -172,7 +172,7 @@ Resulting RYFT query:
 ###Boolean query syntax:
 
 ```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
-```javascript
+```json
 {
   "query": {
     "bool" : {
@@ -186,7 +186,7 @@ Resulting RYFT query:
 ```
 
 #####Boolean query example:
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -216,7 +216,7 @@ Resulting RYFT query:
 ```
 Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
 Queries in section ```should``` are taken into account if no queries in other sections exists or defined ```minimum_should_match``` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -234,7 +234,7 @@ Resulting RYFT query:
 ```
 ((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy"))
 ```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -250,7 +250,7 @@ Resulting RYFT query:
 ```
 ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog"))
 ```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -270,7 +270,7 @@ Resulting RYFT query:
 ((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy") AND ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog")))
 ```
 We can control how many should clauses need to match by using the ```minimum_should_match```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -290,6 +290,81 @@ Resulting RYFT query:
 ((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "fox")) OR
 ((RECORD.title CONTAINS "fox") AND (RECORD.title CONTAINS "dog")))
 ```
+###Wildcard query syntax
+Wildcards are supported for wildcard term queries, and inside match and match_phrase queries. For both types, only the
+`?` symbol is supported. There is no support for the `*` symbol.
+
+#####Wildcards in match queries
+For wildcard search to work in match and match_phrase queries, the wildcard symbol should be escaped. If it is not 
+escaped, the it will be treated as a symbol to search for in the text.
+
+Match phrase: 
+```json
+{
+  "query": {
+    "match_phrase": {
+      "name": {
+        "query": "J\"?\"n\"?\" Doe",
+        "fuzziness": 1
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.name CONTAINS FEDS("J"?"n"?" Doe", DIST=1))
+```
+
+Match:
+```json
+{
+  "query": {
+    "match": {
+      "name": "J\"?\"n\"?\" Doe"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+((RECORD.name CONTAINS "J"?"n"?"") AND (RECORD.name CONTAINS "Doe"))
+```
+
+#####Wildcard term queries
+In wildcard term queries, the wildcard symbol can be used without escaping, it will still be treated as a wildcard.
+
+Full form:
+```json
+{
+  "query": {
+    "wildcard": {
+      "postcode": {
+        "value": "?Z99 ??Z"
+      }
+    }
+  }
+}
+```
+
+Simplified form:
+```json
+{
+  "query": {
+    "wildcard": {
+      "postcode": "?Z99 ??Z"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.postcode CONTAINS ""?"Z99 "??"Z")
+```
+
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
@@ -323,7 +398,7 @@ curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
 Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
 
 ```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -342,7 +417,7 @@ RYFT plugin able to perform record search on non-indexed json files. To do this 
 | enabled                             | The same as ```ryft_enabled```        |
 | files                               | List of files to search               |
 | format                              | Input data format                     |
-```javascript
+```json
 {
     "query": {
         "match": {"Description": "vehicle"}
@@ -363,7 +438,7 @@ http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=c
 ```
 Example to do fuzzy search on non indexed files:
 
-```javascript
+```json
 {
     "query": {
          "match_phrase": {
@@ -387,3 +462,37 @@ Such search query produce following request to RYFT:
 ```
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 ```
+###Raw text search
+RAW_TEXT search allows searching in unstructured and unindexed text data. 
+
+For RAW_TEXT search, the "format" parameter should be either “raw” or “utf8”. Name of field to search can be any string,
+because its value is ignored (“_all” is preferred). RAW_TEXT search supports all implemented types of term search.
+
+Example query:
+```json
+{
+  "query": {
+    "match": {
+      "_all": {
+        "query": "lorem ipsum",
+        "fuzziness": 1,
+        "width": 30
+      }
+    }
+  },
+  "ryft": {
+    "enabled": true,
+    "files": ["loremipsum.txt"],
+    "format": "utf8"
+  }
+}
+```
+Resulting RYFT query:
+```
+((RAW_TEXT CONTAINS FEDS("lorem", WIDTH=30, DIST=1)) OR (RAW_TEXT CONTAINS FEDS("ipsum", WIDTH=30, DIST=1)))
+```
+
+Parameter “width” contains number of surrounding symbols or value “line”. Default value of “width” is 0.
+
+In order for RAW_TEXT search to properly work with the `AND` operator, the "width" has to be "line". If the "width" is
+different, it will be automatically converted to "line".

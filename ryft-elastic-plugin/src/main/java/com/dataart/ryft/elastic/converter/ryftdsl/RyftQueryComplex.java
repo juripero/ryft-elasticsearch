@@ -45,7 +45,21 @@ public class RyftQueryComplex implements RyftQuery {
 
     @Override
     public RyftQuery toRawTextQuery() {
-        return new RyftQueryComplex(operator, operands.stream().map(ryftQuery -> ryftQuery.toRawTextQuery()).collect(Collectors.toList()));
+        //For raw_text search, there is an extra constraint: if the operator is AND, LINE must be true. Check and apply
+        //transformations if required.
+        if (operator.equals(RyftLogicalOperator.AND)) {
+            return new RyftQueryComplex(operator, operands.stream().map(ryftQuery -> ryftQuery.toRawTextQuery().toLineQuery()).collect(Collectors.toList()));
+        } else {
+            return new RyftQueryComplex(operator, operands.stream().map(RyftQuery::toRawTextQuery).collect(Collectors.toList()));
+        }
+    }
+
+    @Override
+    public RyftQuery toLineQuery() {
+        if (operator.equals(RyftLogicalOperator.AND)) {
+            return new RyftQueryComplex(operator, operands.stream().map(RyftQuery::toLineQuery).collect(Collectors.toList()));
+        }
+        return this;
     }
 
     @Override

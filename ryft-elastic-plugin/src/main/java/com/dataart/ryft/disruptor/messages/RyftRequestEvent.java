@@ -34,18 +34,19 @@ public class RyftRequestEvent extends InternalEvent {
 
     public String getRyftSearchUrl() throws ElasticConversionCriticalException {
         validateRequest();
-        StringBuilder sb = new StringBuilder("http://");
-        sb.append(ryftProperties.getStr(PropertiesProvider.HOST)).append(":");
-        sb.append(ryftProperties.getStr(PropertiesProvider.PORT));
-        sb.append("/search?query=").append(getQueryString());
-        getFilenames().stream().forEach((filename) -> {
-            sb.append("&file=");
-            sb.append(filename);
-        });
-        sb.append("&mode=es&local=true&stats=true");
-        sb.append("&format=").append(getFormat().name().toLowerCase());
-        sb.append("&limit=").append(getLimit());
-        return sb.toString();
+        String fileNames = "";
+        for (String filename : getFilenames()) {
+            fileNames += "&file=" + filename;
+        }
+
+        return "http://"
+                + ryftProperties.getStr(PropertiesProvider.HOST) + ":"
+                + ryftProperties.getStr(PropertiesProvider.PORT)
+                + "/search?query=" + getQueryString()
+                + fileNames
+                + "&mode=es&local=true&stats=true"
+                + "&format=" + getFormat().name().toLowerCase()
+                + "&limit=" + getLimit();
     }
 
     private void validateRequest() throws ElasticConversionCriticalException {

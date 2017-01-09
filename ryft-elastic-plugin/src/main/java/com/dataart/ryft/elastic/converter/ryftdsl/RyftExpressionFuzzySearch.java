@@ -14,6 +14,8 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
     }
 
     private Integer distance = null;
+    private String searchString;
+    private RyftFuzzyMetric metric;
 
     public RyftExpressionFuzzySearch(String searchString, RyftFuzzyMetric metric, Integer distance, Boolean line) {
         this(searchString, metric, distance);
@@ -27,6 +29,8 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
 
     public RyftExpressionFuzzySearch(String searchString, RyftFuzzyMetric metric, Integer distance) {
         super(metric.buildRyftString(), String.format("\"%s\"", searchString));
+        this.searchString = searchString;
+        this.metric = metric;
         this.distance = distance;
     }
 
@@ -35,6 +39,11 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
         List<String> result = super.getParameters();
         result.add(String.format("DIST=%d", distance));
         return result;
+    }
+
+    @Override
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionFuzzySearch(searchString, metric, distance, true);
     }
 
 }
