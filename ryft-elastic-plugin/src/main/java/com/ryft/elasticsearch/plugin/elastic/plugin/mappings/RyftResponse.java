@@ -16,19 +16,22 @@ public class RyftResponse {
 
     private String[] errors;
 
+    private String message;
+
     public RyftResponse() {
         // TODO Auto-generated constructor stub
     }
 
     @JsonCreator
     public RyftResponse(@JsonProperty("results") ArrayList<ObjectNode> results,//
-            @JsonProperty("stats") RyftStats stats, //
-            @JsonProperty("errors") String[] errors) {
+                        @JsonProperty("stats") RyftStats stats, //
+                        @JsonProperty("errors") String[] errors,
+                        @JsonProperty("message") String message) {
         super();
         this.results = results;
         this.stats = stats;
         this.errors = errors;
-
+        this.message = message;
     }
 
     @JsonProperty("results")
@@ -51,6 +54,11 @@ public class RyftResponse {
 
     public void setStats(RyftStats stats) {
         this.stats = stats;
+    }
+
+    @JsonProperty("message")
+    public String getMessage() {
+        return message;
     }
 
     @Override
