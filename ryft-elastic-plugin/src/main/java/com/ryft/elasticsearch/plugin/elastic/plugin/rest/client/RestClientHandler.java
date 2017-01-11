@@ -77,7 +77,7 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         try {
             // Ugly construction because of SecurityManager used by ES
-            RyftResponse results = (RyftResponse) AccessController.doPrivileged(//
+            RyftResponse ryftResponse = (RyftResponse) AccessController.doPrivileged(//
                     (PrivilegedAction) () -> {
                         ByteBuf accumulator = NettyUtils.getAttribute(ctx, ACCUMULATOR_ATTR);
                         RyftResponse res = null;
@@ -93,18 +93,18 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                         return res;
                     });
 
-            if (results == null) {
+            if (ryftResponse == null) {
                 NettyUtils.getAttribute(ctx, REQUEST_EVENT_ATTR).getCallback()
                         .onFailure(new RyftRestExeption("EMPTY response"));
                 return;
-            } else if (results.getResults() == null) {
+            } else if (ryftResponse.getResults() == null) {
                 NettyUtils.getAttribute(ctx, REQUEST_EVENT_ATTR).getCallback()
-                        .onFailure(new RyftRestExeption("Server error, could not complete search"));
+                        .onFailure(new RyftRestExeption("Server error - invalid search query"));
                 return;
             }
 
-            if (results.getErrors() != null) {
-                String[] fails = results.getErrors();
+            if (ryftResponse.getErrors() != null) {
+                String[] fails = ryftResponse.getErrors();
                 List<ShardSearchFailure> failures = new ArrayList<ShardSearchFailure>();
 
                 for (String failure : fails) {
@@ -115,9 +115,9 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                 NettyUtils.getAttribute(ctx, REQUEST_EVENT_ATTR).getCallback().onResponse(response);
                 return;
             }
-            logger.trace("Response has been parsed channel will be closed. Response: {}", results);
+            logger.trace("Response has been parsed channel will be closed. Response: {}", ryftResponse);
             List<InternalSearchHit> searchHits = new ArrayList<InternalSearchHit>();
-            results.getResults().forEach(
+            ryftResponse.getResults().forEach(
                     hit -> {
                         ObjectNode hitObj = (ObjectNode) hit;
                         String uid = hitObj.has("_uid") ? hitObj.get("_uid").asText() : UUID.randomUUID().toString();
@@ -127,7 +127,7 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                                 ImmutableMap.of());
                         // TODO: [imasternoy] change index name
                         String[] indexes = new String[]{"tempIndex"};
-                        searchHit.shard(new SearchShardTarget(results.getStats().getHost(), Arrays.toString(NettyUtils
+                        searchHit.shard(new SearchShardTarget(ryftResponse.getStats().getHost(), Arrays.toString(NettyUtils
                                 .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex() == null ? indexes : NettyUtils
                                         .getAttribute(ctx, REQUEST_EVENT_ATTR).getIndex()), 0));
 
@@ -142,9 +142,9 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                     });
             
             long totalHits = 0l;
-            if(results.getStats() != null){
-                if(results.getStats().getMatches() != null){
-                    totalHits = results.getStats().getMatches();
+            if(ryftResponse.getStats() != null){
+                if(ryftResponse.getStats().getMatches() != null){
+                    totalHits = ryftResponse.getStats().getMatches();
                 }
             }
             
