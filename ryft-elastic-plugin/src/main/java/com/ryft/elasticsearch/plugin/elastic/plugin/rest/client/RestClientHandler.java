@@ -97,6 +97,10 @@ public class RestClientHandler extends SimpleChannelInboundHandler<Object> {
                 NettyUtils.getAttribute(ctx, REQUEST_EVENT_ATTR).getCallback()
                         .onFailure(new RyftRestExeption("EMPTY response"));
                 return;
+            } else if (results.getResults() == null) {
+                NettyUtils.getAttribute(ctx, REQUEST_EVENT_ATTR).getCallback()
+                        .onFailure(new RyftRestExeption("Server error, could not complete search"));
+                return;
             }
 
             if (results.getErrors() != null) {
