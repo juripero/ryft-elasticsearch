@@ -37,6 +37,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     // Query properties
     public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
     public static final String RYFT_FORMAT = "ryft_format";
+    public static final String RYFT_CASE_SENSITIVE = "ryft_case_sensitive";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();
@@ -54,6 +55,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RESP_THREAD_NUM, "2");
         defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRt  aW4=");
         defaults.put(RYFT_FORMAT, ElasticConverterRyft.ElasticConverterFormat.RyftFormat.JSON);
+        defaults.put(RYFT_CASE_SENSITIVE, "false");
 
         props = new RyftProperties();
         props.putAll(defaults);

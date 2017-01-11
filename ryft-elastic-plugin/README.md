@@ -409,8 +409,19 @@ Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK fol
     "size": 100
 }
 ```
+
+#####Case sensitivity
+By default, search is not case-sensitive. To configure this setting, the ```ryft``` property should be used. 
+The following configuration parameters should be present:
+
+| Parameter                           | Meaning                                      |
+|-------------------------------------|----------------------------------------------|
+| enabled                             | The same as ```ryft_enabled```               |
+| case_sensitive                      | Should search be case-sensitive?(true/false) |
+
 ###Search on non-indexed files
-RYFT plugin able to perform record search on non-indexed json files. To do this ```ryft``` property should be used. It accepts object with configuration parameters.
+RYFT plugin is able to perform record search on non-indexed files. To do this ```ryft``` property should be used. 
+The following configuration parameters should be present:
 
 | Parameter                           | Meaning                               |
 |-------------------------------------|---------------------------------------|

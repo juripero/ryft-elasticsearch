@@ -45,6 +45,7 @@ public class RyftRequestEvent extends InternalEvent {
                 + "/search?query=" + getQueryString()
                 + fileNames
                 + "&mode=es&local=true&stats=true"
+                + "&cs=" + getCaseSensitive()
                 + "&format=" + getFormat().name().toLowerCase()
                 + "&limit=" + getLimit();
     }
@@ -76,6 +77,10 @@ public class RyftRequestEvent extends InternalEvent {
 
     public RyftFormat getFormat() {
         return (RyftFormat)ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
+    }
+
+    public boolean getCaseSensitive() {
+        return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
     public String[] getIndex() {
