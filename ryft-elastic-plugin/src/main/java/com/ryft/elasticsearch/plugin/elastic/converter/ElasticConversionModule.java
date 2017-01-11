@@ -43,6 +43,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterEnabled.NAME).to(ElasticConverterEnabled.class);
         convertersBinder.addBinding(ElasticConverterFiles.NAME).to(ElasticConverterFiles.class);
         convertersBinder.addBinding(ElasticConverterFormat.NAME).to(ElasticConverterFormat.class);
+        convertersBinder.addBinding(ElasticConverterCaseSensitive.NAME).to(ElasticConverterCaseSensitive.class);
 
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
 

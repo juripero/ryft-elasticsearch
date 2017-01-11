@@ -68,6 +68,21 @@ public class ElasticConverterRyft implements ElasticConvertingElement<Void> {
         }
     }
 
+    public static class ElasticConverterCaseSensitive implements ElasticConvertingElement<Void> {
+
+        static final String NAME = "case_sensitive";
+
+        @Override
+        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return Try.apply(() -> {
+                Boolean isCaseSensitive = ElasticConversionUtil.getBoolean(convertingContext);
+                convertingContext.getQueryProperties().put(RYFT_CASE_SENSITIVE, isCaseSensitive);
+                return null;
+            });
+        }
+    }
+
     @Override
     public Try<Void> convert(ElasticConvertingContext convertingContext) {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
