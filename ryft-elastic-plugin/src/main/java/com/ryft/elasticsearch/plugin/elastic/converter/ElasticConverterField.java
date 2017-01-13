@@ -6,7 +6,6 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionFuz
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
-import com.ryft.elasticsearch.plugin.utils.Try;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,12 +25,17 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         private static final String NAME_ALTERNATIVE = "query";
 
+//        @Override
+//        public Try<String> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                return ElasticConversionUtil.getString(convertingContext);
+//            });
+//        }
         @Override
-        public Try<String> convert(ElasticConvertingContext convertingContext) {
+        public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                return ElasticConversionUtil.getString(convertingContext);
-            });
+            return ElasticConversionUtil.getString(convertingContext);
         }
     }
 
@@ -39,12 +43,17 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "metric";
 
+//        @Override
+//        public Try<RyftFuzzyMetric> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                return ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class);
+//            });
+//        }
         @Override
-        public Try<RyftFuzzyMetric> convert(ElasticConvertingContext convertingContext) {
+        public RyftFuzzyMetric convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                return ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class);
-            });
+            return ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class);
         }
     }
 
@@ -53,17 +62,27 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         public static final String NAME = "fuzziness";
         private final String VALUE_FUZZINESS_AUTO = "auto";
 
+//        @Override
+//        public Try<Integer> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                String fuzziness = ElasticConversionUtil.getString(convertingContext);
+//                if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
+//                    return RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
+//                } else {
+//                    return ElasticConversionUtil.getInteger(convertingContext);
+//                }
+//            });
+//        }
         @Override
-        public Try<Integer> convert(ElasticConvertingContext convertingContext) {
+        public Integer convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                String fuzziness = ElasticConversionUtil.getString(convertingContext);
-                if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
-                    return RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
-                } else {
-                    return ElasticConversionUtil.getInteger(convertingContext);
-                }
-            });
+            String fuzziness = ElasticConversionUtil.getString(convertingContext);
+            if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
+                return RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
+            } else {
+                return ElasticConversionUtil.getInteger(convertingContext);
+            }
         }
     }
 
@@ -71,12 +90,17 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "operator";
 
+//        @Override
+//        public Try<RyftLogicalOperator> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                return ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
+//            });
+//        }
         @Override
-        public Try<RyftLogicalOperator> convert(ElasticConvertingContext convertingContext) {
+        public RyftLogicalOperator convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                return ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
-            });
+            return ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
         }
     }
 
@@ -86,17 +110,28 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         private final String TYPE_PHRASE = "phrase";
 
+//        @Override
+//        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                String type = ElasticConversionUtil.getString(convertingContext);
+//                if (TYPE_PHRASE.equals(type.toLowerCase())
+//                        && ElasticSearchType.MATCH.equals(convertingContext.getSearchType())) {
+//                    convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
+//                }
+//                return null;
+//            });
+//        }
         @Override
-        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+        public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                String type = ElasticConversionUtil.getString(convertingContext);
-                if (TYPE_PHRASE.equals(type.toLowerCase())
-                        && ElasticSearchType.MATCH.equals(convertingContext.getSearchType())) {
-                    convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
-                }
-                return null;
-            });
+            String type = ElasticConversionUtil.getString(convertingContext);
+            if (TYPE_PHRASE.equals(type.toLowerCase())
+                    && ElasticSearchType.MATCH.equals(convertingContext.getSearchType())) {
+                convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
+            }
+            return null;
+
         }
     }
 
@@ -104,18 +139,29 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "width";
 
+//        @Override
+//        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+//            return Try.apply(() -> {
+//                Object width = ElasticConversionUtil.getObject(convertingContext);
+//                if (width instanceof String && width.equals("line")) {
+//                    convertingContext.setLine(true);
+//                } else if (width instanceof Integer) {
+//                    convertingContext.setWidth((Integer) width);
+//                }
+//                return null;
+//            });
+//        }
         @Override
-        public Try<Void> convert(ElasticConvertingContext convertingContext) {
+        public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return Try.apply(() -> {
-                Object width = ElasticConversionUtil.getObject(convertingContext);
-                if (width instanceof String && width.equals("line")) {
-                    convertingContext.setLine(true);
-                } else if (width instanceof Integer) {
-                    convertingContext.setWidth((Integer) width);
-                }
-                return null;
-            });
+            Object width = ElasticConversionUtil.getObject(convertingContext);
+            if (width instanceof String && width.equals("line")) {
+                convertingContext.setLine(true);
+            } else if (width instanceof Integer) {
+                convertingContext.setWidth((Integer) width);
+            }
+            return null;
         }
     }
 
@@ -123,34 +169,52 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
     private static final String ALL_FIELDS = "_all";
 
+//    @Override
+//    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+//        LOGGER.debug("Start field primitive parsing");
+//        return Try.apply(() -> {
+//            XContentParser parser = convertingContext.getContentParser();
+//            parser.nextToken();
+//            Map<String, Object> fieldParametersMap = new HashMap<>();
+//            switch (parser.currentToken()) {
+//                case START_OBJECT:
+//                    return convertFromObject(convertingContext, fieldParametersMap);
+//                case VALUE_STRING:
+//                    return convertFromString(convertingContext, fieldParametersMap);
+//                default:
+//                    throw new ElasticConversionException("Request parsing error");
+//            }
+//        });
+//    }
     @Override
-    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
+    public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug("Start field primitive parsing");
-        return Try.apply(() -> {
-            XContentParser parser = convertingContext.getContentParser();
+        XContentParser parser = convertingContext.getContentParser();
+        try {
             parser.nextToken();
-            Map<String, Object> fieldParametersMap = new HashMap<>();
-            switch (parser.currentToken()) {
-                case START_OBJECT:
-                    return convertFromObject(convertingContext, fieldParametersMap);
-                case VALUE_STRING:
-                    return convertFromString(convertingContext, fieldParametersMap);
-                default:
-                    throw new ElasticConversionException("Request parsing error");
-            }
-        });
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Request parsing error");
+        }
+        Map<String, Object> fieldParametersMap = new HashMap<>();
+        switch (parser.currentToken()) {
+            case START_OBJECT:
+                return convertFromObject(convertingContext, fieldParametersMap);
+            case VALUE_STRING:
+                return convertFromString(convertingContext, fieldParametersMap);
+            default:
+                throw new ElasticConversionException("Request parsing error");
+        }
     }
 
     private RyftQuery convertFromObject(ElasticConvertingContext convertingContext,
-                                        Map<String, Object> fieldParametersMap) throws Exception {
+            Map<String, Object> fieldParametersMap) throws ElasticConversionException {
         String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
         do {
             if (currentName.equals(ElasticConverterValue.NAME_ALTERNATIVE)) {
                 currentName = ElasticConverterValue.NAME;
             }
             Object parameterValue = convertingContext.getElasticConverter(currentName)
-                    .map(converter -> converter.convert(convertingContext).getResultOrException())
-                    .getResultOrException();
+                    .convert(convertingContext);
             fieldParametersMap.put(currentName, parameterValue);
             currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
         } while (!XContentParser.Token.END_OBJECT.equals(convertingContext.getContentParser().currentToken()));
@@ -158,13 +222,13 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
     }
 
     private RyftQuery convertFromString(ElasticConvertingContext convertingContext,
-                                        Map<String, Object> fieldParametersMap) throws Exception {
+            Map<String, Object> fieldParametersMap) throws ElasticConversionException {
         String value = ElasticConversionUtil.getString(convertingContext);
         fieldParametersMap.put(ElasticConverterValue.NAME, value);
         return getRyftQuery(convertingContext, fieldParametersMap);
     }
 
-    private RyftQuery getRyftQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws IOException, ElasticConversionException {
+    private RyftQuery getRyftQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws ElasticConversionException {
         if (fieldQueryMap.containsKey(ElasticConverterMetric.NAME)
                 || fieldQueryMap.containsKey(ElasticConverterFuzziness.NAME)
                 || ElasticConvertingContext.ElasticSearchType.FUZZY.equals(convertingContext.getSearchType())) {
@@ -181,37 +245,43 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         }
     }
 
-    private RyftQuery getRyftFuzzyQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws IOException, ElasticConversionException {
-        FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
-        fieldParameters.setRyftOperator(convertingContext.getRyftOperator());
-        String fieldName = convertingContext.getContentParser().currentName();
-        if (!fieldName.equals(ALL_FIELDS)) {
-            fieldParameters.setFieldName(fieldName);
-        }
-        fieldParameters.setSearchType(convertingContext.getSearchType());
-
-        if (convertingContext.getLine() != null) {
-            fieldParameters.setLine(convertingContext.getLine());
-        } else if (convertingContext.getWidth() != null) {
-            fieldParameters.setWidth(convertingContext.getWidth());
-        }
-
-        fieldQueryMap.forEach((key, value) -> {
-            switch (key) {
-                case ElasticConverterOperator.NAME:
-                    fieldParameters.setOperator((RyftLogicalOperator) value);
-                    break;
-                case ElasticConverterFuzziness.NAME:
-                    fieldParameters.setFuzziness((Integer) value);
-                    break;
-                case ElasticConverterMetric.NAME:
-                    fieldParameters.setMetric((RyftFuzzyMetric) value);
-                    break;
-                case ElasticConverterValue.NAME:
-                    fieldParameters.setSearchValue((String) value);
-                    break;
+    private RyftQuery getRyftFuzzyQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws ElasticConversionException {
+        try {
+            FuzzyQueryParameters fieldParameters = new FuzzyQueryParameters();
+            fieldParameters.setRyftOperator(convertingContext.getRyftOperator());
+            String fieldName = convertingContext.getContentParser().currentName();
+            if (!fieldName.equals(ALL_FIELDS)) {
+                fieldParameters.setFieldName(fieldName);
             }
-        });
-        return convertingContext.getQueryFactory().buildFuzzyQuery(fieldParameters);
+            fieldParameters.setSearchType(convertingContext.getSearchType());
+            
+            if (convertingContext.getLine() != null) {
+                fieldParameters.setLine(convertingContext.getLine());
+            } else if (convertingContext.getWidth() != null) {
+                fieldParameters.setWidth(convertingContext.getWidth());
+            }
+            
+            for (Map.Entry<String, Object> entry : fieldQueryMap.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                switch (key) {
+                    case ElasticConverterOperator.NAME:
+                        fieldParameters.setOperator((RyftLogicalOperator) value);
+                        break;
+                    case ElasticConverterFuzziness.NAME:
+                        fieldParameters.setFuzziness((Integer) value);
+                        break;
+                    case ElasticConverterMetric.NAME:
+                        fieldParameters.setMetric((RyftFuzzyMetric) value);
+                        break;
+                    case ElasticConverterValue.NAME:
+                        fieldParameters.setSearchValue((String) value);
+                        break;
+                }
+            }
+            return convertingContext.getQueryFactory().buildFuzzyQuery(fieldParameters);
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Request parsing error");
+        }
     }
 }

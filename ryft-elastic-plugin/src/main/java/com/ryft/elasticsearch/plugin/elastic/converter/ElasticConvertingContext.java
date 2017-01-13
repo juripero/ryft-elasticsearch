@@ -2,7 +2,6 @@ package com.ryft.elasticsearch.plugin.elastic.converter;
 
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
-import com.ryft.elasticsearch.plugin.utils.Try;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,16 +50,14 @@ public class ElasticConvertingContext {
         return contentParser;
     }
 
-    public Try<ElasticConvertingElement> getElasticConverter(String name) {
-        return Try.apply(() -> {
-            ElasticConvertingElement result = elasticConverters.get(name);
-            if (result == null) {
-                LOGGER.debug("Failed to find appropriate converter for token: '{}'", name);
-                result = elasticConverters.get(ElasticConverterUnknown.NAME);
-            }
-            LOGGER.debug("Return converter {}", result.getClass().getSimpleName());
-            return result;
-        });
+    public ElasticConvertingElement getElasticConverter(String name) {
+        ElasticConvertingElement result = elasticConverters.get(name);
+        if (result == null) {
+            LOGGER.debug("Failed to find appropriate converter for token: '{}'", name);
+            result = elasticConverters.get(ElasticConverterUnknown.NAME);
+        }
+        LOGGER.debug("Return converter {}", result.getClass().getSimpleName());
+        return result;
     }
 
     public String getOriginalQuery() {
