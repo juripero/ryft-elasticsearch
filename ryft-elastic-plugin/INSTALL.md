@@ -85,7 +85,7 @@ For these type of files folowing RDF should be created and installed via Ryft AP
 data_type = "JSON";
 rdf_name = "Elasticsearch index RDF"
 chunk_size_mb = 64;
-file_glob = "*.*json";
+file_glob = "*.*jsonfld";
 record_path = ".";
  ```
 
