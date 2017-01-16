@@ -11,17 +11,6 @@ public class ElasticConverterMatchPhrase implements ElasticConvertingElement<Ryf
 
     final static String NAME = "match_phrase";
 
-//    @Override
-//    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
-//        LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//        return Try.apply(() -> {
-//            convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
-//            ElasticConvertingElement<RyftQuery> converter = 
-//                    convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
-//            return ElasticConversionUtil.getObject(convertingContext, converter);
-//        });
-//    }
-
     @Override
     public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));

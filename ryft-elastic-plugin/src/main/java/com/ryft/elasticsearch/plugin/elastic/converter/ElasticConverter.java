@@ -36,37 +36,6 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         mapper.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
     }
 
-//    @Override
-//    public Try<RyftRequestEvent> convert(ElasticConvertingContext convertingContext) {
-//        LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());
-//        return Try.apply(() -> {
-//            String currentName;
-//            convertingContext.getContentParser().nextToken();
-//            RyftQuery ryftQuery = null;
-//            do {
-//                currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-//                if ((currentName != null) && (!ElasticConversionUtil.isClosePrimitive(convertingContext))) {
-//                    Object conversionResult = convertingContext.getElasticConverter(currentName)
-//                            .map(converter -> converter.convert(convertingContext).getResultOrException())
-//                            .getResultOrException();
-//                    if (conversionResult instanceof RyftQuery) {
-//                        ryftQuery = (RyftQuery) conversionResult;
-//                    }
-//                }
-//            } while (convertingContext.getContentParser().currentToken() != null);
-//            if (ryftQuery == null) {
-//                return null;
-//            }
-//
-//            RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
-//
-//            if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
-//                ryftQuery = ryftQuery.toRawTextQuery();
-//            }
-//
-//            return getRyftRequestEvent(convertingContext, ryftQuery);
-//        });
-//    }
     @Override
     public RyftRequestEvent convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());

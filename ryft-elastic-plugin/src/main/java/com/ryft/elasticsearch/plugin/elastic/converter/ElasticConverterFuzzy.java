@@ -11,16 +11,6 @@ public class ElasticConverterFuzzy implements ElasticConvertingElement {
 
     final static String NAME = "fuzzy";
 
-//    @Override
-//    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
-//        LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//        return Try.apply(() -> {
-//            convertingContext.setSearchType(ElasticSearchType.FUZZY);
-//            ElasticConvertingElement<RyftQuery> converter = 
-//                    convertingContext.getElasticConverter(ElasticConverterField.NAME).getResultOrException();
-//            return ElasticConversionUtil.getObject(convertingContext, converter);
-//        });
-//    }
     @Override
     public Object convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));

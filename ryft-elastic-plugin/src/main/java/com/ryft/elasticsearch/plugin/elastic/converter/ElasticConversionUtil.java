@@ -72,7 +72,7 @@ public abstract class ElasticConversionUtil {
                 case VALUE_BOOLEAN:
                     return (T) getBoolean(convertingContext);
             }
-        } catch (Exception ex) {
+        } catch (IOException | ElasticConversionException ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
         throw new ElasticConversionException("Can not extract object.");
@@ -88,7 +88,7 @@ public abstract class ElasticConversionUtil {
             T result = converter.convert(convertingContext);
             parser.nextToken();
             return result;
-        } catch (Exception ex) {
+        } catch (IOException | ElasticConversionException ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
     }

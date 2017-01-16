@@ -10,17 +10,6 @@ public class ElasticConverterQuery implements ElasticConvertingElement<RyftQuery
 
     static final String NAME = "query";
 
-//    @Override
-//    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
-//        LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//        return Try.apply(() -> {
-//            String currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-//            return convertingContext.getElasticConverter(currentName)
-//                    .map(converter -> (RyftQuery) converter.convert(convertingContext).getResultOrException())
-//                    .getResultOrException();
-//        });
-//    }
-
     @Override
     public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));

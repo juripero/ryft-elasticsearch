@@ -25,13 +25,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         private static final String NAME_ALTERNATIVE = "query";
 
-//        @Override
-//        public Try<String> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                return ElasticConversionUtil.getString(convertingContext);
-//            });
-//        }
         @Override
         public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -43,13 +36,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "metric";
 
-//        @Override
-//        public Try<RyftFuzzyMetric> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                return ElasticConversionUtil.getEnum(convertingContext, RyftFuzzyMetric.class);
-//            });
-//        }
         @Override
         public RyftFuzzyMetric convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -62,18 +48,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         public static final String NAME = "fuzziness";
         private final String VALUE_FUZZINESS_AUTO = "auto";
 
-//        @Override
-//        public Try<Integer> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                String fuzziness = ElasticConversionUtil.getString(convertingContext);
-//                if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
-//                    return RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
-//                } else {
-//                    return ElasticConversionUtil.getInteger(convertingContext);
-//                }
-//            });
-//        }
         @Override
         public Integer convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -90,13 +64,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "operator";
 
-//        @Override
-//        public Try<RyftLogicalOperator> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                return ElasticConversionUtil.getEnum(convertingContext, RyftLogicalOperator.class);
-//            });
-//        }
         @Override
         public RyftLogicalOperator convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -110,18 +77,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         private final String TYPE_PHRASE = "phrase";
 
-//        @Override
-//        public Try<Void> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                String type = ElasticConversionUtil.getString(convertingContext);
-//                if (TYPE_PHRASE.equals(type.toLowerCase())
-//                        && ElasticSearchType.MATCH.equals(convertingContext.getSearchType())) {
-//                    convertingContext.setSearchType(ElasticSearchType.MATCH_PHRASE);
-//                }
-//                return null;
-//            });
-//        }
         @Override
         public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -139,19 +94,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
         public static final String NAME = "width";
 
-//        @Override
-//        public Try<Void> convert(ElasticConvertingContext convertingContext) {
-//            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-//            return Try.apply(() -> {
-//                Object width = ElasticConversionUtil.getObject(convertingContext);
-//                if (width instanceof String && width.equals("line")) {
-//                    convertingContext.setLine(true);
-//                } else if (width instanceof Integer) {
-//                    convertingContext.setWidth((Integer) width);
-//                }
-//                return null;
-//            });
-//        }
         @Override
         public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
@@ -169,23 +111,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
 
     private static final String ALL_FIELDS = "_all";
 
-//    @Override
-//    public Try<RyftQuery> convert(ElasticConvertingContext convertingContext) {
-//        LOGGER.debug("Start field primitive parsing");
-//        return Try.apply(() -> {
-//            XContentParser parser = convertingContext.getContentParser();
-//            parser.nextToken();
-//            Map<String, Object> fieldParametersMap = new HashMap<>();
-//            switch (parser.currentToken()) {
-//                case START_OBJECT:
-//                    return convertFromObject(convertingContext, fieldParametersMap);
-//                case VALUE_STRING:
-//                    return convertFromString(convertingContext, fieldParametersMap);
-//                default:
-//                    throw new ElasticConversionException("Request parsing error");
-//            }
-//        });
-//    }
     @Override
     public RyftQuery convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug("Start field primitive parsing");
