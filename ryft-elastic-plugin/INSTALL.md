@@ -1,5 +1,12 @@
 #Ryft elastic plugin installation
 
+##Jenkins installation
+To install ryft-elastic-plugin please use Jenkins server
+
+**Ryft-elasticsearch-build-and-deploy** job builds ES Ryft codec and plugin from current project and deploys ElasticSearch 2.4.1 with Ryft integration tarball into Amazon S3 bucket.
+Next it deploys that tarball into specified Ryft machine. So you just need to launch it with needed version and machine IP.
+
+##Docker installation
 To install ryft-elastic-plugin please consider to do the folowing: [ES docker installation](https://github.com/getryft/elastic-search)
 
 After completing installation of ES. Stop docker container if you started it previously. 
@@ -99,6 +106,8 @@ In case of system failure restart elastic search using command in ~/ELK/docker-e
 sudo docker-compose stop
 sudo docker-compose start
 ```
+
+If you follow [Jenkins installation](#jenkins-installation) you should use **ryft-elasticsearch-deploy** job for restarting elastic search.
 
 Attention all data that was indexed via ES would be deleted completely!
 Remove all indices via next command:
