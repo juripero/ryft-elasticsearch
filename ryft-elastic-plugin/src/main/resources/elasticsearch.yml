@@ -26,6 +26,8 @@ index:
     policy.min_merge_size: 10mb
     policy.max_merge_docs: 100
     scheduler.max_thread_count: 1
+
+index.unassigned.node_left.delayed_timeout: 5m
 # ---------------------------------- Cluster -----------------------------------
 #
 # Use a descriptive name for your cluster:
