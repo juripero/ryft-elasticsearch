@@ -6,6 +6,16 @@ To install ryft-elastic-plugin please use Jenkins server
 **Ryft-elasticsearch-build-and-deploy** job builds ES Ryft codec and plugin from current project and deploys ElasticSearch 2.4.1 with Ryft integration tarball into Amazon S3 bucket.
 Next it deploys that tarball into specified Ryft machine. So you just need to launch it with needed version and machine IP.
 
+###Manual starting/stopping
+ElasticSearch can be start running following command:
+```bash
+JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 bin/elasticsearch -d
+```
+It can be stop using:
+```bash
+jps | grep Elasticsearch | awk '{print $1}' | xargs kill 2> /dev/null &
+```
+
 ##Docker installation
 To install ryft-elastic-plugin please consider to do the folowing: [ES docker installation](https://github.com/getryft/elastic-search)
 
