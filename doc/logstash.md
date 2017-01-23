@@ -4,6 +4,10 @@ To install Logstash use following commands:
 wget https://artifacts.elastic.co/downloads/logstash/logstash-5.1.2.deb
 sudo dpkg -i logstash-5.1.2.deb
 ```
+Logstash requires Java 8 for operation. If other version of Java is used in your system by default, you should define `JAVA_HOME` with path to Java 8 for Logstash. To do this add following value into `/etc/init/logstash.conf` before script section:
+```
+env JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+```
 ## Logstash operation
 Logstash registered in system as service daemon. To start logstash service do:
 ```
