@@ -9,11 +9,11 @@ Next it deploys that tarball into specified Ryft machine. So you just need to la
 ###Manual starting/stopping
 ElasticSearch can be start running following command:
 ```bash
-JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 bin/elasticsearch -d
+sudo start elasticsearch
 ```
 It can be stop using:
 ```bash
-jps | grep Elasticsearch | awk '{print $1}' | xargs kill 2> /dev/null &
+sudo stop elasticsearch
 ```
 
 ##Docker installation
