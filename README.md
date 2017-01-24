@@ -1,4 +1,4 @@
-##Elsticsearch integration with RYFT
+##Elasticsearch integration with RYFT
 
 * [Plugin integration benchmarks](ryft-elastic-benchmark/README.md)
 
@@ -9,3 +9,5 @@
 * [Logstash](doc/logstash.md)
 
 * [Kibana](doc/kibana.md)
+
+* [Upstart](upstart/README.md)
