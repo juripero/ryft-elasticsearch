@@ -22,6 +22,16 @@ public abstract class RyftExpression implements RyftDslToken {
         this.value = value;
     }
 
+    public RyftExpression(String expressionName, String value, Boolean line) {
+        this(expressionName, value);
+        this.line = line;
+    }
+
+    public RyftExpression(String expressionName, String value, Integer width) {
+        this(expressionName, value);
+        this.width = width;
+    }
+
     protected List<String> getParameters() {
         List<String> result = new ArrayList<>();
         if (line != null) {
