@@ -1,6 +1,5 @@
 package com.ryft.elasticsearch.plugin.elastic.converter;
 
-import com.ryft.elasticsearch.plugin.utils.Try;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ public abstract class ElasticConversionUtil {
             if (XContentParser.Token.START_ARRAY.equals(parser.currentToken())) {
                 parser.nextToken();
                 while (!XContentParser.Token.END_ARRAY.equals(parser.currentToken())) {
-                    result.add(getObject(convertingContext));
+                    result.add((T) getObject(convertingContext));
                     getNextElasticPrimitive(convertingContext);
                 }
                 return result;
@@ -62,10 +61,9 @@ public abstract class ElasticConversionUtil {
                 case START_OBJECT:
                     String currentName = getNextElasticPrimitive(convertingContext);
                     if ((currentName != null) && (XContentParser.Token.FIELD_NAME.equals(parser.currentToken()))) {
-                        Try<T> tryArrayElement = convertingContext.getElasticConverter(currentName)
-                                .map(converter -> (T) converter.convert(convertingContext).getResultOrException());
+                        T arrayElement = (T) convertingContext.getElasticConverter(currentName).convert(convertingContext);
                         parser.nextToken();
-                        return tryArrayElement.getResultOrException();
+                        return arrayElement;
                     }
                 case VALUE_STRING:
                     return (T) getString(convertingContext);
@@ -74,23 +72,23 @@ public abstract class ElasticConversionUtil {
                 case VALUE_BOOLEAN:
                     return (T) getBoolean(convertingContext);
             }
-        } catch (Exception ex) {
+        } catch (IOException | ElasticConversionException ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
         throw new ElasticConversionException("Can not extract object.");
     }
 
-    static <T> T getObject(ElasticConvertingContext convertingContext, ElasticConvertingElement<T> converter) throws Exception {
+    static <T> T getObject(ElasticConvertingContext convertingContext, ElasticConvertingElement<T> converter) throws ElasticConversionException {
         XContentParser parser = convertingContext.getContentParser();
         try {
             if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
                 parser.nextToken();
             }
             getNextElasticPrimitive(convertingContext);
-            T result = converter.convert(convertingContext).getResultOrException();
+            T result = converter.convert(convertingContext);
             parser.nextToken();
             return result;
-        } catch (Exception ex) {
+        } catch (IOException | ElasticConversionException ex) {
             throw new ElasticConversionException("Elastic request parsing error.", ex);
         }
     }

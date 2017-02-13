@@ -5,7 +5,6 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEventFactory;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRyft.ElasticConverterFormat.RyftFormat;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.utils.Try;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,39 +37,39 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
     }
 
     @Override
-    public Try<RyftRequestEvent> convert(ElasticConvertingContext convertingContext) {
+    public RyftRequestEvent convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());
-        return Try.apply(() -> {
-            String currentName;
+        String currentName;
+        try {
             convertingContext.getContentParser().nextToken();
-            RyftQuery ryftQuery = null;
-            do {
-                currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-                if ((currentName != null) && (!ElasticConversionUtil.isClosePrimitive(convertingContext))) {
-                    Object conversionResult = convertingContext.getElasticConverter(currentName)
-                            .map(converter -> converter.convert(convertingContext).getResultOrException())
-                            .getResultOrException();
-                    if (conversionResult instanceof RyftQuery) {
-                        ryftQuery = (RyftQuery) conversionResult;
-                    }
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Request parsing error");
+        }
+        RyftQuery ryftQuery = null;
+        do {
+            currentName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
+            if ((currentName != null) && (!ElasticConversionUtil.isClosePrimitive(convertingContext))) {
+                Object conversionResult = convertingContext.getElasticConverter(currentName).convert(convertingContext);
+                if (conversionResult instanceof RyftQuery) {
+                    ryftQuery = (RyftQuery) conversionResult;
                 }
-            } while (convertingContext.getContentParser().currentToken() != null);
-            if (ryftQuery == null) {
-                return null;
             }
+        } while (convertingContext.getContentParser().currentToken() != null);
+        if (ryftQuery == null) {
+            return null;
+        }
 
-            RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
+        RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
 
-            if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
-                ryftQuery = ryftQuery.toRawTextQuery();
-            }
+        if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
+            ryftQuery = ryftQuery.toRawTextQuery();
+        }
 
-            return getRyftRequestEvent(convertingContext, ryftQuery);
-        });
+        return getRyftRequestEvent(convertingContext, ryftQuery);
     }
 
-    public Try<RyftRequestEvent> convert(ActionRequest request) {
-        return Try.apply(() -> {
+    public RyftRequestEvent convert(ActionRequest request) throws ElasticConversionException {
+        try {
             if (request instanceof SearchRequest) {
                 SearchRequest searchRequest = (SearchRequest) request;
                 BytesReference searchContent = searchRequest.source();
@@ -78,7 +77,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
                 LOGGER.debug("Request: {}", queryString);
                 XContentParser parser = XContentFactory.xContent(queryString).createParser(queryString);
                 ElasticConvertingContext convertingContext = contextFactory.create(parser, queryString);
-                RyftRequestEvent result = convert(convertingContext).getResultOrException();
+                RyftRequestEvent result = convert(convertingContext);
                 if (result != null) {
                     LOGGER.info("Constructed query: {}", result.getQuery().buildRyftString());
                     result.setIndex(searchRequest.indices());
@@ -88,7 +87,9 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
             } else {
                 throw new ElasticConversionException("Request is not SearchRequest");
             }
-        });
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Request parsing error");
+        }
     }
 
     private void adjustRequest(SearchRequest request) throws IOException {
