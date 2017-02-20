@@ -652,4 +652,168 @@ public class ElasticConverterTest {
                         "AND (RAW_TEXT NOT_CONTAINS \"love\") AND (RAW_TEXT CONTAINS ES(\"hamlet\", LINE=true)))",
                 ryftRequest2.getQuery().buildRyftString());
     }
+
+    @Test
+    public void DateTimeSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"timestamp\": {\n" +
+                "        \"value\": \"2014/01/01 07:00:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy/MM/dd HH:mm:ss\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS = 07:00:00)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gt\" : \"2014/01/01 07:00:00\",\n" +
+                "        \"lt\" : \"2014/01/07 07:00:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy/MM/dd HH:mm:ss\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 07:00:00))) " +
+                        "OR (RECORD.timestamp CONTAINS DATE(2014/01/01 < YYYY/MM/DD < 2014/01/07)) " +
+                        "OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/07)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 07:00:00))))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeSameDayTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gt\" : \"2014/01/01 07:00:00\",\n" +
+                "        \"lt\" : \"2014/01/01 12:00:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy/MM/dd HH:mm:ss\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 07:00:00))) " +
+                        "OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 12:00:00))))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeLowerBoundTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gte\" : \"2014-01-01 07:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy-MM-dd HH:mm\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM >= 07:00))) " +
+                        "OR (RECORD.timestamp CONTAINS DATE(YYYY-MM-DD > 2014-01-01)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeUpperBoundTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"lt\" : \"2014-01-01 07:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy-MM-dd HH:mm\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM < 07:00))) " +
+                        "OR (RECORD.timestamp CONTAINS DATE(YYYY-MM-DD < 2014-01-01)))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeOnlyDateTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gt\" : \"2014-01-01\",\n" +
+                "        \"lte\" : \"2014-01-02\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"yyyy-MM-dd\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.timestamp CONTAINS DATE(2014-01-01 < YYYY-MM-DD <= 2014-01-02))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void DateTimeRangeOnlyTimeTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gt\" : \"07:00\",\n" +
+                "        \"lte\" : \"09:00\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"HH:mm\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.timestamp CONTAINS TIME(07:00 < HH:MM <= 09:00))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
 }

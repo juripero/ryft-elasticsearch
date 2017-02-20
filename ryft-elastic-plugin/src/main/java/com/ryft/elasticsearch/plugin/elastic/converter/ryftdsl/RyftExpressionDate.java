@@ -37,6 +37,11 @@ public class RyftExpressionDate extends RyftExpressionRange {
         this(valueA, operatorA, null, null, DEFAULT_FORMAT);
     }
 
+    public static DateFormat getDateFormat(String format) {
+        String datePattern = getDatePattern(format);
+        return (datePattern == null) ? null : new SimpleDateFormat(datePattern);
+    }
+
     private String getVariableName(String format) throws ElasticConversionException {
         String datePattern = getDatePattern(format);
         String separator = getSeparator(datePattern);
@@ -63,12 +68,7 @@ public class RyftExpressionDate extends RyftExpressionRange {
         }
     }
 
-    private DateFormat getDateFormat(String format) {
-        String datePattern = getDatePattern(format);
-        return (datePattern == null) ? null : new SimpleDateFormat(datePattern);
-    }
-
-    private String getDatePattern(String format) {
+    private static String getDatePattern(String format) {
         Pattern pattern = Pattern.compile("(y{4}|y{2}).(M{2}).(d{2})|(M{2}).(d{2}).(y{4}|y{2})|(d{2}).(M{2}).(y{4}|y{2})");
         Matcher matcher = pattern.matcher(format);
         if (matcher.find()) {

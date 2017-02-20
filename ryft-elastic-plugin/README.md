@@ -333,7 +333,7 @@ Resulting RYFT query:
 ((RECORD.name CONTAINS "J"?"n"?"") AND (RECORD.name CONTAINS "Doe"))
 ```
 
-#####Wildcard term queries
+#####Wildcard queries
 In wildcard term queries, the wildcard symbol can be used without escaping, it will still be treated as a wildcard.
 
 Full form:
@@ -363,6 +363,61 @@ Simplified form:
 Resulting RYFT query:
 ```
 (RECORD.postcode CONTAINS ""?"Z99 "??"Z")
+```
+
+###Date-Time queries
+Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
+
+Default date format is “yyyy-MM-dd’T’HH:mm:ss.SS”.
+
+Date format pattern should have consistent separator characters for date and time, 
+because RYFT can search date and time with one type of separator.
+
+It is only possible to have one format defined per query
+
+The date-time data type can be used in term queries and in range queries.
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "timestamp": {
+        "value": "2014/01/01 07:00:00",
+        "type": "datetime",
+        "format": "yyyy/MM/dd HH:mm:ss"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS = 07:00:00)))
+
+```
+
+Query: 
+```json
+{
+  "query": {
+    "range" : {
+      "timestamp" : {
+        "gt" : "2014/01/01 07:00:00",
+        "lt" : "2014/01/07 07:00:00",
+        "type": "datetime",
+        "format": "yyyy/MM/dd HH:mm:ss"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 07:00:00))) 
+OR (RECORD.timestamp CONTAINS DATE(2014/01/01 < YYYY/MM/DD < 2014/01/07)) 
+OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/07)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 07:00:00))))
 ```
 
 ###Plugin configuration

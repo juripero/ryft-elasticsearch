@@ -6,6 +6,10 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionFuz
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryComplex;
 import static com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
 
+/**
+ * Contains parsed query parameters that are required to create a ryft query
+ * Used by {@link com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory}
+ */
 public class FuzzyQueryParameters extends QueryParameters<String> {
 
     public static RyftFuzzyMetric METRIC_DEFAULT = RyftFuzzyMetric.FEDS;

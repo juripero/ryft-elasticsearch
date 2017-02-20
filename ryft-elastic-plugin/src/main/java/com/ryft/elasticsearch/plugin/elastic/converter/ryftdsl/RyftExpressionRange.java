@@ -14,11 +14,29 @@ public abstract class RyftExpressionRange extends RyftExpression {
             this.ryftValue = ryftValue;
         }
 
+        public static RyftOperatorCompare getOppositeValue(RyftOperatorCompare base) {
+            switch (base) {
+                case EQ:
+                    return NE;
+                case NE:
+                    return EQ;
+                case GT:
+                    return LT;
+                case LT:
+                    return GT;
+                case GTE:
+                    return LTE;
+                case LTE:
+                    return GTE;
+                default:
+                    return base;
+            }
+        }
+
         @Override
         public String buildRyftString() {
             return ryftValue;
         }
-
     }
 
     protected String valueA;

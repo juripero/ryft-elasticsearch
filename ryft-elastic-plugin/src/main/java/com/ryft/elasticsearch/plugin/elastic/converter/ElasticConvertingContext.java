@@ -14,7 +14,11 @@ import org.elasticsearch.common.xcontent.XContentParser;
 public class ElasticConvertingContext {
 
     public static enum ElasticSearchType {
-        MATCH, MATCH_PHRASE, FUZZY, WILDCARD
+        MATCH, MATCH_PHRASE, FUZZY, WILDCARD, TERM, RANGE
+    }
+
+    public static enum ElasticDataType {
+        DATETIME
     }
 
     public static enum ElasticBoolSearchType {
@@ -34,6 +38,7 @@ public class ElasticConvertingContext {
     private Boolean minimumShouldMatchDefined = false;
     private Boolean line;
     private Integer width;
+    private ElasticDataType dataType;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
@@ -109,6 +114,14 @@ public class ElasticConvertingContext {
 
     public void setWidth(Integer width) {
         this.width = width;
+    }
+
+    public ElasticDataType getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(ElasticDataType dataType) {
+        this.dataType = dataType;
     }
 
     public Map<String, Object> getQueryProperties() {

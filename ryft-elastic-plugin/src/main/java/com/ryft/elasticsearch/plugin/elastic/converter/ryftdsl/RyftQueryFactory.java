@@ -2,18 +2,21 @@ package com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl;
 
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionException;
 import com.ryft.elasticsearch.plugin.elastic.converter.entities.FuzzyQueryParameters;
+import com.ryft.elasticsearch.plugin.elastic.converter.entities.RangeQueryParameters;
+import com.ryft.elasticsearch.plugin.elastic.converter.entities.TermQueryParameters;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -69,6 +72,36 @@ public class RyftQueryFactory {
         }
     }
 
+    public RyftQuery buildTermQuery(TermQueryParameters termQueryParameters) throws ElasticConversionException {
+        switch (termQueryParameters.getDataType()) {
+            case DATETIME:
+                return buildQueryDateTimeTerm(
+                        termQueryParameters.getSearchValue(),
+                        termQueryParameters.getFormat(),
+                        termQueryParameters.getFieldName(),
+                        termQueryParameters.getRyftOperator());
+            default:
+                throw new ElasticConversionException("Unknown data type");
+        }
+
+    }
+
+    public RyftQuery buildRangeQuery(RangeQueryParameters rangeQueryParameters) throws ElasticConversionException {
+        rangeQueryParameters.check();
+        switch (rangeQueryParameters.getDataType()) {
+            case DATETIME:
+                return buildQueryDateTimeRange(
+                        rangeQueryParameters.getLowerBound(),
+                        rangeQueryParameters.getUpperBound(),
+                        rangeQueryParameters.getFormat(),
+                        rangeQueryParameters.getFieldName(),
+                        rangeQueryParameters.getRyftOperator());
+            default:
+                throw new ElasticConversionException("Unknown data type");
+        }
+
+    }
+
     private RyftQuery buildQueryMatchPhrase(String searchText, String fieldName,
                                             RyftFuzzyMetric metric, Integer fuzziness, RyftOperator ryftOperator,
                                             Integer width, Boolean line) {
@@ -115,6 +148,60 @@ public class RyftQueryFactory {
         RyftExpression ryftExpression = new RyftExpressionExactSearch(searchTextFormatted);
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
                 ryftOperator, ryftExpression);
+    }
+
+    private RyftQuery buildQueryDateTimeTerm(String searchText, String format, String fieldName,
+                                             RyftOperator ryftOperator) throws ElasticConversionException {
+        DateFormat dateFormat = RyftExpressionDate.getDateFormat(format);
+        DateFormat timeFormat = RyftExpressionTime.getTimeFormat(format);
+
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            Date date = sdf.parse(searchText);
+
+            if (dateFormat != null && timeFormat != null) {
+                RyftQuery dateQuery = RyftQueryDateTimeUtil.buildSimpleDateQuery(date, format, ryftOperator,
+                        fieldName, RyftExpressionRange.RyftOperatorCompare.EQ);
+
+                RyftQuery timeQuery = RyftQueryDateTimeUtil.buildSimpleTimeQuery(date, format, ryftOperator,
+                        fieldName, RyftExpressionRange.RyftOperatorCompare.EQ);
+
+                List<RyftQuery> queries = Arrays.asList(dateQuery, timeQuery);
+
+                return buildComplexQuery(RyftLogicalOperator.AND, queries);
+            } else if (dateFormat == null && timeFormat != null) {
+                return RyftQueryDateTimeUtil.buildSimpleTimeQuery(date, format, ryftOperator,
+                        fieldName, RyftExpressionRange.RyftOperatorCompare.EQ);
+            } else if (timeFormat == null && dateFormat != null) {
+                return RyftQueryDateTimeUtil.buildSimpleDateQuery(date, format, ryftOperator,
+                        fieldName, RyftExpressionRange.RyftOperatorCompare.EQ);
+            } else {
+                throw new ElasticConversionException("Could not parse datetime format: " + format);
+            }
+        } catch (ParseException e) {
+            throw new ElasticConversionException("Could not parse datetime format", e.getCause());
+        }
+    }
+
+    private RyftQuery buildQueryDateTimeRange(Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound,
+                                              Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound,
+                                              String format, String fieldName,
+                                              RyftOperator ryftOperator) throws ElasticConversionException {
+        DateFormat dateFormat = RyftExpressionDate.getDateFormat(format);
+        DateFormat timeFormat = RyftExpressionTime.getTimeFormat(format);
+
+        try {
+            if (timeFormat == null && dateFormat != null) {
+                return RyftQueryDateTimeUtil.buildSimpleRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName, false);
+            } else if (dateFormat == null && timeFormat != null) {
+                return RyftQueryDateTimeUtil.buildSimpleRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName, true);
+            } else if (dateFormat != null && timeFormat != null) {
+                return RyftQueryDateTimeUtil.buildFullRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName);
+            }
+            throw new ElasticConversionException("Could not parse datetime format: " + format);
+        } catch (ParseException e) {
+            throw new ElasticConversionException("Could not parse datetime format", e.getCause());
+        }
     }
 
     private RyftQuery buildQueryFuzzy(String searchText, String fieldName,

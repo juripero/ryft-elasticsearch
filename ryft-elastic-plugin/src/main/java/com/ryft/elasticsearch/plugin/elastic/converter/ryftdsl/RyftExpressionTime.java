@@ -42,6 +42,11 @@ public class RyftExpressionTime extends RyftExpressionRange {
         this(valueA, operatorA, null, null, DEFAULT_FORMAT);
     }
 
+    public static DateFormat getTimeFormat(String format) {
+        String timePattern = getTimePattern(format);
+        return (timePattern == null) ? null : new SimpleDateFormat(timePattern);
+    }
+
     private String getVariableName(String format) throws ElasticConversionException {
         String timePattern = getTimePattern(format);
         String separator = getSeparator(timePattern);
@@ -49,8 +54,15 @@ public class RyftExpressionTime extends RyftExpressionRange {
         Matcher matcher = pattern.matcher(timePattern);
         if (matcher.find()) {
             return String.format("HH%1$sMM%1$sSS%1$sss", separator);
-        } else {
+        }
+
+        pattern = Pattern.compile("s{2}");
+        matcher = pattern.matcher(timePattern);
+
+        if (matcher.find()) {
             return String.format("HH%1$sMM%1$sSS", separator);
+        } else {
+            return String.format("HH%1$sMM", separator);
         }
     }
 
@@ -67,20 +79,15 @@ public class RyftExpressionTime extends RyftExpressionRange {
             separator = matcher.group();
             count++;
         }
-        if (isEqual && ((count == 2) || (count == 3))) {
+        if (isEqual && ((count == 1) || (count == 2) || (count == 3))) {
             return separator;
         } else {
             throw new ElasticConversionException("Time pattern should have consistent separator");
         }
     }
 
-    private DateFormat getTimeFormat(String format) {
-        String timePattern = getTimePattern(format);
-        return (timePattern == null) ? null : new SimpleDateFormat(timePattern);
-    }
-
-    private String getTimePattern(String format) {
-        Pattern pattern = Pattern.compile("H{2}.m{2}.s{2}(.S{2})?");
+    private static String getTimePattern(String format) {
+        Pattern pattern = Pattern.compile("H{2}.m{2}(.s{2})?(.S{2})?");
         Matcher matcher = pattern.matcher(format);
         if (matcher.find()) {
             return matcher.group();

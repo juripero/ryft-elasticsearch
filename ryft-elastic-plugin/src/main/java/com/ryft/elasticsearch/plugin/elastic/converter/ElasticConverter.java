@@ -43,7 +43,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
         try {
             convertingContext.getContentParser().nextToken();
         } catch (IOException ex) {
-            throw new ElasticConversionException("Request parsing error");
+            throw new ElasticConversionException("Request parsing error", ex.getCause());
         }
         RyftQuery ryftQuery = null;
         do {
@@ -89,6 +89,8 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestEve
             }
         } catch (IOException ex) {
             throw new ElasticConversionException("Request parsing error");
+        } catch (UnsupportedOperationException ex) {
+            throw new ElasticConversionException(ex.getMessage());
         }
     }
 

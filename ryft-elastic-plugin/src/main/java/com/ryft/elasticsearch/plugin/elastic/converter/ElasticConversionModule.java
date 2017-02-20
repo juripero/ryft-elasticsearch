@@ -3,6 +3,8 @@ package com.ryft.elasticsearch.plugin.elastic.converter;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterBool.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterField.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRyft.*;
+import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterShared.*;
+import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRangeField.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Singleton;
@@ -23,19 +25,29 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterMatch.NAME).to(ElasticConverterMatch.class);
         convertersBinder.addBinding(ElasticConverterMatchPhrase.NAME).to(ElasticConverterMatchPhrase.class);
         convertersBinder.addBinding(ElasticConverterWildcard.NAME).to(ElasticConverterWildcard.class);
+        convertersBinder.addBinding(ElasticConverterTerm.NAME).to(ElasticConverterTerm.class);
+        convertersBinder.addBinding(ElasticConverterRangeField.NAME).to(ElasticConverterRangeField.class);
         convertersBinder.addBinding(ElasticConverterField.NAME).to(ElasticConverterField.class);
+        convertersBinder.addBinding(ElasticConverterRange.NAME).to(ElasticConverterRange.class);
         convertersBinder.addBinding(ElasticConverterBool.NAME).to(ElasticConverterBool.class);
         convertersBinder.addBinding(ElasticConverterMust.NAME).to(ElasticConverterMust.class);
         convertersBinder.addBinding(ElasticConverterMustNot.NAME).to(ElasticConverterMustNot.class);
         convertersBinder.addBinding(ElasticConverterShould.NAME).to(ElasticConverterShould.class);
         convertersBinder.addBinding(ElasticConverterMinimumShouldMatch.NAME).to(ElasticConverterMinimumShouldMatch.class);
         convertersBinder.addBinding(ElasticConverterMinimumShouldMatch.NAME_ALTERNATIVE).to(ElasticConverterMinimumShouldMatch.class);
-        convertersBinder.addBinding(ElasticConverterValue.NAME).to(ElasticConverterValue.class);
         convertersBinder.addBinding(ElasticConverterMetric.NAME).to(ElasticConverterMetric.class);
         convertersBinder.addBinding(ElasticConverterFuzziness.NAME).to(ElasticConverterFuzziness.class);
         convertersBinder.addBinding(ElasticConverterOperator.NAME).to(ElasticConverterOperator.class);
-        convertersBinder.addBinding(ElasticConverterType.NAME).to(ElasticConverterType.class);
         convertersBinder.addBinding(ElasticConverterWidth.NAME).to(ElasticConverterWidth.class);
+
+        convertersBinder.addBinding(ElasticConverterGreaterThanEquals.NAME).to(ElasticConverterGreaterThanEquals.class);
+        convertersBinder.addBinding(ElasticConverterGreaterThan.NAME).to(ElasticConverterGreaterThan.class);
+        convertersBinder.addBinding(ElasticConverterLessThanEquals.NAME).to(ElasticConverterLessThanEquals.class);
+        convertersBinder.addBinding(ElasticConverterLessThan.NAME).to(ElasticConverterLessThan.class);
+
+        convertersBinder.addBinding(ElasticConverterDateFormat.NAME).to(ElasticConverterShared.ElasticConverterDateFormat.class);
+        convertersBinder.addBinding(ElasticConverterType.NAME).to(ElasticConverterShared.ElasticConverterType.class);
+        convertersBinder.addBinding(ElasticConverterValue.NAME).to(ElasticConverterShared.ElasticConverterValue.class);
 
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
         convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);
