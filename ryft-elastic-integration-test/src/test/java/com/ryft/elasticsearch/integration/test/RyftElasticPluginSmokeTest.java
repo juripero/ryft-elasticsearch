@@ -58,6 +58,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
             logger.info("Creating index {}", ALTERNATIVE_INDEX_NAME);
             client.admin().indices().prepareCreate(ALTERNATIVE_INDEX_NAME).get();
 
+            client.admin().indices().preparePutMapping(ALTERNATIVE_INDEX_NAME).setType("data").setSource("{\n" +
+                    "    \"data\" : {\n" +
+                    "        \"properties\" : {\n" +
+                    "            \"registered\" : {\"type\" : \"date\", \"format\" : \"yyyy-MM-dd HH:mm:ss\"}\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}").get();
+
             ClassLoader classLoader = getClass().getClassLoader();
             File file = new File(classLoader.getResource("dataset.json").getFile());
 
