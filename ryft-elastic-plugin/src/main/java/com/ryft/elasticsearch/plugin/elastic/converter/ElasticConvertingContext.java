@@ -18,7 +18,7 @@ public class ElasticConvertingContext {
     }
 
     public static enum ElasticDataType {
-        DATETIME
+        DATETIME, NUMBER, NUMBER_ARRAY
     }
 
     public static enum ElasticBoolSearchType {

@@ -816,4 +816,85 @@ public class ElasticConverterTest {
                 ryftRequest.getQuery().buildRyftString());
     }
 
+    @Test
+    public void NumericSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"price\": {\n" +
+                "        \"value\": 20,\n" +
+                "        \"type\": \"number\",\n" +
+                "        \"separator\":\",\",\n" +
+                "        \"decimal\":\".\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.price CONTAINS NUMBER(NUM = \"20\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void NumericSearchSimplifiedTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"price\": 20\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.price CONTAINS NUMBER(NUM = \"20\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void NumericSearchArrayTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"price\": [20, 30]\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.price CONTAINS NUMBER(NUM = \"20\", \",\", \".\")) OR (RECORD.price CONTAINS NUMBER(NUM = \"30\", \",\", \".\")))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void NumericRangeTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"age\" : {\n" +
+                "        \"gte\" : -1.01e2,\n" +
+                "        \"lte\" : \"2000.12\",\n" +
+                "        \"type\":\"number\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.age CONTAINS NUMBER(\"-1.01e2\" <= NUM <= \"2000.12\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
 }

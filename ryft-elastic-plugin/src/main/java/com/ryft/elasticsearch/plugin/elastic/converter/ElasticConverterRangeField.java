@@ -92,6 +92,12 @@ public class ElasticConverterRangeField extends ElasticConverterField {
                     case ElasticConverterLessThan.NAME:
                         rangeQueryParameters.setUpperBound(Collections.singletonMap(RyftExpressionRange.RyftOperatorCompare.LT, (String) value));
                         break;
+                    case ElasticConverterShared.ElasticConverterSeparator.NAME:
+                        rangeQueryParameters.setSeparator((String) value);
+                        break;
+                    case ElasticConverterShared.ElasticConverterDecimal.NAME:
+                        rangeQueryParameters.setDecimal((String) value);
+                        break;
                 }
             }
             return convertingContext.getQueryFactory().buildRangeQuery(rangeQueryParameters);

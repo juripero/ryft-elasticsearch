@@ -5,31 +5,31 @@ import java.util.List;
 
 public class RyftExpressionNumeric extends RyftExpressionRange {
 
-    private final String subitizer;
+    private final String separator;
     private final String decimal;
 
-    public RyftExpressionNumeric(Double valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, Double valueB, String subitizer, String decimal) {
+    public RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB, String separator, String decimal) {
         super(String.format("\"%s\"", valueA), operatorA, operatorB, String.format("\"%s\"", valueB), "NUMBER", "NUM");
-        this.subitizer = subitizer;
+        this.separator = separator;
         this.decimal = decimal;
     }
 
-    public RyftExpressionNumeric(Double valueA, RyftOperatorCompare operatorA, String subitizer, String decimal) {
-        this(valueA, operatorA, null, null, subitizer, decimal);
+    public RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA, String separator, String decimal) {
+        this(valueA, operatorA, null, null, separator, decimal);
     }
 
-    public RyftExpressionNumeric(Double valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, Double valueB) {
+    public RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB) {
         this(valueA, operatorA, operatorB, valueB, ",", ".");
     }
 
-    public RyftExpressionNumeric(Double valueA, RyftOperatorCompare operatorA) {
+    public RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA) {
         this(valueA, operatorA, ",", ".");
     }
 
     @Override
     protected List<String> getParameters() {
         return Arrays.asList(new String[]{
-            String.format("\"%s\"", subitizer),
+            String.format("\"%s\"", separator),
             String.format("\"%s\"", decimal)
         });
     }

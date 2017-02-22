@@ -420,6 +420,78 @@ OR (RECORD.timestamp CONTAINS DATE(2014/01/01 < YYYY/MM/DD < 2014/01/07))
 OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/07)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 07:00:00))))
 ```
 
+###Numeric queries
+Default values for “separator” and “decimal” are “,”, and “.”.
+Accepted numbers described [here](https://github.com/getryft/ryft-server/blob/development/docs/searchsyntax.md#number-search)
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": 20,
+        "type": "number",
+        "separator":",",
+        "decimal":"."
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS NUMBER(NUM = "20", ",", "."))
+
+```
+This query also supports a simplified syntax:
+```json
+{
+  "query": {
+    "term": {
+      "price": 20
+    }
+  }
+}
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range" : {
+      "age" : {
+        "gte" : -1.01e2,
+        "lte" : "2000.12",
+        "type":"number"
+      }
+    }
+  }
+}
+
+```
+
+Resulting RYFT query:
+```
+(RECORD.age CONTAINS NUMBER("-1.01e2" <= NUM <= "2000.12", ",", "."))
+```
+
+Searching for multiple exact values: 
+```json
+{
+  "query": {
+    "term": {
+      "price": [20, 30]
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+((RECORD.price CONTAINS NUMBER(NUM = "20", ",", ".")) OR (RECORD.price CONTAINS NUMBER(NUM = "30", ",", ".")))
+```
+
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.

@@ -73,7 +73,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
                 }
-                bulkRequest.add(client.prepareIndex(ALTERNATIVE_INDEX_NAME, "data")
+                bulkRequest.add(client.prepareIndex(ALTERNATIVE_INDEX_NAME, "data", data.getId())
                         .setSource(json));
             });
             BulkResponse bulkResponse = bulkRequest.get();
@@ -531,6 +531,51 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "        \"lt\" : \"2014-01-07 07:00:00\",\n" +
                 "        \"type\": \"datetime\",\n" +
                 "        \"format\": \"yyyy-MM-dd HH:mm:ss\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }, \n" +
+                "\"ryft_enabled\": true\n" +
+                "}\n";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testNumericTerm() throws InterruptedException, ExecutionException {
+        TermQueryBuilder builder = QueryBuilders.termQuery("age", 22);
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"age\": {\n" +
+                "        \"value\": \"22\",\n" +
+                "        \"type\": \"number\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }, \n" +
+                "\"ryft_enabled\": true\n" +
+                "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testNumericRange() throws InterruptedException, ExecutionException {
+        RangeQueryBuilder builder = QueryBuilders.rangeQuery("age").gt(22).lt(29);
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"age\" : {\n" +
+                "        \"gt\" : \"22\",\n" +
+                "        \"lt\" : \"29\",\n" +
+                "        \"type\": \"number\"\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }, \n" +

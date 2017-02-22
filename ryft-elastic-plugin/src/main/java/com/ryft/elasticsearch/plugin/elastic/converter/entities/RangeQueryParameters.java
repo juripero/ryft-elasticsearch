@@ -18,6 +18,8 @@ public class RangeQueryParameters extends QueryParameters<String> {
     private String format;
     private Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound;
     private Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound;
+    private String separator = ",";
+    private String decimal = ".";
 
     public ElasticConvertingContext.ElasticDataType getDataType() {
         return dataType;
@@ -49,6 +51,22 @@ public class RangeQueryParameters extends QueryParameters<String> {
 
     public void setUpperBound(Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound) {
         this.upperBound = upperBound;
+    }
+
+    public String getSeparator() {
+        return separator;
+    }
+
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
+
+    public String getDecimal() {
+        return decimal;
+    }
+
+    public void setDecimal(String decimal) {
+        this.decimal = decimal;
     }
 
     @Override

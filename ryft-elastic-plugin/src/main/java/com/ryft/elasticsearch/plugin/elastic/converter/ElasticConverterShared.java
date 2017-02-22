@@ -41,6 +41,7 @@ public class ElasticConverterShared {
 
         private final String TYPE_PHRASE = "phrase";
         private final String TYPE_DATETIME = "datetime";
+        private final String TYPE_NUMBER = "number";
 
         @Override
         public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
@@ -55,10 +56,35 @@ public class ElasticConverterShared {
                     case TYPE_DATETIME:
                         convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.DATETIME);
                         break;
+                    case TYPE_NUMBER:
+                        convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.NUMBER);
+                        break;
                 }
             }
             return null;
 
+        }
+    }
+
+    public static class ElasticConverterSeparator implements ElasticConvertingElement<String> {
+
+        public static final String NAME = "separator";
+
+        @Override
+        public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return ElasticConversionUtil.getString(convertingContext);
+        }
+    }
+
+    public static class ElasticConverterDecimal implements ElasticConvertingElement<String> {
+
+        public static final String NAME = "decimal";
+
+        @Override
+        public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return ElasticConversionUtil.getString(convertingContext);
         }
     }
 }

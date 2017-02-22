@@ -2,6 +2,8 @@ package com.ryft.elasticsearch.plugin.elastic.converter.entities;
 
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConvertingContext;
 
+import java.util.List;
+
 /**
  * Contains parsed query parameters that are required to create a ryft query, for cases where the
  * {@link ElasticConvertingContext.ElasticSearchType} is "term"
@@ -10,7 +12,10 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConvertingContext;
 public class TermQueryParameters extends QueryParameters<String> {
 
     private ElasticConvertingContext.ElasticDataType dataType;
+    private List<String> searchArray;
     private String format;
+    private String separator = ",";
+    private String decimal = ".";
 
     public ElasticConvertingContext.ElasticDataType getDataType() {
         return dataType;
@@ -24,7 +29,31 @@ public class TermQueryParameters extends QueryParameters<String> {
         return format;
     }
 
+    public List<String> getSearchArray() {
+        return searchArray;
+    }
+
+    public void setSearchArray(List<String> searchArray) {
+        this.searchArray = searchArray;
+    }
+
     public void setFormat(String format) {
         this.format = format;
+    }
+
+    public String getSeparator() {
+        return separator;
+    }
+
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
+
+    public String getDecimal() {
+        return decimal;
+    }
+
+    public void setDecimal(String decimal) {
+        this.decimal = decimal;
     }
 }

@@ -48,6 +48,8 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterDateFormat.NAME).to(ElasticConverterShared.ElasticConverterDateFormat.class);
         convertersBinder.addBinding(ElasticConverterType.NAME).to(ElasticConverterShared.ElasticConverterType.class);
         convertersBinder.addBinding(ElasticConverterValue.NAME).to(ElasticConverterShared.ElasticConverterValue.class);
+        convertersBinder.addBinding(ElasticConverterSeparator.NAME).to(ElasticConverterShared.ElasticConverterSeparator.class);
+        convertersBinder.addBinding(ElasticConverterDecimal.NAME).to(ElasticConverterShared.ElasticConverterDecimal.class);
 
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
         convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);

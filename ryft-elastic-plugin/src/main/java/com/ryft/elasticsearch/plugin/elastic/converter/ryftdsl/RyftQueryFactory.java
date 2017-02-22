@@ -80,6 +80,20 @@ public class RyftQueryFactory {
                         termQueryParameters.getFormat(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getRyftOperator());
+            case NUMBER:
+                return buildQueryNumericTerm(
+                        termQueryParameters.getSearchValue(),
+                        termQueryParameters.getFieldName(),
+                        termQueryParameters.getSeparator(),
+                        termQueryParameters.getDecimal(),
+                        termQueryParameters.getRyftOperator());
+            case NUMBER_ARRAY:
+                return buildQueryNumericArrayTerm(
+                        termQueryParameters.getSearchArray(),
+                        termQueryParameters.getFieldName(),
+                        termQueryParameters.getSeparator(),
+                        termQueryParameters.getDecimal(),
+                        termQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown data type");
         }
@@ -95,6 +109,14 @@ public class RyftQueryFactory {
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFormat(),
                         rangeQueryParameters.getFieldName(),
+                        rangeQueryParameters.getRyftOperator());
+            case NUMBER:
+                return buildQueryNumericRange(
+                        rangeQueryParameters.getLowerBound(),
+                        rangeQueryParameters.getUpperBound(),
+                        rangeQueryParameters.getFieldName(),
+                        rangeQueryParameters.getSeparator(),
+                        rangeQueryParameters.getDecimal(),
                         rangeQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown data type");
@@ -201,6 +223,73 @@ public class RyftQueryFactory {
             throw new ElasticConversionException("Could not parse datetime format: " + format);
         } catch (ParseException e) {
             throw new ElasticConversionException("Could not parse datetime format", e.getCause());
+        }
+    }
+
+    private RyftQuery buildQueryNumericTerm(String searchText,
+                                            String fieldName,
+                                            String separator,
+                                            String decimal,
+                                            RyftOperator ryftOperator) {
+        RyftExpression ryftExpression = new RyftExpressionNumeric(searchText,
+                RyftExpressionRange.RyftOperatorCompare.EQ,
+                separator,
+                decimal);
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+    }
+
+    private RyftQuery buildQueryNumericArrayTerm(List<String> searchArray,
+                                                 String fieldName,
+                                                 String separator,
+                                                 String decimal,
+                                                 RyftOperator ryftOperator) {
+        List<RyftQuery> queries = new ArrayList<>();
+        searchArray.forEach(searchText -> {
+            RyftExpression ryftExpression = new RyftExpressionNumeric(searchText,
+                    RyftExpressionRange.RyftOperatorCompare.EQ,
+                    separator,
+                    decimal);
+            queries.add(new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression));
+        });
+
+        return buildComplexQuery(RyftLogicalOperator.OR, queries);
+    }
+
+    private RyftQuery buildQueryNumericRange(Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound,
+                                             Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound,
+                                             String fieldName,
+                                             String separator,
+                                             String decimal,
+                                             RyftOperator ryftOperator) throws ElasticConversionException {
+        Optional<RyftExpressionRange.RyftOperatorCompare> operatorCompareLower = Optional.empty();
+        if (lowerBound != null) {
+            operatorCompareLower = lowerBound.keySet().stream().findFirst();
+        }
+        Optional<RyftExpressionRange.RyftOperatorCompare> operatorCompareUpper = Optional.empty();
+        if (upperBound != null) {
+            operatorCompareUpper = upperBound.keySet().stream().findFirst();
+        }
+
+        if (operatorCompareLower.isPresent() && operatorCompareUpper.isPresent()) {
+            String numberLower = lowerBound.get(operatorCompareLower.get());
+            String numberUpper = upperBound.get(operatorCompareUpper.get());
+
+            //Resulting expression is of format "a < x < b". So, we must reverse operatorCompareLower in order for the comparison logic to be preserved
+            RyftExpression ryftExpression = new RyftExpressionNumeric(numberLower,
+                    RyftExpressionRange.RyftOperatorCompare.getOppositeValue(operatorCompareLower.get()),
+                    operatorCompareUpper.get(), numberUpper, separator, decimal);
+
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else if (operatorCompareLower.isPresent() && !operatorCompareUpper.isPresent()) {
+            String number = lowerBound.get(operatorCompareLower.get());
+            RyftExpression ryftExpression = new RyftExpressionNumeric(number, operatorCompareLower.get(), separator, decimal);
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else if (operatorCompareUpper.isPresent() && !operatorCompareLower.isPresent()) {
+            String number = upperBound.get(operatorCompareUpper.get());
+            RyftExpression ryftExpression = new RyftExpressionNumeric(number, operatorCompareUpper.get(), separator, decimal);
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else {
+            throw new ElasticConversionException("Range query must have either an upper bound, a lower bound, or both");
         }
     }
 

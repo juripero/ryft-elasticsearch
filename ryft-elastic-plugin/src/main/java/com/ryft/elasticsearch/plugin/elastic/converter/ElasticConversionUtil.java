@@ -51,6 +51,27 @@ public abstract class ElasticConversionUtil {
         throw new ElasticConversionException("Can not extract array.");
     }
 
+    static List<String> getStringArray(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
+                parser.nextToken();
+            }
+            List<String> result = new ArrayList<>();
+            if (XContentParser.Token.START_ARRAY.equals(parser.currentToken())) {
+                parser.nextToken();
+                while (!XContentParser.Token.END_ARRAY.equals(parser.currentToken())) {
+                    result.add(getString(convertingContext));
+                    getNextElasticPrimitive(convertingContext);
+                }
+                return result;
+            }
+        } catch (IOException | ElasticConversionException ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
+        throw new ElasticConversionException("Can not extract array.");
+    }
+
     static <T> T getObject(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         XContentParser parser = convertingContext.getContentParser();
         try {

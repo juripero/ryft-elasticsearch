@@ -10,6 +10,7 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.elasticsearch.common.logging.ESLogger;
@@ -95,6 +96,13 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                 return convertFromObject(convertingContext, fieldParametersMap);
             case VALUE_STRING:
                 return convertFromString(convertingContext, fieldParametersMap);
+            case VALUE_NUMBER:
+                convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.NUMBER);
+                return convertFromString(convertingContext, fieldParametersMap);
+            case START_ARRAY:
+                //Will need to refactor if we ever need to support searching for arrays of not numbers
+                convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.NUMBER_ARRAY);
+                return convertFromArray(convertingContext, fieldParametersMap);
             default:
                 throw new ElasticConversionException("Request parsing error");
         }
@@ -141,6 +149,13 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         return getRyftQuery(convertingContext, fieldParametersMap);
     }
 
+    private RyftQuery convertFromArray(ElasticConvertingContext convertingContext,
+                                        Map<String, Object> fieldParametersMap) throws ElasticConversionException {
+        List<String> values = ElasticConversionUtil.getStringArray(convertingContext);
+        fieldParametersMap.put(ElasticConverterShared.ElasticConverterValue.NAME, values);
+        return getRyftQuery(convertingContext, fieldParametersMap);
+    }
+
     private RyftQuery getRyftFullQuery(ElasticConvertingContext convertingContext, Map<String, Object> fieldQueryMap) throws ElasticConversionException {
         try {
             if (convertingContext.getSearchType().equals(ElasticSearchType.TERM)) {
@@ -157,10 +172,20 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                     Object value = entry.getValue();
                     switch (key) {
                         case ElasticConverterShared.ElasticConverterValue.NAME:
-                            termQueryParameters.setSearchValue((String) value);
+                            if (value instanceof String) {
+                                termQueryParameters.setSearchValue((String) value);
+                            } else if (value instanceof List) {
+                                termQueryParameters.setSearchArray((List<String>) value);
+                            }
                             break;
                         case ElasticConverterShared.ElasticConverterDateFormat.NAME:
                             termQueryParameters.setFormat((String) value);
+                            break;
+                        case ElasticConverterShared.ElasticConverterSeparator.NAME:
+                            termQueryParameters.setSeparator((String) value);
+                            break;
+                        case ElasticConverterShared.ElasticConverterDecimal.NAME:
+                            termQueryParameters.setDecimal((String) value);
                             break;
                     }
                 }
