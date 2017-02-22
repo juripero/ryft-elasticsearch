@@ -4,7 +4,6 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionExceptio
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConvertingContext;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionRange;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,7 +14,7 @@ import java.util.Map;
 public class RangeQueryParameters extends QueryParameters<String> {
 
     private ElasticConvertingContext.ElasticDataType dataType;
-    private String format;
+    private String format = "yyyy-MM-dd HH:mm:ss";
     private Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound;
     private Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound;
     private String separator = ",";

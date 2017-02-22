@@ -13,7 +13,7 @@ public class TermQueryParameters extends QueryParameters<String> {
 
     private ElasticConvertingContext.ElasticDataType dataType;
     private List<String> searchArray;
-    private String format;
+    private String format = "yyyy-MM-dd HH:mm:ss";
     private String separator = ",";
     private String decimal = ".";
 

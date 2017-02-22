@@ -368,7 +368,7 @@ Resulting RYFT query:
 ###Date-Time queries
 Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
 
-Default date format is “yyyy-MM-dd’T’HH:mm:ss.SS”.
+Default date format is “yyyy-MM-dd HH:mm:ss”.
 
 Date format pattern should have consistent separator characters for date and time, 
 because RYFT can search date and time with one type of separator.
