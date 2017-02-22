@@ -491,6 +491,8 @@ Resulting RYFT query:
 ```
 ((RECORD.price CONTAINS NUMBER(NUM = "20", ",", ".")) OR (RECORD.price CONTAINS NUMBER(NUM = "30", ",", ".")))
 ```
+This syntax is only supported for numeric search.
+
 
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
