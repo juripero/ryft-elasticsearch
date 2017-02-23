@@ -604,14 +604,15 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"term\": {\n" +
-                "      \"age\": {\n" +
+                "      \"balance\": {\n" +
                 "        \"value\": \"$1,158.96\",\n" +
-                "        \"type\": \"currency\"\n" +
+                "        \"type\": \"currency\", \n" +
+                "        \"currency\": \"$\"\n" +
                 "      }\n" +
                 "    }\n" +
                 "  }, \n" +
                 "\"ryft_enabled\": true\n" +
-                "}";
+                "}\n";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);
