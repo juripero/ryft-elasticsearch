@@ -35,6 +35,14 @@ Simplified form:
 | metric    | <"FEDS", "FHS">      |                               | Available only for RYFT. Default "feds". |
 | type      | "phrase"             | "phrase"                      | Change query type to phrase.             |
 
+Fuzziness AUTO will result in the following distances:
+
+0 for strings of one or two characters
+
+1 for strings of three, four, or five characters
+
+2 for strings of more than five characters
+
 #####Simple fuzzy match query example:
 We are looking for speaker "MARCELLUS" with one mistake in his name 
 ```json
