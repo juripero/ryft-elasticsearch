@@ -897,4 +897,71 @@ public class ElasticConverterTest {
                 ryftRequest.getQuery().buildRyftString());
     }
 
+    @Test
+    public void CurrencySearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"price\": {\n" +
+                "        \"value\": \"$100\",\n" +
+                "        \"type\": \"currency\",\n" +
+                "        \"currency\":\"$\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.price CONTAINS CURRENCY(CUR = \"$100\", \"$\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void CurrencySearchSimpleTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"price\": {\n" +
+                "        \"value\": \"100\",\n" +
+                "        \"type\": \"currency\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.price CONTAINS CURRENCY(CUR = \"$100\", \"$\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void CurrencyRangeTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"price\" : {\n" +
+                "        \"gte\" : 10,\n" +
+                "        \"lte\" : 20,\n" +
+                "        \"type\":\"currency\",\n" +
+                "        \"separator\":\",\",\n" +
+                "        \"decimal\":\".\",\n" +
+                "        \"currency\":\"%\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.price CONTAINS CURRENCY(\"%10\" <= CUR <= \"%20\", \"%\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

@@ -98,6 +98,9 @@ public class ElasticConverterRangeField extends ElasticConverterField {
                     case ElasticConverterShared.ElasticConverterDecimal.NAME:
                         rangeQueryParameters.setDecimal((String) value);
                         break;
+                    case ElasticConverterShared.ElasticConverterCurrency.NAME:
+                        rangeQueryParameters.setCurrency((String) value);
+                        break;
                 }
             }
             return convertingContext.getQueryFactory().buildRangeQuery(rangeQueryParameters);

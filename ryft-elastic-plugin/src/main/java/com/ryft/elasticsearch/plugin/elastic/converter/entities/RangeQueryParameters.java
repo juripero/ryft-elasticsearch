@@ -13,12 +13,13 @@ import java.util.Map;
  */
 public class RangeQueryParameters extends QueryParameters<String> {
 
-    private ElasticConvertingContext.ElasticDataType dataType;
+    private ElasticConvertingContext.ElasticDataType dataType = ElasticConvertingContext.ElasticDataType.NUMBER;
     private String format = "yyyy-MM-dd HH:mm:ss";
     private Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound;
     private Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound;
     private String separator = ",";
     private String decimal = ".";
+    private String currency = "$";
 
     public ElasticConvertingContext.ElasticDataType getDataType() {
         return dataType;
@@ -66,6 +67,14 @@ public class RangeQueryParameters extends QueryParameters<String> {
 
     public void setDecimal(String decimal) {
         this.decimal = decimal;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
     @Override

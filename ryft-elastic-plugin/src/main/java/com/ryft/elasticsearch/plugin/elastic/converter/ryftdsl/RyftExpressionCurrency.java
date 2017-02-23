@@ -2,29 +2,43 @@ package com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class RyftExpressionCurrency extends RyftExpressionRange {
 
-    private final String subitizer;
+    private final String separator;
     private final String decimal;
     private final String currency;
 
-    public RyftExpressionCurrency(Double valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, Double valueB, String currency, String subitizer, String decimal) {
-        super(String.format("\"%s%s\"", currency, valueA), operatorA, operatorB, String.format("\"%s%s\"", currency, valueB), "CURRENCY", "CUR");
-        this.subitizer = subitizer;
+    public RyftExpressionCurrency(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB, String currency, String separator, String decimal) {
+        super("CURRENCY");
+        if (valueA.contains(currency)) {
+            valueA = valueA.replace(currency, "");
+        }
+        if (valueB != null && valueB.contains(currency)) {
+            valueB = valueB.replace(currency, "");
+        }
+        this.valueA = String.format("\"%s%s\"", currency, valueA);
+        this.operatorA = operatorA;
+        this.variableName = "CUR";
+        this.valueB = Optional.ofNullable(String.format("\"%s%s\"", currency, valueB));
+        this.operatorB = Optional.ofNullable(operatorB);
+        constructValue();
+
+        this.separator = separator;
         this.decimal = decimal;
         this.currency = currency;
     }
 
-    public RyftExpressionCurrency(Double valueA, RyftOperatorCompare operatorA, String currency, String subitizer, String decimal) {
-        this(valueA, operatorA, null, null, currency, subitizer, decimal);
+    public RyftExpressionCurrency(String valueA, RyftOperatorCompare operatorA, String currency, String separator, String decimal) {
+        this(valueA, operatorA, null, null, currency, separator, decimal);
     }
 
-    public RyftExpressionCurrency(Double valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, Double valueB) {
+    public RyftExpressionCurrency(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB) {
         this(valueA, operatorA, operatorB, valueB, "$", ",", ".");
     }
 
-    public RyftExpressionCurrency(Double valueA, RyftOperatorCompare operatorA) {
+    public RyftExpressionCurrency(String valueA, RyftOperatorCompare operatorA) {
         this(valueA, operatorA, null, null);
     }
 
@@ -32,7 +46,7 @@ public class RyftExpressionCurrency extends RyftExpressionRange {
     protected List<String> getParameters() {
         return Arrays.asList(new String[]{
             String.format("\"%s\"", currency),
-            String.format("\"%s\"", subitizer),
+            String.format("\"%s\"", separator),
             String.format("\"%s\"", decimal)
         });
     }

@@ -18,7 +18,7 @@ public class ElasticConvertingContext {
     }
 
     public static enum ElasticDataType {
-        DATETIME, NUMBER, NUMBER_ARRAY
+        DATETIME, NUMBER, NUMBER_ARRAY, CURRENCY
     }
 
     public static enum ElasticBoolSearchType {
@@ -38,7 +38,7 @@ public class ElasticConvertingContext {
     private Boolean minimumShouldMatchDefined = false;
     private Boolean line;
     private Integer width;
-    private ElasticDataType dataType;
+    private ElasticDataType dataType = ElasticDataType.NUMBER;
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,

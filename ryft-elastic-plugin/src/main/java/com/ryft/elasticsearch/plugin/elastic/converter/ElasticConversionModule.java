@@ -50,6 +50,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterValue.NAME).to(ElasticConverterShared.ElasticConverterValue.class);
         convertersBinder.addBinding(ElasticConverterSeparator.NAME).to(ElasticConverterShared.ElasticConverterSeparator.class);
         convertersBinder.addBinding(ElasticConverterDecimal.NAME).to(ElasticConverterShared.ElasticConverterDecimal.class);
+        convertersBinder.addBinding(ElasticConverterCurrency.NAME).to(ElasticConverterShared.ElasticConverterCurrency.class);
 
         convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
         convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);

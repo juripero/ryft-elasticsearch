@@ -11,11 +11,12 @@ import java.util.List;
  */
 public class TermQueryParameters extends QueryParameters<String> {
 
-    private ElasticConvertingContext.ElasticDataType dataType;
+    private ElasticConvertingContext.ElasticDataType dataType = ElasticConvertingContext.ElasticDataType.NUMBER;
     private List<String> searchArray;
     private String format = "yyyy-MM-dd HH:mm:ss";
     private String separator = ",";
     private String decimal = ".";
+    private String currency = "$";
 
     public ElasticConvertingContext.ElasticDataType getDataType() {
         return dataType;
@@ -55,5 +56,13 @@ public class TermQueryParameters extends QueryParameters<String> {
 
     public void setDecimal(String decimal) {
         this.decimal = decimal;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 }

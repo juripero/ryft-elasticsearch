@@ -187,6 +187,9 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                         case ElasticConverterShared.ElasticConverterDecimal.NAME:
                             termQueryParameters.setDecimal((String) value);
                             break;
+                        case ElasticConverterShared.ElasticConverterCurrency.NAME:
+                            termQueryParameters.setCurrency((String) value);
+                            break;
                     }
                 }
                 return convertingContext.getQueryFactory().buildTermQuery(termQueryParameters);

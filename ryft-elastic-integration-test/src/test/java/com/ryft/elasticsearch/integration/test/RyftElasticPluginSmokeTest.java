@@ -594,6 +594,29 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
+    @Test
+    public void testCurrencyTerm() throws InterruptedException, ExecutionException {
+        QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance");
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info(String.valueOf(searchResponse.getHits().getTotalHits()));
+
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"age\": {\n" +
+                "        \"value\": \"$1,158.96\",\n" +
+                "        \"type\": \"currency\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }, \n" +
+                "\"ryft_enabled\": true\n" +
+                "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
     public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
         String elasticQuery = "{\"query\":{" + "\"match_phrase\": { " + "\"doc.text_entry\": {"
                 + "\"query\":\"To be, or not to be\"," + "\"metric\": \"Fhs\"," + "\"fuzziness\": 5" + "}" + "}" + "}}";

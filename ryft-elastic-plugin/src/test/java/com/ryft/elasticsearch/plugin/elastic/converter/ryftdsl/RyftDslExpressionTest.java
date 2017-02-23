@@ -46,26 +46,26 @@ public class RyftDslExpressionTest {
 
     @Test
     public void TestExpressionCurrency() {
-        Double valueA = 1.01e2;
+        String valueA = "1.01e2";
         RyftExpression ryftExpression = new RyftExpressionCurrency(valueA, RyftOperatorCompare.EQ);
         String expected = String.format("CURRENCY(CUR = \"$%s\", \"$\", \",\", \".\")", valueA);
         LOGGER.info(expected);
         assertEquals(expected, ryftExpression.buildRyftString());
 
-        Double valueB = 32432.332;
+        String valueB = "32432.332";
         ryftExpression = new RyftExpressionCurrency(valueA, RyftOperatorCompare.LT, RyftOperatorCompare.LTE, valueB);
         expected = String.format("CURRENCY(\"$%s\" < CUR <= \"$%s\", \"$\", \",\", \".\")", valueA, valueB);
         LOGGER.info(expected);
         assertEquals(expected, ryftExpression.buildRyftString());
 
-        valueA = -0.00001234;
-        valueB = 123.456e-6;
+        valueA = "-0.00001234";
+        valueB = "123.456e-6";
         ryftExpression = new RyftExpressionCurrency(valueA, RyftOperatorCompare.LTE, RyftOperatorCompare.LT, valueB, "%", ",", ".");
         expected = String.format("CURRENCY(\"%%%s\" <= CUR < \"%%%s\", \"%%\", \",\", \".\")", valueA, valueB);
         LOGGER.info(expected);
         assertEquals(expected, ryftExpression.buildRyftString());
 
-        valueA = 10011928.0;
+        valueA = "10011928.0";
         ryftExpression = new RyftExpressionCurrency(valueA, RyftOperatorCompare.GTE, "$", "-", ".");
         expected = String.format("CURRENCY(CUR >= \"$%s\", \"$\", \"-\", \".\")", valueA);
         LOGGER.info(expected);

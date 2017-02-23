@@ -42,6 +42,7 @@ public class ElasticConverterShared {
         private final String TYPE_PHRASE = "phrase";
         private final String TYPE_DATETIME = "datetime";
         private final String TYPE_NUMBER = "number";
+        private final String TYPE_CURRENCY = "currency";
 
         @Override
         public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
@@ -58,6 +59,9 @@ public class ElasticConverterShared {
                         break;
                     case TYPE_NUMBER:
                         convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.NUMBER);
+                        break;
+                    case TYPE_CURRENCY:
+                        convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.CURRENCY);
                         break;
                 }
             }
@@ -80,6 +84,17 @@ public class ElasticConverterShared {
     public static class ElasticConverterDecimal implements ElasticConvertingElement<String> {
 
         public static final String NAME = "decimal";
+
+        @Override
+        public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            return ElasticConversionUtil.getString(convertingContext);
+        }
+    }
+
+    public static class ElasticConverterCurrency implements ElasticConvertingElement<String> {
+
+        public static final String NAME = "currency";
 
         @Override
         public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {

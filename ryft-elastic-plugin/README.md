@@ -501,6 +501,70 @@ Resulting RYFT query:
 ```
 This syntax is only supported for numeric search.
 
+###Currency queries
+Default values for “currency”, “separator” and “decimal” are “$”, “,”, and “.”.
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": 10000,
+        "type": "currency"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY(CUR = "$10000", "$", ",", "."))
+
+```
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": "$100",
+        "type": "currency",
+        "currency":"$"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY(CUR = "$100", "$", ",", "."))
+
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range" : {
+      "price" : {
+        "gte" : 10,
+        "lte" : 20,
+        "type":"currency",
+        "separator":",",
+        "decimal":".",
+        "currency":"%"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY("%10" <= CUR <= "%20", "%", ",", "."))
+```
 
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
