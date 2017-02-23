@@ -309,7 +309,7 @@ public class RyftQueryFactory {
         Integer textLength = searchText.length();
         if (textLength < TEXT_LENGTH_NO_FUZZINESS) {
             return 0;
-        } else if (textLength < TEXT_LENGTH_FUZZINESS) {
+        } else if (textLength <= TEXT_LENGTH_FUZZINESS) {
             return 1;
         } else {
             return 2;

@@ -132,7 +132,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
 
         String elasticQuery = "{" + "\"query\": {" + "\"match_phrase\": {" + "\"text_entry\":{"
-                + "\"query\":\"All the worlds a\"," + "\"fuzziness\":\"1\"" + "}" + "}" + "},"
+                + "\"query\":\"All the worlds a\"," + "\"fuzziness\":\"2\"" + "}" + "}" + "},"
                 + "\"ryft_enabled\":true" + "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
