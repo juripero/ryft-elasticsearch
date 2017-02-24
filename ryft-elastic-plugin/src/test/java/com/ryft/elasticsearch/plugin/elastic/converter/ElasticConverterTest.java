@@ -1112,4 +1112,30 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.name CONTAINS \"Tom\")",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void RawTextNumericSearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"64\",\n" +
+                "        \"type\": \"number\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }
