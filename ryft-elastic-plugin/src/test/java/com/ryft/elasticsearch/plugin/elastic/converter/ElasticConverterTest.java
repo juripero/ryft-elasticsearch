@@ -1092,4 +1092,24 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.ip_addr CONTAINS IPV6(\"2001::db8\" <= IP < \"2001::db9\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void DefaultDatatypeTermTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"name\": {\n" +
+                "        \"value\": \"Tom\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.name CONTAINS \"Tom\")",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

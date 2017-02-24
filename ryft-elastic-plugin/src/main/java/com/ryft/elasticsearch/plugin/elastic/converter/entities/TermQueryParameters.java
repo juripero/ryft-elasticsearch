@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class TermQueryParameters extends QueryParameters<String> {
 
-    private ElasticConvertingContext.ElasticDataType dataType = ElasticConvertingContext.ElasticDataType.NUMBER;
+    private ElasticConvertingContext.ElasticDataType dataType = ElasticConvertingContext.ElasticDataType.STRING;
     private List<String> searchArray;
     private String format = "yyyy-MM-dd HH:mm:ss";
     private String separator = ",";

@@ -76,6 +76,11 @@ public class RyftQueryFactory {
 
     public RyftQuery buildTermQuery(TermQueryParameters termQueryParameters) throws ElasticConversionException {
         switch (termQueryParameters.getDataType()) {
+            case STRING:
+                return buildQueryStringTerm(
+                        termQueryParameters.getSearchValue(),
+                        termQueryParameters.getFieldName(),
+                        termQueryParameters.getRyftOperator());
             case DATETIME:
                 return buildQueryDateTimeTerm(
                         termQueryParameters.getSearchValue(),
@@ -209,6 +214,13 @@ public class RyftQueryFactory {
                                          Integer width, Boolean line) {
         String searchTextFormatted = searchText.replace("?", "\"?\"");
         RyftExpression ryftExpression = new RyftExpressionExactSearch(searchTextFormatted);
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
+                ryftOperator, ryftExpression);
+    }
+
+    private RyftQuery buildQueryStringTerm(String searchText, String fieldName,
+                                         RyftOperator ryftOperator) {
+        RyftExpression ryftExpression = new RyftExpressionExactSearch(searchText);
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
                 ryftOperator, ryftExpression);
     }
