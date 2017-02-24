@@ -566,6 +566,64 @@ Resulting RYFT query:
 (RECORD.price CONTAINS CURRENCY("%10" <= CUR <= "%20", "%", ",", "."))
 ```
 
+###IPv4 queries
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "192.168.10.11",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4(IP = "192.168.10.11"))
+```
+
+Mask search query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "192.168.0.0/16",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4("192.168.0.0" <= IP <= "192.168.255.255"))
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range": {
+      "ip_addr": {
+        "gte": "192.168.1.0",
+        "lt":  "192.168.2.0",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4("192.168.1.0" <= IP < "192.168.2.0"))
+```
+
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.

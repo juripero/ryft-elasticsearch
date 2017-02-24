@@ -964,4 +964,68 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.price CONTAINS CURRENCY(\"%10\" <= CUR <= \"%20\", \"%\", \",\", \".\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void Ipv4SearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"value\": \"192.168.10.11\",\n" +
+                "        \"type\": \"ipv4\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV4(IP = \"192.168.10.11\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void Ipv4SearchMaskTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"value\": \"192.168.0.0/16\",\n" +
+                "        \"type\": \"ipv4\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV4(\"192.168.0.0\" <= IP <= \"192.168.255.255\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void Ipv4RangeTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"gte\": \"192.168.1.0\",\n" +
+                "        \"lt\":  \"192.168.2.0\",\n" +
+                "        \"type\": \"ipv4\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV4(\"192.168.1.0\" <= IP < \"192.168.2.0\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

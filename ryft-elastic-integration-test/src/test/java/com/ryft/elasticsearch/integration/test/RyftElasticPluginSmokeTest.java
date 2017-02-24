@@ -599,7 +599,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
-        logger.info(String.valueOf(searchResponse.getHits().getTotalHits()));
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -613,6 +612,28 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "  }, \n" +
                 "\"ryft_enabled\": true\n" +
                 "}\n";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testIpv4Term() throws InterruptedException, ExecutionException {
+        QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("122.176.86.200").field("ipv4");
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"ipv4\": {\n" +
+                "        \"value\": \"122.176.86.200\",\n" +
+                "        \"type\": \"ipv4\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }, \n" +
+                "\"ryft_enabled\": true\n" +
+                "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
         elasticSubsetRyft(searchResponse, ryftResponse);

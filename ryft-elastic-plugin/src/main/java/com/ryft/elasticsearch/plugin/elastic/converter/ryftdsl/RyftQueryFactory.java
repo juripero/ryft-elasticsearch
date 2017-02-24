@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.net.util.SubnetUtils;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -102,6 +103,12 @@ public class RyftQueryFactory {
                         termQueryParameters.getSeparator(),
                         termQueryParameters.getDecimal(),
                         termQueryParameters.getRyftOperator());
+            case IPV4:
+                return buildQueryIpv4Term(
+                        termQueryParameters.getSearchValue(),
+                        termQueryParameters.getFieldName(),
+                        termQueryParameters.getRyftOperator()
+                );
             default:
                 throw new ElasticConversionException("Unknown data type");
         }
@@ -134,6 +141,12 @@ public class RyftQueryFactory {
                         rangeQueryParameters.getCurrency(),
                         rangeQueryParameters.getSeparator(),
                         rangeQueryParameters.getDecimal(),
+                        rangeQueryParameters.getRyftOperator());
+            case IPV4:
+                return buildQueryIpv4Range(
+                        rangeQueryParameters.getLowerBound(),
+                        rangeQueryParameters.getUpperBound(),
+                        rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getRyftOperator());
             default:
                 throw new ElasticConversionException("Unknown data type");
@@ -357,6 +370,62 @@ public class RyftQueryFactory {
         } else if (operatorCompareUpper.isPresent() && !operatorCompareLower.isPresent()) {
             String value = upperBound.get(operatorCompareUpper.get());
             RyftExpression ryftExpression = new RyftExpressionCurrency(value, operatorCompareUpper.get(), currency, separator, decimal);
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else {
+            throw new ElasticConversionException("Range query must have either an upper bound, a lower bound, or both");
+        }
+    }
+
+    private RyftQuery buildQueryIpv4Term(String searchText,
+                                         String fieldName,
+                                         RyftOperator ryftOperator) throws ElasticConversionException {
+        String[] parts = searchText.split("/");
+        if (parts.length == 2) {
+            SubnetUtils utils = new SubnetUtils(searchText);
+            utils.setInclusiveHostCount(true);
+            String lowerIp = utils.getInfo().getLowAddress();
+            String upperIp = utils.getInfo().getHighAddress();
+            Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound =
+                    Collections.singletonMap(RyftExpressionRange.RyftOperatorCompare.GTE, lowerIp);
+            Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound =
+                    Collections.singletonMap(RyftExpressionRange.RyftOperatorCompare.LTE, upperIp);
+            return buildQueryIpv4Range(lowerBound, upperBound, fieldName, ryftOperator);
+        }
+
+        RyftExpression ryftExpression = new RyftExpressionIPv4(searchText, RyftExpressionRange.RyftOperatorCompare.EQ);
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+    }
+
+    private RyftQuery buildQueryIpv4Range(Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound,
+                                          Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound,
+                                          String fieldName,
+                                          RyftOperator ryftOperator) throws ElasticConversionException {
+        Optional<RyftExpressionRange.RyftOperatorCompare> operatorCompareLower = Optional.empty();
+        if (lowerBound != null) {
+            operatorCompareLower = lowerBound.keySet().stream().findFirst();
+        }
+        Optional<RyftExpressionRange.RyftOperatorCompare> operatorCompareUpper = Optional.empty();
+        if (upperBound != null) {
+            operatorCompareUpper = upperBound.keySet().stream().findFirst();
+        }
+
+        if (operatorCompareLower.isPresent() && operatorCompareUpper.isPresent()) {
+            String ipLower = lowerBound.get(operatorCompareLower.get());
+            String ipUpper = upperBound.get(operatorCompareUpper.get());
+
+            //Resulting expression is of format "a < x < b". So, we must reverse operatorCompareLower in order for the comparison logic to be preserved
+            RyftExpression ryftExpression = new RyftExpressionIPv4(ipLower,
+                    RyftExpressionRange.RyftOperatorCompare.getOppositeValue(operatorCompareLower.get()),
+                    operatorCompareUpper.get(), ipUpper);
+
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else if (operatorCompareLower.isPresent() && !operatorCompareUpper.isPresent()) {
+            String ip = lowerBound.get(operatorCompareLower.get());
+            RyftExpression ryftExpression = new RyftExpressionIPv4(ip, operatorCompareLower.get());
+            return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
+        } else if (operatorCompareUpper.isPresent() && !operatorCompareLower.isPresent()) {
+            String ip = upperBound.get(operatorCompareUpper.get());
+            RyftExpression ryftExpression = new RyftExpressionIPv4(ip, operatorCompareUpper.get());
             return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName), ryftOperator, ryftExpression);
         } else {
             throw new ElasticConversionException("Range query must have either an upper bound, a lower bound, or both");
