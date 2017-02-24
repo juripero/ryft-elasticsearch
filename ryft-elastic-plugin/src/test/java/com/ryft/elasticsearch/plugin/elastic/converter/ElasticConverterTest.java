@@ -1028,4 +1028,68 @@ public class ElasticConverterTest {
         assertEquals("(RECORD.ip_addr CONTAINS IPV4(\"192.168.1.0\" <= IP < \"192.168.2.0\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void Ipv6SearchTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"value\": \"2001::db8\",\n" +
+                "        \"type\": \"ipv6\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV6(IP = \"2001::db8\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void Ipv6SearchMaskTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"value\": \"2001::db8/32\",\n" +
+                "        \"type\": \"ipv6\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV6(\"2001::\" <= IP <= \"2001:0:ffff:ffff:ffff:ffff:ffff:ffff\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void Ipv6RangeTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\": {\n" +
+                "      \"ip_addr\": {\n" +
+                "        \"gte\": \"2001::db8\",\n" +
+                "        \"lt\":  \"2001::db9\",\n" +
+                "        \"type\": \"ipv6\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RECORD.ip_addr CONTAINS IPV6(\"2001::db8\" <= IP < \"2001::db9\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

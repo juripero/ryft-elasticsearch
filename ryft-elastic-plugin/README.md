@@ -624,6 +624,65 @@ Resulting RYFT query:
 (RECORD.ip_addr CONTAINS IPV4("192.168.1.0" <= IP < "192.168.2.0"))
 ```
 
+
+###IPv6 queries
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "2001::db8",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6(IP = "2001::db8"))
+```
+
+Mask search query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "2001::db8/32",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6("2001::" <= IP <= "2001:0:ffff:ffff:ffff:ffff:ffff:ffff"))
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range": {
+      "ip_addr": {
+        "gte": "2001::db8",
+        "lt":  "2001::db9",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6("2001::db8" <= IP < "2001::db9"))
+```
+
 ###Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.

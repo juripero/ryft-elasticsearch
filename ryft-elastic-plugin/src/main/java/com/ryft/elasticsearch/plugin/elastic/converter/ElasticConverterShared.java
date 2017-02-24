@@ -44,6 +44,7 @@ public class ElasticConverterShared {
         private final String TYPE_NUMBER = "number";
         private final String TYPE_CURRENCY = "currency";
         private final String TYPE_IPV4 = "ipv4";
+        private final String TYPE_IPV6 = "ipv6";
 
         @Override
         public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
@@ -66,6 +67,9 @@ public class ElasticConverterShared {
                         break;
                     case TYPE_IPV4:
                         convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.IPV4);
+                        break;
+                    case TYPE_IPV6:
+                        convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.IPV6);
                         break;
                 }
             }
