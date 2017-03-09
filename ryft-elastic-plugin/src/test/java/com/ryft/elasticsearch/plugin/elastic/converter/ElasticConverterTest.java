@@ -1138,4 +1138,30 @@ public class ElasticConverterTest {
         assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+
+    @Test
+    public void DateTimeRangeMillisTest() throws Exception {
+        String query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\" : {\n" +
+                "      \"timestamp\" : {\n" +
+                "        \"gt\" : \"1488546149100\",\n" +
+                "        \"lt\" : \"1488586749100\",\n" +
+                "        \"type\": \"datetime\",\n" +
+                "        \"format\": \"epoch_millis\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2017-03-03)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 15:02:29))) " +
+                        "OR (RECORD.timestamp CONTAINS DATE(2017-03-03 < YYYY-MM-DD < 2017-03-04)) " +
+                        "OR ((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2017-03-04)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 02:19:09))))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

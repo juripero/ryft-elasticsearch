@@ -262,6 +262,12 @@ public class RyftQueryFactory {
                                               Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound,
                                               String format, String fieldName,
                                               RyftOperator ryftOperator) throws ElasticConversionException {
+        boolean isMillis = false;
+        if (format.equals("epoch_millis")){
+            format = RyftExpressionDate.DEFAULT_FORMAT + " " + RyftExpressionTime.DEFAULT_FORMAT;
+            isMillis = true;
+        }
+
         DateFormat dateFormat = RyftExpressionDate.getDateFormat(format);
         DateFormat timeFormat = RyftExpressionTime.getTimeFormat(format);
 
@@ -271,7 +277,7 @@ public class RyftQueryFactory {
             } else if (dateFormat == null && timeFormat != null) {
                 return RyftQueryDateTimeUtil.buildSimpleRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName, true);
             } else if (dateFormat != null && timeFormat != null) {
-                return RyftQueryDateTimeUtil.buildFullRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName);
+                return RyftQueryDateTimeUtil.buildFullRangeQuery(lowerBound, upperBound, format, ryftOperator, fieldName, isMillis);
             }
             throw new ElasticConversionException("Could not parse datetime format: " + format);
         } catch (ParseException e) {

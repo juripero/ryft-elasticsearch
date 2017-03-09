@@ -100,7 +100,7 @@ public class RyftQueryDateTimeUtil {
                                                 Map<RyftOperatorCompare, String> upperBound,
                                                 String format,
                                                 RyftOperator ryftOperator,
-                                                String fieldName) throws ElasticConversionException, ParseException {
+                                                String fieldName, boolean isMillis) throws ElasticConversionException, ParseException {
         Optional<RyftOperatorCompare> operatorCompareLower = Optional.empty();
         if (lowerBound != null) {
             operatorCompareLower = lowerBound.keySet().stream().findFirst();
@@ -112,8 +112,15 @@ public class RyftQueryDateTimeUtil {
 
         SimpleDateFormat sdf = new SimpleDateFormat(format);
         if (operatorCompareLower.isPresent() && operatorCompareUpper.isPresent()) {
-            Date lowerDate = sdf.parse(lowerBound.get(operatorCompareLower.get()));
-            Date upperDate = sdf.parse(upperBound.get(operatorCompareUpper.get()));
+            Date lowerDate;
+            Date upperDate;
+            if(isMillis) {
+                lowerDate = new Date(Long.valueOf(lowerBound.get(operatorCompareLower.get())));
+                upperDate = new Date(Long.valueOf(upperBound.get(operatorCompareUpper.get())));
+            } else  {
+                lowerDate = sdf.parse(lowerBound.get(operatorCompareLower.get()));
+                upperDate = sdf.parse(upperBound.get(operatorCompareUpper.get()));
+            }
 
             RyftQuery lowerDayQuery = buildBoundaryDayQuery(lowerDate, format,
                     ryftOperator, fieldName, operatorCompareLower.get());
