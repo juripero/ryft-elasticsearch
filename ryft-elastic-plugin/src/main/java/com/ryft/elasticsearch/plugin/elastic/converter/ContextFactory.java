@@ -1,8 +1,8 @@
 package com.ryft.elasticsearch.plugin.elastic.converter;
 
-import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.action.search.SearchRequest;
 
 public interface ContextFactory {
 
-    ElasticConvertingContext create(XContentParser parser, String originalQuery);
+    ElasticConvertingContext create(SearchRequest searchRequest);
 }

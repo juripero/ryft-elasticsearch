@@ -8,15 +8,13 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.InternalEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class RyftProcessor implements PostConstruct {
-    ExecutorService executor;
-    
 
-    // TODO: [imasternoy] Configure thread pool via properties
+    protected ExecutorService executor ;
+
     @Override
     public void onPostConstruct() {
         executor = Executors
                 .newFixedThreadPool(getPoolSize(), new ThreadFactoryBuilder().setNameFormat(getName()).build());
-
     }
 
     public abstract void process(InternalEvent event);
@@ -24,9 +22,10 @@ public abstract class RyftProcessor implements PostConstruct {
     /**
      * Should return name for current pool impl
      *
+     * @return
      */
     public abstract String getName();
-    
+
     public abstract int getPoolSize();
 
 }

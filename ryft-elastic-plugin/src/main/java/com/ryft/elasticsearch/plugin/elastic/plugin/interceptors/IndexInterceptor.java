@@ -10,7 +10,6 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.tasks.Task;
 
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.elastic.plugin.RyftPluginGlobalSettingsProvider;
 
 public class IndexInterceptor implements ActionInterceptor {
     private final ESLogger logger = Loggers.getLogger(getClass());

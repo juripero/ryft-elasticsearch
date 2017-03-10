@@ -14,7 +14,6 @@ import io.netty.handler.codec.http.HttpResponseDecoder;
 import java.net.InetSocketAddress;
 
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -25,7 +24,8 @@ import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
 
 @Singleton
 public class RyftRestClient implements PostConstruct {
-    private static final ESLogger logger = Loggers.getLogger(RestClientHandler.class);
+
+    private static final ESLogger logger = Loggers.getLogger(RyftRestClient.class);
     private Bootstrap b;
     RyftProperties props;
 
@@ -36,7 +36,7 @@ public class RyftRestClient implements PostConstruct {
 
     @Override
     public void onPostConstruct() {
-        EventLoopGroup workerGroup = new NioEventLoopGroup( props.getInt(PropertiesProvider.WROKER_THREAD_COUNT));
+        EventLoopGroup workerGroup = new NioEventLoopGroup(props.getInt(PropertiesProvider.WROKER_THREAD_COUNT));
         b = new Bootstrap();
         b = b.group(workerGroup)//
                 .channel(NioSocketChannel.class)//
@@ -45,9 +45,6 @@ public class RyftRestClient implements PostConstruct {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
-                        // DefaultChannelPipeline pipe =
-                        // (DefaultChannelPipeline)
-                        // ch.pipeline();
                         ch.pipeline().addLast("encoder", new HttpRequestEncoder());
                         ch.pipeline().addLast("decoder", new HttpResponseDecoder());
                     }
@@ -55,9 +52,16 @@ public class RyftRestClient implements PostConstruct {
     }
 
     public Channel get() throws InterruptedException {
-            return b.connect(new InetSocketAddress(//
-                    props.getStr(PropertiesProvider.HOST),//
-                    props.getInt(PropertiesProvider.PORT)))//
-                    .sync().channel();
+        String host = props.getStr(PropertiesProvider.HOST); 
+        return get(host);
+    }
+
+    public Channel get(String host) throws InterruptedException {
+        Integer port = props.getInt(PropertiesProvider.PORT);
+        return get(new InetSocketAddress(host, port));
+    }
+
+    private Channel get(InetSocketAddress address) throws InterruptedException {
+        return b.connect(address).sync().channel();
     }
 }
