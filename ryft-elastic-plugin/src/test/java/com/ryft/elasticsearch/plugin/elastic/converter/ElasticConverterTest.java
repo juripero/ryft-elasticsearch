@@ -2,6 +2,8 @@ package com.ryft.elasticsearch.plugin.elastic.converter;
 
 import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEventFactory;
+import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionDate;
+import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionTime;
 import com.ryft.elasticsearch.plugin.elastic.plugin.JSR250Module;
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
@@ -18,6 +20,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
+
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ElasticConverterTest {
@@ -1142,12 +1148,15 @@ public class ElasticConverterTest {
 
     @Test
     public void DateTimeRangeMillisTest() throws Exception {
+        long now = Instant.now().toEpochMilli();
+        long earlier = now - 1000000000;
+
         String query = "{\n" +
                 "  \"query\": {\n" +
                 "    \"range\" : {\n" +
                 "      \"timestamp\" : {\n" +
-                "        \"gt\" : \"1488546149100\",\n" +
-                "        \"lt\" : \"1488586749100\",\n" +
+                "        \"gt\" : \"" + earlier + "\",\n" +
+                "        \"lt\" : \"" + now + "\",\n" +
                 "        \"type\": \"datetime\",\n" +
                 "        \"format\": \"epoch_millis\"\n" +
                 "      }\n" +
@@ -1159,9 +1168,22 @@ public class ElasticConverterTest {
         ElasticConvertingContext context = contextFactory.create(parser, query);
         RyftRequestEvent ryftRequest = elasticConverter.convert(context);
         assertNotNull(ryftRequest);
-        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2017-03-03)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 15:02:29))) " +
-                        "OR (RECORD.timestamp CONTAINS DATE(2017-03-03 < YYYY-MM-DD < 2017-03-04)) " +
-                        "OR ((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = 2017-03-04)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 02:19:09))))",
+
+        Date nowDate = new Date(now);
+        Date earlierDate = new Date(earlier);
+
+        SimpleDateFormat dayFormat = new SimpleDateFormat(RyftExpressionDate.DEFAULT_FORMAT);
+        SimpleDateFormat timeFormat = new SimpleDateFormat(RyftExpressionTime.DEFAULT_FORMAT);
+
+        String nowDay = dayFormat.format(nowDate);
+        String nowTime = timeFormat.format(nowDate);
+
+        String earlierDay = dayFormat.format(earlierDate);
+        String earlierTime = timeFormat.format(earlierDate);
+
+        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = " + earlierDay + ")) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > " + earlierTime + "))) " +
+                        "OR (RECORD.timestamp CONTAINS DATE(" + earlierDay + " < YYYY-MM-DD < " + nowDay + ")) " +
+                        "OR ((RECORD.timestamp CONTAINS DATE(YYYY-MM-DD = " + nowDay + ")) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < " + nowTime + "))))",
                 ryftRequest.getQuery().buildRyftString());
     }
 }
