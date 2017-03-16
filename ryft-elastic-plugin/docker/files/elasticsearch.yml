@@ -1,0 +1,11 @@
+network.host: 0.0.0.0
+cluster.name: ${CLUSTER_NAME}
+node.name: ${NODE_NAME}
+path.data: /ryftone/
+discovery.zen.ping.unicast.hosts: ["node1", "node2", "node3"]
+
+index:
+  codec: RyftCodec
+  compound_format: false
+  compound_on_flush: false
+  shard.check_on_startup: false
