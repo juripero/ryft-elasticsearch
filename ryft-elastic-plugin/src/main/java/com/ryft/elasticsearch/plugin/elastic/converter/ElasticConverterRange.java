@@ -12,7 +12,7 @@ import org.elasticsearch.common.logging.Loggers;
  */
 public class ElasticConverterRange implements ElasticConvertingElement<RyftQuery> {
 
-    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterTerm.class);
+    private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterRange.class);
 
     final static String NAME = "range";
 

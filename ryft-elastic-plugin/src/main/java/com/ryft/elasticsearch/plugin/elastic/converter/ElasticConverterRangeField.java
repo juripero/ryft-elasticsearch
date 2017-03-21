@@ -8,6 +8,7 @@ import org.elasticsearch.common.logging.Loggers;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 
@@ -102,6 +103,10 @@ public class ElasticConverterRangeField extends ElasticConverterField {
                         rangeQueryParameters.setCurrency((String) value);
                         break;
                 }
+            }
+            //FIXME - workaround for timeseries
+            if (convertingContext.getSearchArray() != null) {
+                rangeQueryParameters.setSearchArray(convertingContext.getSearchArray());
             }
             return convertingContext.getQueryFactory().buildRangeQuery(rangeQueryParameters);
         } catch (IOException ex) {

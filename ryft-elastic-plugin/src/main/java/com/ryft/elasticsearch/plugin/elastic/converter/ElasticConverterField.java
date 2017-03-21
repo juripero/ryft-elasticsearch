@@ -153,6 +153,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                                         Map<String, Object> fieldParametersMap) throws ElasticConversionException {
         List<String> values = ElasticConversionUtil.getStringArray(convertingContext);
         fieldParametersMap.put(ElasticConverterShared.ElasticConverterValue.NAME, values);
+        convertingContext.setSearchArray(values); //FIXME - workaround for timeseries
         return getRyftQuery(convertingContext, fieldParametersMap);
     }
 

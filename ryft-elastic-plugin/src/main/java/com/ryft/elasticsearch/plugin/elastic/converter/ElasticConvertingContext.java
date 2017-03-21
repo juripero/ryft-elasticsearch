@@ -4,6 +4,7 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
@@ -39,6 +40,7 @@ public class ElasticConvertingContext {
     private Boolean line;
     private Integer width;
     private ElasticDataType dataType = ElasticDataType.STRING;
+    private List<String> searchArray; //FIXME - workaround for timeseries
 
     @Inject
     public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
@@ -132,4 +134,11 @@ public class ElasticConvertingContext {
         return ryftQueryFactory;
     }
 
+    public List<String> getSearchArray() {
+        return searchArray;
+    }
+
+    public void setSearchArray(List<String> searchArray) {
+        this.searchArray = searchArray;
+    }
 }

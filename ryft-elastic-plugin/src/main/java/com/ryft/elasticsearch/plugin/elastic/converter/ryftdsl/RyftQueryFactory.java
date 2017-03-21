@@ -143,6 +143,13 @@ public class RyftQueryFactory {
                         rangeQueryParameters.getSeparator(),
                         rangeQueryParameters.getDecimal(),
                         rangeQueryParameters.getRyftOperator());
+            case NUMBER_ARRAY:
+                return buildQueryNumericArrayTerm(
+                        rangeQueryParameters.getSearchArray(),
+                        rangeQueryParameters.getFieldName(),
+                        rangeQueryParameters.getSeparator(),
+                        rangeQueryParameters.getDecimal(),
+                        rangeQueryParameters.getRyftOperator());
             case CURRENCY:
                 return buildQueryCurrencyRange(
                         rangeQueryParameters.getLowerBound(),

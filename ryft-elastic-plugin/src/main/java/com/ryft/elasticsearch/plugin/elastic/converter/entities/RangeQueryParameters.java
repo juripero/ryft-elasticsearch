@@ -4,6 +4,7 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionExceptio
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConvertingContext;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionRange;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +18,7 @@ public class RangeQueryParameters extends QueryParameters<String> {
     private String format = "yyyy-MM-dd HH:mm:ss";
     private Map<RyftExpressionRange.RyftOperatorCompare, String> lowerBound;
     private Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound;
+    private List<String> searchArray;
     private String separator = ",";
     private String decimal = ".";
     private String currency = "$";
@@ -51,6 +53,14 @@ public class RangeQueryParameters extends QueryParameters<String> {
 
     public void setUpperBound(Map<RyftExpressionRange.RyftOperatorCompare, String> upperBound) {
         this.upperBound = upperBound;
+    }
+
+    public List<String> getSearchArray() {
+        return searchArray;
+    }
+
+    public void setSearchArray(List<String> searchArray) {
+        this.searchArray = searchArray;
     }
 
     public String getSeparator() {
