@@ -1,6 +1,6 @@
-##Supported elastic search API requests:
+## Supported elastic search API requests:
 
-###Match query syntax:
+### Match query syntax:
 Full form:
 ```json
 {
@@ -162,7 +162,7 @@ Resulting RYFT query:
 ```
 (RECORD.text_entry CONTAINS FEDS("knight", DIST=2))
 ```
-###Search on all record fields
+### Search on all record fields
 It is possible to do search request on all record fields using keyword ```_all```.
 ```json
 {
@@ -177,7 +177,7 @@ Resulting RYFT query:
 ```
 (RECORD CONTAINS "To be or not to be")
 ```
-###Boolean query syntax:
+### Boolean query syntax:
 
 ```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
 ```json
@@ -193,7 +193,7 @@ Resulting RYFT query:
 }
 ```
 
-#####Boolean query example:
+##### Boolean query example:
 ```json
 {
     "query": {
@@ -298,11 +298,11 @@ Resulting RYFT query:
 ((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "fox")) OR
 ((RECORD.title CONTAINS "fox") AND (RECORD.title CONTAINS "dog")))
 ```
-###Wildcard query syntax
+### Wildcard query syntax
 Wildcards are supported for wildcard term queries, and inside match and match_phrase queries. For both types, only the
 `?` symbol is supported. There is no support for the `*` symbol.
 
-#####Wildcards in match queries
+##### Wildcards in match queries
 For wildcard search to work in match and match_phrase queries, the wildcard symbol should be escaped. If it is not 
 escaped, the it will be treated as a symbol to search for in the text.
 
@@ -341,7 +341,7 @@ Resulting RYFT query:
 ((RECORD.name CONTAINS "J"?"n"?"") AND (RECORD.name CONTAINS "Doe"))
 ```
 
-#####Wildcard queries
+##### Wildcard queries
 In wildcard term queries, the wildcard symbol can be used without escaping, it will still be treated as a wildcard.
 
 Full form:
@@ -373,7 +373,7 @@ Resulting RYFT query:
 (RECORD.postcode CONTAINS ""?"Z99 "??"Z")
 ```
 
-###Date-Time queries
+### Date-Time queries
 Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
 
 Default date format is “yyyy-MM-dd HH:mm:ss”.
@@ -428,7 +428,7 @@ OR (RECORD.timestamp CONTAINS DATE(2014/01/01 < YYYY/MM/DD < 2014/01/07))
 OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/07)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 07:00:00))))
 ```
 
-###Numeric queries
+### Numeric queries
 Default values for “separator” and “decimal” are “,”, and “.”.
 Accepted numbers described [here](https://github.com/getryft/ryft-server/blob/development/docs/searchsyntax.md#number-search)
 
@@ -501,7 +501,7 @@ Resulting RYFT query:
 ```
 This syntax is only supported for numeric search.
 
-###Currency queries
+### Currency queries
 Default values for “currency”, “separator” and “decimal” are “$”, “,”, and “.”.
 
 Query:
@@ -566,7 +566,7 @@ Resulting RYFT query:
 (RECORD.price CONTAINS CURRENCY("%10" <= CUR <= "%20", "%", ",", "."))
 ```
 
-###IPv4 queries
+### IPv4 queries
 
 Query:
 ```json
@@ -625,7 +625,7 @@ Resulting RYFT query:
 ```
 
 
-###IPv6 queries
+### IPv6 queries
 
 Query:
 ```json
@@ -683,7 +683,7 @@ Resulting RYFT query:
 (RECORD.ip_addr CONTAINS IPV6("2001::db8" <= IP < "2001::db9"))
 ```
 
-###Plugin configuration
+### Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
 
@@ -728,7 +728,7 @@ Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK fol
 }
 ```
 
-#####Case sensitivity
+##### Case sensitivity
 By default, search is not case-sensitive. To configure this setting, the ```ryft``` property should be used. 
 The following configuration parameters should be present:
 
@@ -737,7 +737,7 @@ The following configuration parameters should be present:
 | enabled                             | The same as ```ryft_enabled```               |
 | case_sensitive                      | Should search be case-sensitive?(true/false) |
 
-###Search on non-indexed files
+### Search on non-indexed files
 RYFT plugin is able to perform record search on non-indexed files. To do this ```ryft``` property should be used. 
 The following configuration parameters should be present:
 
@@ -791,7 +791,7 @@ Such search query produce following request to RYFT:
 ```
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 ```
-###Raw text search
+### Raw text search
 RAW_TEXT search allows searching in unstructured and unindexed text data. 
 
 For RAW_TEXT search, the "format" parameter should be either “raw” or “utf8”. Name of field to search can be any string,
