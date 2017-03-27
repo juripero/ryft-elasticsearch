@@ -1,4 +1,4 @@
-##Elsticsearch integration with RYFT
+## Elsticsearch integration with RYFT
 
 * [Plugin integration benchmarks](ryft-elastic-benchmark/README.md)
 
