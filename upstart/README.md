@@ -1,4 +1,4 @@
-#Kibana and ElasticSearch upstart manual
+# Kibana and ElasticSearch upstart manual
 
 To use upstart feature with Kibana and ElasticSearch on machine you need to copy [kibana.conf](kibana.conf) and [elasticsearch.conf](elasticsearch.conf) into **/etc/init/** directory.
 Also you need to change stop action in **/etc/init/rhfsd.conf** from:
