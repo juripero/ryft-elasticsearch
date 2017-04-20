@@ -30,8 +30,8 @@ mvn clean install
 
 As the result next files should be generated:
 
- - ryft-elastic-codec/target/ryft-elastic-codec-1.0.0-SNAPSHOT.jar
- - ryft-elastic-plugin/target/releases/ryft-elastic-plugin-0.0.1-SNAPSHOT.zip
+ - ryft-elastic-codec/target/ryft-elastic-codec-1.1.0.jar
+ - ryft-elastic-plugin/target/releases/ryft-elastic-plugin-1.1.0.zip
 
 Copy these files to '~/ELK/' folder of ryft server.
 Inside '~/ELK' folder unzip file ryft-elastic-plugin-0.0.1-SNAPSHOT.zip
