@@ -1,8 +1,8 @@
-##Supported elastic search API requests:
+## Supported elastic search API requests:
 
-###Match query syntax:
+### Match query syntax:
 Full form:
-```javascript
+```json
 {
     "query": {
         "match": {
@@ -18,7 +18,7 @@ Full form:
 }
 ```
 Simplified form:
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -35,9 +35,17 @@ Simplified form:
 | metric    | <"FEDS", "FHS">      |                               | Available only for RYFT. Default "feds". |
 | type      | "phrase"             | "phrase"                      | Change query type to phrase.             |
 
+Fuzziness AUTO will result in the following distances:
+
+0 for strings of one or two characters
+
+1 for strings of three, four, or five characters
+
+2 for strings of more than five characters
+
 #####Simple fuzzy match query example:
 We are looking for speaker "MARCELLUS" with one mistake in his name 
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -55,7 +63,7 @@ Resulting RYFT query:
 (RECORD.speaker CONTAINS FHS("MRCELLUS", DIST=1))
 ```
 In the case when fuzziness equal 0 request translates to the exact search query.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -68,7 +76,7 @@ In the case when fuzziness equal 0 request translates to the exact search query.
 }
 ```
 The same in simplified form
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -83,7 +91,7 @@ Resulting RYFT query:
 ```
 We are looking for famous: "To be, or not to be that: " with two mistakes 'comma' and 'that'
 The query below would be divided in couple of queries with AND operator in between.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -106,7 +114,7 @@ Resulting RYFT query:
 (RECORD.text_entry CONTAINS FEDS("tht", DIST=1)))
 ```
 Phrase matching is different from simple match because it will try to find the whole phrase.
-```javascript
+```json
 {
     "query": {
         "match_phrase": {
@@ -120,7 +128,7 @@ Phrase matching is different from simple match because it will try to find the w
 ```
 As the result we will get only one result.
 User can rewrite ```match_phrase``` query as ```match``` query like:
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -138,7 +146,7 @@ Resulting RYFT query:
 (RECORD.text_entry CONTAINS FEDS("To be or not to be", DIST=3))
 ```
 Fuzzy search also possible to do in following way:
-```javascript
+```json
 {
     "query": {
         "fuzzy" : {
@@ -154,9 +162,9 @@ Resulting RYFT query:
 ```
 (RECORD.text_entry CONTAINS FEDS("knight", DIST=2))
 ```
-###Search on all record fields
+### Search on all record fields
 It is possible to do search request on all record fields using keyword ```_all```.
-```javascript
+```json
 {
     "query": {
         "match_phrase" : {
@@ -169,10 +177,10 @@ Resulting RYFT query:
 ```
 (RECORD CONTAINS "To be or not to be")
 ```
-###Boolean query syntax:
+### Boolean query syntax:
 
 ```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
-```javascript
+```json
 {
   "query": {
     "bool" : {
@@ -185,8 +193,8 @@ Resulting RYFT query:
 }
 ```
 
-#####Boolean query example:
-```javascript
+##### Boolean query example:
+```json
 {
     "query": {
         "bool": {
@@ -216,7 +224,7 @@ Resulting RYFT query:
 ```
 Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
 Queries in section ```should``` are taken into account if no queries in other sections exists or defined ```minimum_should_match``` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -234,7 +242,7 @@ Resulting RYFT query:
 ```
 ((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy"))
 ```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -250,7 +258,7 @@ Resulting RYFT query:
 ```
 ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog"))
 ```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -270,7 +278,7 @@ Resulting RYFT query:
 ((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy") AND ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog")))
 ```
 We can control how many should clauses need to match by using the ```minimum_should_match```
-```javascript
+```json
 {
     "query": {
         "bool": {
@@ -290,7 +298,392 @@ Resulting RYFT query:
 ((RECORD.title CONTAINS "brown") AND (RECORD.title CONTAINS "fox")) OR
 ((RECORD.title CONTAINS "fox") AND (RECORD.title CONTAINS "dog")))
 ```
-###Plugin configuration
+### Wildcard query syntax
+Wildcards are supported for wildcard term queries, and inside match and match_phrase queries. For both types, only the
+`?` symbol is supported. There is no support for the `*` symbol.
+
+##### Wildcards in match queries
+For wildcard search to work in match and match_phrase queries, the wildcard symbol should be escaped. If it is not 
+escaped, the it will be treated as a symbol to search for in the text.
+
+Match phrase: 
+```json
+{
+  "query": {
+    "match_phrase": {
+      "name": {
+        "query": "J\"?\"n\"?\" Doe",
+        "fuzziness": 1
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.name CONTAINS FEDS("J"?"n"?" Doe", DIST=1))
+```
+
+Match:
+```json
+{
+  "query": {
+    "match": {
+      "name": "J\"?\"n\"?\" Doe"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+((RECORD.name CONTAINS "J"?"n"?"") AND (RECORD.name CONTAINS "Doe"))
+```
+
+##### Wildcard queries
+In wildcard term queries, the wildcard symbol can be used without escaping, it will still be treated as a wildcard.
+
+Full form:
+```json
+{
+  "query": {
+    "wildcard": {
+      "postcode": {
+        "value": "?Z99 ??Z"
+      }
+    }
+  }
+}
+```
+
+Simplified form:
+```json
+{
+  "query": {
+    "wildcard": {
+      "postcode": "?Z99 ??Z"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.postcode CONTAINS ""?"Z99 "??"Z")
+```
+
+### Date-Time queries
+Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
+
+Default date format is “yyyy-MM-dd HH:mm:ss”.
+
+Date format pattern should have consistent separator characters for date and time, 
+because RYFT can search date and time with one type of separator.
+
+It is only possible to have one format defined per query
+
+The date-time data type can be used in term queries and in range queries.
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "timestamp": {
+        "value": "2014/01/01 07:00:00",
+        "type": "datetime",
+        "format": "yyyy/MM/dd HH:mm:ss"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS = 07:00:00)))
+
+```
+
+Query: 
+```json
+{
+  "query": {
+    "range" : {
+      "timestamp" : {
+        "gt" : "2014/01/01 07:00:00",
+        "lt" : "2014/01/07 07:00:00",
+        "type": "datetime",
+        "format": "yyyy/MM/dd HH:mm:ss"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 07:00:00))) 
+OR (RECORD.timestamp CONTAINS DATE(2014/01/01 < YYYY/MM/DD < 2014/01/07)) 
+OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/07)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 07:00:00))))
+```
+
+### Numeric queries
+Default values for “separator” and “decimal” are “,”, and “.”.
+Accepted numbers described [here](https://github.com/getryft/ryft-server/blob/development/docs/searchsyntax.md#number-search)
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": 20,
+        "type": "number",
+        "separator":",",
+        "decimal":"."
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS NUMBER(NUM = "20", ",", "."))
+
+```
+This query also supports a simplified syntax:
+```json
+{
+  "query": {
+    "term": {
+      "price": 20
+    }
+  }
+}
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range" : {
+      "age" : {
+        "gte" : -1.01e2,
+        "lte" : "2000.12",
+        "type":"number"
+      }
+    }
+  }
+}
+
+```
+
+Resulting RYFT query:
+```
+(RECORD.age CONTAINS NUMBER("-1.01e2" <= NUM <= "2000.12", ",", "."))
+```
+
+Searching for multiple exact values: 
+```json
+{
+  "query": {
+    "term": {
+      "price": [20, 30]
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+((RECORD.price CONTAINS NUMBER(NUM = "20", ",", ".")) OR (RECORD.price CONTAINS NUMBER(NUM = "30", ",", ".")))
+```
+This syntax is only supported for numeric search.
+
+### Currency queries
+Default values for “currency”, “separator” and “decimal” are “$”, “,”, and “.”.
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": 10000,
+        "type": "currency"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY(CUR = "$10000", "$", ",", "."))
+
+```
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "price": {
+        "value": "$100",
+        "type": "currency",
+        "currency":"$"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY(CUR = "$100", "$", ",", "."))
+
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range" : {
+      "price" : {
+        "gte" : 10,
+        "lte" : 20,
+        "type":"currency",
+        "separator":",",
+        "decimal":".",
+        "currency":"%"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.price CONTAINS CURRENCY("%10" <= CUR <= "%20", "%", ",", "."))
+```
+
+### IPv4 queries
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "192.168.10.11",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4(IP = "192.168.10.11"))
+```
+
+Mask search query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "192.168.0.0/16",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4("192.168.0.0" <= IP <= "192.168.255.255"))
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range": {
+      "ip_addr": {
+        "gte": "192.168.1.0",
+        "lt":  "192.168.2.0",
+        "type": "ipv4"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV4("192.168.1.0" <= IP < "192.168.2.0"))
+```
+
+
+### IPv6 queries
+
+Query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "2001::db8",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6(IP = "2001::db8"))
+```
+
+Mask search query:
+```json
+{
+  "query": {
+    "term": {
+      "ip_addr": {
+        "value": "2001::db8/32",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6("2001::" <= IP <= "2001:0:ffff:ffff:ffff:ffff:ffff:ffff"))
+```
+
+Range query: 
+```json
+{
+  "query": {
+    "range": {
+      "ip_addr": {
+        "gte": "2001::db8",
+        "lt":  "2001::db9",
+        "type": "ipv6"
+      }
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.ip_addr CONTAINS IPV6("2001::db8" <= IP < "2001::db9"))
+```
+
+### Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
 
@@ -323,7 +716,7 @@ curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
 Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
 
 ```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
-```javascript
+```json
 {
     "query": {
         "match" : {
@@ -334,15 +727,26 @@ Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK fol
     "size": 100
 }
 ```
-###Search on non-indexed files
-RYFT plugin able to perform record search on non-indexed json files. To do this ```ryft``` property should be used. It accepts object with configuration parameters.
+
+##### Case sensitivity
+By default, search is not case-sensitive. To configure this setting, the ```ryft``` property should be used. 
+The following configuration parameters should be present:
+
+| Parameter                           | Meaning                                      |
+|-------------------------------------|----------------------------------------------|
+| enabled                             | The same as ```ryft_enabled```               |
+| case_sensitive                      | Should search be case-sensitive?(true/false) |
+
+### Search on non-indexed files
+RYFT plugin is able to perform record search on non-indexed files. To do this ```ryft``` property should be used. 
+The following configuration parameters should be present:
 
 | Parameter                           | Meaning                               |
 |-------------------------------------|---------------------------------------|
 | enabled                             | The same as ```ryft_enabled```        |
 | files                               | List of files to search               |
 | format                              | Input data format                     |
-```javascript
+```json
 {
     "query": {
         "match": {"Description": "vehicle"}
@@ -363,7 +767,7 @@ http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=c
 ```
 Example to do fuzzy search on non indexed files:
 
-```javascript
+```json
 {
     "query": {
          "match_phrase": {
@@ -387,3 +791,37 @@ Such search query produce following request to RYFT:
 ```
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 ```
+### Raw text search
+RAW_TEXT search allows searching in unstructured and unindexed text data. 
+
+For RAW_TEXT search, the "format" parameter should be either “raw” or “utf8”. Name of field to search can be any string,
+because its value is ignored (“_all” is preferred). RAW_TEXT search supports all implemented types of term search.
+
+Example query:
+```json
+{
+  "query": {
+    "match": {
+      "_all": {
+        "query": "lorem ipsum",
+        "fuzziness": 1,
+        "width": 30
+      }
+    }
+  },
+  "ryft": {
+    "enabled": true,
+    "files": ["loremipsum.txt"],
+    "format": "utf8"
+  }
+}
+```
+Resulting RYFT query:
+```
+((RAW_TEXT CONTAINS FEDS("lorem", WIDTH=30, DIST=1)) OR (RAW_TEXT CONTAINS FEDS("ipsum", WIDTH=30, DIST=1)))
+```
+
+Parameter “width” contains number of surrounding symbols or value “line”. Default value of “width” is 0.
+
+In order for RAW_TEXT search to properly work with the `AND` operator, the "width" has to be "line". If the "width" is
+different, it will be automatically converted to "line".

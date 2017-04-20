@@ -1,4 +1,4 @@
-#Data upload
+# Data upload
 
 [Elasticsearch suggests](https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk.html) to use bulk API to index huge amount of data. 
 Main idea of bulk API is to prepare file with folowing structure and upload it to the ES node, which will parse it and index the data inside.
@@ -28,7 +28,7 @@ The 3rd parameter used for name of generated index.
 The 4th parameter used for amount of files to be generated.
 
 
-##Using Main.java generator
+## Using Main.java generator
 
 * Copy the class to the folder on your disk.
 

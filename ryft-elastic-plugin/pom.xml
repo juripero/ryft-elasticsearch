@@ -1,9 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.dataart</groupId>
+
+	<parent>
+		<groupId>com.ryft.elasticsearch</groupId>
+		<artifactId>ryft-elastic-integration</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+
 	<artifactId>ryft-elastic-plugin</artifactId>
-	<version>1.0.0</version>
 	<properties>
 		<elasticsearch.version>2.4.1</elasticsearch.version>
 		<fasterxml.jackson>2.8.1</fasterxml.jackson>
@@ -12,6 +17,12 @@
 		<mockito-core>1.9.5</mockito-core>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+
+    <groupId>com.ryft.elasticsearch.plugin</groupId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+
 	<dependencies>
 
 		<dependency>
@@ -28,40 +39,43 @@
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
-			<version>${elasticsearch.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>${io.netty}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>${fasterxml.jackson}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>${fasterxml.jackson}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.lmax</groupId>
 			<artifactId>disruptor</artifactId>
-			<version>${lmax.disruptor}</version>
 		</dependency>
+
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.java-ipv6</groupId>
+            <artifactId>java-ipv6</artifactId>
+            <version>0.16</version>
+        </dependency>
 		<!-- TEST SCOPE -->
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>${mockito-core}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
