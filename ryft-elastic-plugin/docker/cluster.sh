@@ -2,10 +2,10 @@
 set -e
 
 # read -p "Enter cluster size: " cluster_size
-# read -p "Enter storage path: " storage
+read -p "Enter storage path: " storage
 # read -p "Enter node memory (mb): " memory
 cluster_size=3
-storage="/Users/amedvedev/DataArt/Projects/Ryft/es-cluster/storage"
+
 memory=512
 
 heap=$((memory/2))
