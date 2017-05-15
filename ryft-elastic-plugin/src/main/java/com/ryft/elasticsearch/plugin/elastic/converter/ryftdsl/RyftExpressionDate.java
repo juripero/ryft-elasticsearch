@@ -42,6 +42,19 @@ public class RyftExpressionDate extends RyftExpressionRange {
         return (datePattern == null) ? null : new SimpleDateFormat(datePattern);
     }
 
+    @Override
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionDate(valueA, operatorA, operatorB.orElse(null), valueB.orElse(null), variableName, true);
+    }
+
+    private RyftExpressionDate(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB, String variableName, Boolean line) {
+        super(valueA, operatorA, "DATE", variableName);
+        this.valueB = Optional.ofNullable(valueB);
+        this.operatorB = Optional.ofNullable(operatorB);
+        this.line = line;
+        constructValue();
+    }
+
     private String getVariableName(String format) throws ElasticConversionException {
         String datePattern = getDatePattern(format);
         String separator = getSeparator(datePattern);
@@ -76,10 +89,4 @@ public class RyftExpressionDate extends RyftExpressionRange {
         }
         return null;
     }
-
-    @Override
-    protected List<String> getParameters() {
-        return new ArrayList<>();
-    }
-
 }

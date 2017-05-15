@@ -1,7 +1,9 @@
 package com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class RyftExpressionNumeric extends RyftExpressionRange {
 
@@ -28,10 +30,36 @@ public class RyftExpressionNumeric extends RyftExpressionRange {
 
     @Override
     protected List<String> getParameters() {
-        return Arrays.asList(new String[]{
-            String.format("\"%s\"", separator),
-            String.format("\"%s\"", decimal)
-        });
+        List<String> result = new ArrayList<>();
+
+        result.add(String.format("\"%s\"", separator));
+        result.add(String.format("\"%s\"", decimal));
+
+        if (line != null) {
+            result.add(String.format("LINE=%b", line));
+        }
+        if (width != null) {
+            result.add(String.format("WIDTH=%d", width));
+        }
+        return result;
+    }
+
+    @Override
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionNumeric(valueA, operatorA, operatorB.orElse(null), valueB.orElse(null), separator, decimal, variableName, true);
+    }
+
+    private RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB,
+                                   String valueB, String separator, String decimal,
+                                   String variableName, Boolean line) {
+        super(valueA, operatorA, "NUMBER", variableName);
+        this.valueB = Optional.ofNullable(valueB);
+        this.operatorB = Optional.ofNullable(operatorB);
+        this.line = line;
+        constructValue();
+
+        this.separator = separator;
+        this.decimal = decimal;
     }
 
 }

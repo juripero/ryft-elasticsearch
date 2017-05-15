@@ -1,7 +1,6 @@
 package com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 public class RyftExpressionIPv6 extends RyftExpressionRange {
 
@@ -14,8 +13,15 @@ public class RyftExpressionIPv6 extends RyftExpressionRange {
     }
 
     @Override
-    protected List<String> getParameters() {
-        return new ArrayList<>();
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionIPv6(valueA, operatorA, operatorB.orElse(null), valueB.orElse(null), variableName, true);
+    }
+
+    private RyftExpressionIPv6(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB, String variableName, boolean line) {
+        super(valueA, operatorA, "IPV6", variableName);
+        this.valueB = Optional.ofNullable(valueB);
+        this.operatorB = Optional.ofNullable(operatorB);
+        this.line = line;
     }
 
 }

@@ -47,6 +47,19 @@ public class RyftExpressionTime extends RyftExpressionRange {
         return (timePattern == null) ? null : new SimpleDateFormat(timePattern);
     }
 
+    @Override
+    public RyftExpression toLineExpression() {
+        return new RyftExpressionTime(valueA, operatorA, operatorB.orElse(null), valueB.orElse(null), variableName, true);
+    }
+
+    private RyftExpressionTime(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB, String valueB, String variableName, Boolean line) {
+        super(valueA, operatorA, "TIME", variableName);
+        this.valueB = Optional.ofNullable(valueB);
+        this.operatorB = Optional.ofNullable(operatorB);
+        this.line = line;
+        constructValue();
+    }
+
     private String getVariableName(String format) throws ElasticConversionException {
         String timePattern = getTimePattern(format);
         String separator = getSeparator(timePattern);
@@ -94,10 +107,4 @@ public class RyftExpressionTime extends RyftExpressionRange {
         }
         return null;
     }
-
-    @Override
-    protected List<String> getParameters() {
-        return new ArrayList<>();
-    }
-
 }
