@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-# read -p "Enter cluster size: " cluster_size
+read -p "Enter cluster size: " cluster_size
 read -p "Enter storage path: " storage
 # read -p "Enter node memory (mb): " memory
-cluster_size=3
+#cluster_size=3
 
 memory=512
 
@@ -13,10 +13,21 @@ image="es-t"
 network="es-net"
 cluster="cluster-ryft"
 
-# build image
-if [ ! "$(docker images -q  $image)" ];then
-    docker build -t $image .
+# rebuild artifacts
+mkdir -p .tmp
+if [ ! -f .tmp/fake-ryft-server-0.11.0-alpha-13-g1b57b9b_amd64.deb ]; then
+    aws s3 cp s3://ryft-images/fake-ryft-server-0.11.0-alpha-13-g1b57b9b_amd64.deb .tmp
 fi
+mvn -f ../pom.xml clean install
+cp ../target/releases/ryft-elastic-plugin-*.zip .tmp
+mvn -f ../../ryft-elastic-codec/pom.xml clean install
+cp ../../ryft-elastic-codec/target/ryft-elastic-codec-*.jar .tmp
+
+# rebuild image
+if [ "$(docker images -q  $image)" ];then
+    docker rmi $(docker images -q  $image)
+fi
+docker build -t $image .
 
 # create bridge network
 if [ ! "$(docker network ls --filter name=$network -q)" ];then
@@ -37,7 +48,7 @@ for ((i=0; i<$cluster_size; i++)); do
     docker run -d -p 920$i:9200 \
         --name "$image$i" \
         --network "$network" \
-        -v "$storage":/usr/share/elasticsearch/data \
+        -v "$storage":/ryftone/ \
         -v "$PWD/config/elasticsearch.yml":/usr/share/elasticsearch/config/elasticsearch.yml \
         --cap-add=IPC_LOCK --ulimit nofile=65536:65536 --ulimit memlock=-1:-1 \
         --memory="${memory}m" --memory-swap="${memory}m" --memory-swappiness=0 \
@@ -54,7 +65,7 @@ for ((i=0; i<$cluster_size; i++)); do
         -Des.node.disk_type=ssd \
         -Des.node.data=true \
         -Des.bootstrap.mlockall=true \
-        -Des.threadpool.bulk.queue_size=500 
+        -Des.threadpool.bulk.queue_size=500
 done
 
 # get cluster status

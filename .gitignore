@@ -78,3 +78,4 @@ sql/hive-thriftserver/test_warehouses
 
 # For Phyton
 .ipynb_checkpoints
+.tmp/
