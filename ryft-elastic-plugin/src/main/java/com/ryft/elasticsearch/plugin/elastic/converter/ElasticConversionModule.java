@@ -5,7 +5,11 @@ import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterField.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRyft.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterShared.*;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRangeField.*;
+import com.ryft.elasticsearch.plugin.elastic.converter.entities.RyftRequestParameters;
+import com.ryft.elasticsearch.plugin.elastic.converter.entities.RyftRequestParametersFactory;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
+import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftClusterService;
+import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftClusterServiceFactory;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
@@ -61,6 +65,9 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterCaseSensitive.NAME).to(ElasticConverterCaseSensitive.class);
 
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
+
+        bind(RyftRequestParametersFactory.class).toProvider(
+                FactoryProvider.newFactory(RyftRequestParametersFactory.class, RyftRequestParameters.class)).in(Singleton.class);
 
         bind(RyftQueryFactory.class).in(Singleton.class);
     }

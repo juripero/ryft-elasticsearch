@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftResponse {
 
-    private ArrayList<ObjectNode> results = new ArrayList<ObjectNode>();
+    private ArrayList<ObjectNode> results = new ArrayList<>();
 
     private RyftStats stats;
 
@@ -24,9 +24,9 @@ public class RyftResponse {
 
     @JsonCreator
     public RyftResponse(@JsonProperty("results") ArrayList<ObjectNode> results,//
-                        @JsonProperty("stats") RyftStats stats, //
-                        @JsonProperty("errors") String[] errors,
-                        @JsonProperty("message") String message) {
+            @JsonProperty("stats") RyftStats stats, //
+            @JsonProperty("errors") String[] errors,
+            @JsonProperty("message") String message) {
         super();
         this.results = results;
         this.stats = stats;
@@ -42,6 +42,14 @@ public class RyftResponse {
     @JsonProperty("errors")
     public String[] getErrors() {
         return errors;
+    }
+
+    public void setErrors(String[] errors) {
+        this.errors = errors;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public void setResults(ArrayList<ObjectNode> results) {
@@ -72,23 +80,30 @@ public class RyftResponse {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         RyftResponse other = (RyftResponse) obj;
         if (results == null) {
-            if (other.results != null)
+            if (other.results != null) {
                 return false;
-        } else if (!results.equals(other.results))
+            }
+        } else if (!results.equals(other.results)) {
             return false;
+        }
         if (stats == null) {
-            if (other.stats != null)
+            if (other.stats != null) {
                 return false;
-        } else if (!stats.equals(other.stats))
+            }
+        } else if (!stats.equals(other.stats)) {
             return false;
+        }
         return true;
     }
 

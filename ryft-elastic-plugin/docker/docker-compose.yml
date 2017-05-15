@@ -1,0 +1,25 @@
+version: '2'
+
+services:
+  node1:
+    build: .
+    image: ryft-elasticsearch
+    container_name: ryft-elasticsearch1
+    environment:
+      - NODE_NAME=node1
+      - CLUSTER_NAME=docker-ryft-cluster
+
+  node2:
+    image: ryft-elasticsearch
+    container_name: ryft-elasticsearch2
+    environment:
+      - NODE_NAME=node2
+      - CLUSTER_NAME=docker-ryft-cluster
+
+  node3:
+    image: ryft-elasticsearch
+    container_name: ryft-elasticsearch3
+    environment:
+      - NODE_NAME=node3
+      - CLUSTER_NAME=docker-ryft-cluster
+

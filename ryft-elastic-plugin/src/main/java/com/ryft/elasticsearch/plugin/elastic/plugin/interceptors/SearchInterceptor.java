@@ -9,42 +9,48 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.tasks.Task;
 
 import com.ryft.elasticsearch.plugin.disruptor.EventProducer;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEventFactory;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionException;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverter;
+import com.ryft.elasticsearch.plugin.elastic.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftClusterService;
 
 public class SearchInterceptor implements ActionInterceptor {
 
     private static final ESLogger LOGGER = Loggers.getLogger(SearchInterceptor.class);
-    private final EventProducer<RyftRequestEvent> producer;
+    private final EventProducer<RyftClusterRequestEvent> producer;
     private final ElasticConverter elasticConverter;
     private final RyftProperties properties;
+    private final RyftClusterService ryftClusterService;
 
     @Inject
     public SearchInterceptor(RyftProperties ryftProperties,
-            EventProducer<RyftRequestEvent> producer, ElasticConverter elasticConverter) {
+            EventProducer<RyftClusterRequestEvent> producer, ElasticConverter elasticConverter,
+            RyftClusterService ryftClusterService) {
         this.properties = ryftProperties;
         this.producer = producer;
         this.elasticConverter = elasticConverter;
+        this.ryftClusterService = ryftClusterService;
     }
 
     @Override
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
-        RyftRequestEvent requestEvent;
         try {
-            requestEvent = elasticConverter.convert(request);
+            RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+            RyftClusterRequestEvent clusterRequestEvent = ryftClusterService.getClusterRequestEvent(ryftRequestParameters);
             Boolean isRyftIntegrationElabled;
-            if (requestEvent != null) {
-                isRyftIntegrationElabled = requestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+            if (clusterRequestEvent != null) {
+                isRyftIntegrationElabled = clusterRequestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
             } else {
                 isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
             }
-            if (isRyftIntegrationElabled && (requestEvent != null)) {
-                requestEvent.setCallback(listener);
-                producer.send(requestEvent);
+            if (isRyftIntegrationElabled && (clusterRequestEvent != null)) {
+                clusterRequestEvent.setCallback(listener);
+                producer.send(clusterRequestEvent);
                 return true;
             }
             return false;

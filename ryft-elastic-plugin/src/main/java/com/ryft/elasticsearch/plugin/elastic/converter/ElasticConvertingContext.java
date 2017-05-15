@@ -3,13 +3,17 @@ package com.ryft.elasticsearch.plugin.elastic.converter;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 public class ElasticConvertingContext {
@@ -41,14 +45,18 @@ public class ElasticConvertingContext {
     private Integer width;
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
+    private String[] indices;
 
     @Inject
-    public ElasticConvertingContext(@Assisted XContentParser parser, @Assisted String originalQuery,
+    public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
             Map<String, ElasticConvertingElement> injectedConverters,
-            RyftQueryFactory ryftQueryFactory) {
+            RyftQueryFactory ryftQueryFactory) throws IOException {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
-        this.originalQuery = originalQuery;
-        this.contentParser = parser;
+        BytesReference searchContent = searchRequest.source();
+        String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
+        this.originalQuery = queryString;
+        this.contentParser = XContentFactory.xContent(queryString).createParser(queryString);
+        this.indices = searchRequest.indices();
         this.ryftQueryFactory = ryftQueryFactory;
         this.queryProperties = new HashMap<>();
     }
@@ -141,4 +149,13 @@ public class ElasticConvertingContext {
     public void setSearchArray(List<String> searchArray) {
         this.searchArray = searchArray;
     }
+
+    public String[] getIndices() {
+        return indices;
+    }
+
+    public void setIndices(String[] indices) {
+        this.indices = indices;
+    }
+    
 }
