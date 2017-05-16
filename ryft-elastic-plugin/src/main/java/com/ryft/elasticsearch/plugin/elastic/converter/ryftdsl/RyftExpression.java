@@ -53,5 +53,14 @@ public abstract class RyftExpression implements RyftDslToken {
         }
     }
 
-    public abstract RyftExpression toLineExpression();
+    public RyftExpression toLineExpression() {
+        this.line = true;
+        this.width = null;
+        return this;
+    }
+
+    public RyftExpression toWidthExpression(Integer width) {
+        this.width = width;
+        return this;
+    }
 }

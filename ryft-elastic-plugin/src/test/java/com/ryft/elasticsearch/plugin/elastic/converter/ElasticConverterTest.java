@@ -1143,6 +1143,30 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
                 ryftRequest.getQuery().buildRyftString());
+
+        query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"64\",\n" +
+                "        \"type\": \"number\", \n" +
+                "        \"width\": 20\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        bytes = new BytesArray(query);
+        parser = XContentFactory.xContent(bytes).createParser(bytes);
+        context = contextFactory.create(parser, query);
+        ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\", WIDTH=20))",
+                ryftRequest.getQuery().buildRyftString());
     }
 
     @Test

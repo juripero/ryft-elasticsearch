@@ -44,22 +44,4 @@ public class RyftExpressionNumeric extends RyftExpressionRange {
         return result;
     }
 
-    @Override
-    public RyftExpression toLineExpression() {
-        return new RyftExpressionNumeric(valueA, operatorA, operatorB.orElse(null), valueB.orElse(null), separator, decimal, variableName, true);
-    }
-
-    private RyftExpressionNumeric(String valueA, RyftOperatorCompare operatorA, RyftOperatorCompare operatorB,
-                                   String valueB, String separator, String decimal,
-                                   String variableName, Boolean line) {
-        super(valueA, operatorA, "NUMBER", variableName);
-        this.valueB = Optional.ofNullable(valueB);
-        this.operatorB = Optional.ofNullable(operatorB);
-        this.line = line;
-        constructValue();
-
-        this.separator = separator;
-        this.decimal = decimal;
-    }
-
 }
