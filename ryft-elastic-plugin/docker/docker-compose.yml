@@ -2,10 +2,17 @@ version: '2'
 
 services:
   elasticsearch:
-    build: .
+    build: elasticsearch/
     image: ryft-elasticsearch
     networks:
       - elk
+
+  kibana:
+    image: kibana:4.6
+    networks:
+      - elk
+    links:
+      - elasticsearch
 
 networks:
   elk:
