@@ -44,7 +44,7 @@ public class RyftClusterRequestEvent extends InternalEvent {
 
     @Inject
     public RyftClusterRequestEvent(ClusterService clusterService,
-            RyftProperties ryftProperties, Settings settings,
+            Settings settings, @Assisted RyftProperties ryftProperties,
             @Assisted RyftQuery query, @Assisted List<ShardRouting> shards) throws ElasticConversionCriticalException {
         super();
         this.clusterState = clusterService.state();

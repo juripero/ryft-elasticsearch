@@ -41,19 +41,23 @@ public class SearchInterceptor implements ActionInterceptor {
     public boolean intercept(Task task, String action, ActionRequest request, ActionListener listener, ActionFilterChain chain) {
         try {
             RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
-            RyftClusterRequestEvent clusterRequestEvent = ryftClusterService.getClusterRequestEvent(ryftRequestParameters);
-            Boolean isRyftIntegrationElabled;
-            if (clusterRequestEvent != null) {
-                isRyftIntegrationElabled = clusterRequestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+            if (ryftRequestParameters == null) {
+                return false;
             } else {
-                isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+                RyftClusterRequestEvent clusterRequestEvent = ryftClusterService.getClusterRequestEvent(ryftRequestParameters);
+                Boolean isRyftIntegrationElabled;
+                if (clusterRequestEvent != null) {
+                    isRyftIntegrationElabled = clusterRequestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+                } else {
+                    isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+                }
+                if (isRyftIntegrationElabled && (clusterRequestEvent != null)) {
+                    clusterRequestEvent.setCallback(listener);
+                    producer.send(clusterRequestEvent);
+                    return true;
+                }
+                return false;
             }
-            if (isRyftIntegrationElabled && (clusterRequestEvent != null)) {
-                clusterRequestEvent.setCallback(listener);
-                producer.send(clusterRequestEvent);
-                return true;
-            }
-            return false;
         } catch (ElasticConversionException ex) {
             if (ex != null) {
                 LOGGER.error("Convertion exception.", ex);

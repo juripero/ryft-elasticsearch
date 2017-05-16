@@ -29,7 +29,8 @@ public class RyftClusterService {
 
     public RyftClusterRequestEvent getClusterRequestEvent(RyftRequestParameters requestParameters) {
         LOGGER.debug(clusterService.state().prettyPrint());
-        RyftClusterRequestEvent event = ryftClusterRequestEventFactory.create(requestParameters.getQuery(), getShards(requestParameters));
+        RyftClusterRequestEvent event = ryftClusterRequestEventFactory.create(requestParameters.getRyftProperties(),
+                requestParameters.getQuery(), getShards(requestParameters));
         return event;
     }
 
