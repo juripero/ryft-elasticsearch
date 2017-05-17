@@ -63,6 +63,11 @@ public class RyftQueryComplex implements RyftQuery {
     }
 
     @Override
+    public RyftQuery toWidthQuery(Integer width) {
+        return new RyftQueryComplex(operator, operands.stream().map(ryftQuery -> ryftQuery.toWidthQuery(width)).collect(Collectors.toList()));
+    }
+
+    @Override
     public String toString() {
         return "RyftQueryComplex{" + buildRyftString() + '}';
     }

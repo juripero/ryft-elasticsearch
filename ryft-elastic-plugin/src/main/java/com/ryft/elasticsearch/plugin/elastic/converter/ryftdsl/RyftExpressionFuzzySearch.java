@@ -40,10 +40,4 @@ public class RyftExpressionFuzzySearch extends RyftExpression {
         result.add(String.format("DIST=%d", distance));
         return result;
     }
-
-    @Override
-    public RyftExpression toLineExpression() {
-        return new RyftExpressionFuzzySearch(searchString, metric, distance, true);
-    }
-
 }

@@ -76,10 +76,4 @@ public class RyftExpressionDate extends RyftExpressionRange {
         }
         return null;
     }
-
-    @Override
-    protected List<String> getParameters() {
-        return new ArrayList<>();
-    }
-
 }

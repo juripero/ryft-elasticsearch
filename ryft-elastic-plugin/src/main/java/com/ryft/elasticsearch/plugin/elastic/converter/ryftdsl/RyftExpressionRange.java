@@ -1,7 +1,6 @@
 package com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl;
 
 import java.util.Optional;
-import javax.naming.OperationNotSupportedException;
 
 public abstract class RyftExpressionRange extends RyftExpression {
 
@@ -71,11 +70,4 @@ public abstract class RyftExpressionRange extends RyftExpression {
             value = String.format("%s %s %s", variableName, operatorA.buildRyftString(), valueA);
         }
     }
-
-    @Override
-    public RyftExpression toLineExpression() {
-        //TODO:
-        throw new UnsupportedOperationException("Range expression has no line option");
-    }
-
 }

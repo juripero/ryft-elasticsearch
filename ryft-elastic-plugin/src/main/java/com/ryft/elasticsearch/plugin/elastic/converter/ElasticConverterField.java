@@ -60,23 +60,6 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
         }
     }
 
-    public static class ElasticConverterWidth implements ElasticConvertingElement<Void> {
-
-        public static final String NAME = "width";
-
-        @Override
-        public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            Object width = ElasticConversionUtil.getObject(convertingContext);
-            if (width instanceof String && width.equals("line")) {
-                convertingContext.setLine(true);
-            } else if (width instanceof Integer) {
-                convertingContext.setWidth((Integer) width);
-            }
-            return null;
-        }
-    }
-
     static final String NAME = "field_name";
 
     private static final String ALL_FIELDS = "_all";
@@ -166,6 +149,12 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
                 String fieldName = convertingContext.getContentParser().currentName();
                 if (!fieldName.equals(ALL_FIELDS)) {
                     termQueryParameters.setFieldName(fieldName);
+                }
+
+                if (convertingContext.getLine() != null) {
+                    termQueryParameters.setLine(convertingContext.getLine());
+                } else if (convertingContext.getWidth() != null) {
+                    termQueryParameters.setWidth(convertingContext.getWidth());
                 }
 
                 for (Map.Entry<String, Object> entry : fieldQueryMap.entrySet()) {

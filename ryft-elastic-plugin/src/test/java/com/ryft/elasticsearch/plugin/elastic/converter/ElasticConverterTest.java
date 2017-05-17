@@ -1143,6 +1143,42 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
                 ryftRequest.getQuery().buildRyftString());
+
+        query = "{\n" +
+                "  \"query\": {\n" +
+                "    \"term\": {\n" +
+                "      \"_all\": {\n" +
+                "        \"query\": \"64\",\n" +
+                "        \"type\": \"number\", \n" +
+                "        \"width\": 20\n" +
+                "      }\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"ryft\": {\n" +
+                "    \"enabled\": true,\n" +
+                "    \"files\": [\"shakespear.txt\"],\n" +
+                "    \"format\": \"utf8\"\n" +
+                "  }\n" +
+                "}\n";
+        bytes = new BytesArray(query);
+        parser = XContentFactory.xContent(bytes).createParser(bytes);
+        context = contextFactory.create(parser, query);
+        ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\", WIDTH=20))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RawTextDateAndBooleanSearchTest() throws Exception {
+        String query = "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"_all\":{\"query\":\"11:10:51\",\"type\":\"datetime\",\"format\":\"HH:mm:ss\",\"width\":\"line\"}}},{\"match\":{\"_all\":{\"query\":\"Panic\"}}}]}},\"ryft\":{\"case_sensitive\":false,\"enabled\":true,\"files\":[\"logs/ryft0003/*\"],\"format\":\"utf8\"}}";
+        BytesArray bytes = new BytesArray(query);
+        XContentParser parser = XContentFactory.xContent(bytes).createParser(bytes);
+        ElasticConvertingContext context = contextFactory.create(parser, query);
+        RyftRequestEvent ryftRequest = elasticConverter.convert(context);
+        assertNotNull(ryftRequest);
+        assertEquals("((RAW_TEXT CONTAINS TIME(HH:MM:SS = 11:10:51, LINE=true)) AND (RAW_TEXT CONTAINS ES(\"Panic\", LINE=true)))",
+                ryftRequest.getQuery().buildRyftString());
     }
 
 

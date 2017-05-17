@@ -94,10 +94,4 @@ public class RyftExpressionTime extends RyftExpressionRange {
         }
         return null;
     }
-
-    @Override
-    protected List<String> getParameters() {
-        return new ArrayList<>();
-    }
-
 }
