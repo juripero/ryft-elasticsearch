@@ -21,11 +21,12 @@ import org.elasticsearch.common.logging.Loggers;
 import com.ryft.elasticsearch.plugin.disruptor.PostConstruct;
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import java.util.Optional;
 
 @Singleton
 public class RyftRestClient implements PostConstruct {
 
-    private static final ESLogger logger = Loggers.getLogger(RyftRestClient.class);
+    private static final ESLogger LOGGER = Loggers.getLogger(RyftRestClient.class);
     private Bootstrap b;
     RyftProperties props;
 
@@ -51,17 +52,22 @@ public class RyftRestClient implements PostConstruct {
                 });
     }
 
-    public Channel get() throws InterruptedException {
-        String host = props.getStr(PropertiesProvider.HOST); 
+    public Optional<Channel> get() {
+        String host = props.getStr(PropertiesProvider.HOST);
         return get(host);
     }
 
-    public Channel get(String host) throws InterruptedException {
+    public Optional<Channel> get(String host) {
         Integer port = props.getInt(PropertiesProvider.PORT);
         return get(new InetSocketAddress(host, port));
     }
 
-    private Channel get(InetSocketAddress address) throws InterruptedException {
-        return b.connect(address).sync().channel();
+    private Optional<Channel> get(InetSocketAddress address) {
+        try {
+            return Optional.of(b.connect(address).sync().channel());
+        } catch (Exception ex) {
+            LOGGER.error("Can not open channel to {}.", ex, address);
+            return Optional.empty();
+        }
     }
 }

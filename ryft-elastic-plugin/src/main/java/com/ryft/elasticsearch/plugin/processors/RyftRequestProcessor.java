@@ -1,7 +1,6 @@
 package com.ryft.elasticsearch.plugin.processors;
 
 import com.google.common.collect.ImmutableMap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -21,8 +20,11 @@ import com.ryft.elasticsearch.plugin.elastic.plugin.rest.client.ClusterRestClien
 import com.ryft.elasticsearch.plugin.elastic.plugin.rest.client.NettyUtils;
 import com.ryft.elasticsearch.plugin.elastic.plugin.rest.client.RyftRestClient;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -60,36 +62,44 @@ public class RyftRequestProcessor extends RyftProcessor {
     protected void sendToRyftCluster(RyftClusterRequestEvent requestEvent) {
         try {
             List<ShardRouting> shardRoutings = requestEvent.getShards();
-            List<ShardRouting> primaryShardsRoutings = shardRoutings.stream()
-                    .filter(shard -> shard.primary())
-                    .collect(Collectors.toList());
-            List<ChannelFuture> channelFutures = new ArrayList<>();
-            CountDownLatch countDownLatch = new CountDownLatch(primaryShardsRoutings.size());
+            Map<Integer, List<ShardRouting>> groupedShards = shardRoutings.stream()
+                    .collect(Collectors.groupingBy(ShardRouting::getId));
+            List<ChannelFuture> ryftResponses = new ArrayList<>();
+            CountDownLatch countDownLatch = new CountDownLatch(groupedShards.size());
             Long start = System.currentTimeMillis();
-            for (ShardRouting shardRouting : primaryShardsRoutings) {
-                URI uri = requestEvent.getRyftSearchURL(shardRouting);
-                channelFutures.add(sendToRyft(uri, shardRouting, countDownLatch));
+            for (Map.Entry<Integer, List<ShardRouting>> entry : groupedShards.entrySet()) {
+                Integer shardId = entry.getKey();
+                List<ShardRouting> shards = entry.getValue();
+                Optional<ChannelFuture> maybeRyftResponse;
+                do {
+                    ShardRouting shardRouting = shards.get(0);
+                    shards.remove(shardRouting);
+                    URI uri = requestEvent.getRyftSearchURL(shardRouting);
+                    maybeRyftResponse = sendToRyft(uri, shardRouting, countDownLatch);
+                } while (!(maybeRyftResponse.isPresent() || shards.isEmpty()));
+                ryftResponses.add(maybeRyftResponse.get());
             }
             countDownLatch.await();
             Long diff = System.currentTimeMillis() - start;
-            SearchResponse searchResponse = getSearchResponse(channelFutures, diff);
+            SearchResponse searchResponse = getSearchResponse(ryftResponses, diff);
             requestEvent.getCallback().onResponse(searchResponse);
-        } catch (Exception ex) {
+        } catch (URISyntaxException | InterruptedException ex) {
             LOGGER.error("Failed to connect to ryft server", ex);
             requestEvent.getCallback().onFailure(ex);
         }
     }
 
-    protected ChannelFuture sendToRyft(URI searchUri, ShardRouting shardRouting, CountDownLatch countDownLatch) throws InterruptedException {
-        LOGGER.info("URI: {}", searchUri);
-        Channel ryftChannel = channelProvider.get(searchUri.getHost());
-        NettyUtils.setAttribute(ClusterRestClientHandler.INDEX_SHARD_ATTR, shardRouting, ryftChannel);
-        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-        DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, searchUri.toString());
-        request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
-        request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
-        LOGGER.info("Send request: {}", request);
-        return ryftChannel.writeAndFlush(request);
+    protected Optional<ChannelFuture> sendToRyft(URI searchUri, ShardRouting shardRouting, CountDownLatch countDownLatch) {
+        LOGGER.info("Search in shard: {}", shardRouting);
+        return channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
+            NettyUtils.setAttribute(ClusterRestClientHandler.INDEX_SHARD_ATTR, shardRouting, ryftChannel);
+            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, searchUri.toString());
+            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
+            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
+            LOGGER.info("Send request: {}", request);
+            return ryftChannel.writeAndFlush(request);
+        });
     }
 
     private SearchResponse getSearchResponse(List<ChannelFuture> channelFutures, Long diff) {
