@@ -67,6 +67,8 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
             countDownLatch.countDown();
             return null;
         });
+        countDownLatch.countDown();
+        ctx.channel().close();
     }
 
 }
