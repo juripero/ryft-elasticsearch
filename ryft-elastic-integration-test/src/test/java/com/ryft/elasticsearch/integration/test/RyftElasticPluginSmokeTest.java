@@ -70,7 +70,8 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
             File file = new File(classLoader.getResource("dataset.json").getFile());
 
             ObjectMapper mapper = new ObjectMapper();
-            ArrayList<TestData> testData = mapper.readValue(file, new TypeReference<List<TestData>>(){});
+            ArrayList<TestData> testData = mapper.readValue(file, new TypeReference<List<TestData>>() {
+            });
 
             BulkRequestBuilder bulkRequest = client.prepareBulk();
 
@@ -85,7 +86,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                         .setSource(json));
             });
             BulkResponse bulkResponse = bulkRequest.get();
-            if(bulkResponse.hasFailures()) {
+            if (bulkResponse.hasFailures()) {
                 logger.error(bulkResponse.buildFailureMessage());
             } else {
                 logger.error("Bulk indexing succeeded.");
@@ -95,7 +96,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @AfterClass
     public static void afterClass() {
-        logger.info("Deleting created indices");
+//        logger.info("Deleting created indices");
 //        getClient().admin().indices().prepareDelete(ALTERNATIVE_INDEX_NAME).get();
     }
 
@@ -110,12 +111,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 .operator(Operator.AND);
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String elasticQuery = "{" + "\"query\": {" + "\"match_phrase\": {" + "\"text_entry\":{"
                 + "\"query\":\"To be or not to be\"," + "\"fuzziness\":\"1\"" + "}" + "}" + "},"
                 + "\"ryft_enabled\":true" + "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -130,12 +133,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 .operator(Operator.AND);
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String elasticQuery = "{" + "\"query\": {" + "\"match_phrase\": {" + "\"text_entry\":{"
                 + "\"query\":\"All the worlds a\"," + "\"fuzziness\":\"2\"" + "}" + "}" + "},"
                 + "\"ryft_enabled\":true" + "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -149,12 +154,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 .fuzziness(Fuzziness.ONE);
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String elasticQuery = "{\"query\": {\"fuzzy\": {\"speaker\": "
                 + "{\"value\": \"marcelus\", \"fuzziness\": 1}}}, \"ryft_enabled\":true }";
 
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -171,12 +178,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setSize(total).setFrom(0)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String elasticQuery = "{\"query\": {\"fuzzy\": {\"speaker\": "
                 + "{\"value\": \"macelus\", \"fuzziness\": 2}}}, \"ryft_enabled\":true }";
 
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -194,11 +203,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\r\n\"query\": {\r\n\"match\" : {\r\n \"text_entry\": {\r\n\"query\":\"Lord Hmlet\",\r\n\"fuzziness\": \"1\",\r\n\"operator\":\"and\"\r\n}\r\n}\r\n},\r\n \"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
-
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -216,10 +226,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\r\n\"query\": {\r\n\"match\" : {\r\n \"text_entry\": {\r\n\"query\":\"Lord mlet\",\r\n\"fuzziness\": \"2\",\r\n\"operator\":\"and\"\r\n}\r\n}\r\n},\r\n\"size\":30000,\r\n \"ryft_enabled\": true}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -245,10 +257,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Lrd amlet\",\"fuzziness\": 1,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LRD POLONIU\",\"fuzziness\": 1,\"operator\": \"and\"}}}]}},\r\n\"size\":10000, \"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -273,10 +287,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Lrd mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LRD PLONIU\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -301,10 +317,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"speaker\": {\"query\": \"mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"tht is qetion\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -329,10 +347,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must\": [{\"match\": {\"speaker\": {\"query\": \"mlet\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"th is te qution\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -357,10 +377,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"that is the quetion\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"all the world a stage\",\"fuzziness\": 1,\"operator\": \"and\"}}}]}},\r\n  \"size\":20000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -385,10 +407,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"tht is th quetion\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"text_entry\": {\"query\": \"all the wld a stage\",\"fuzziness\": 2,\"operator\": \"and\"}}}]}},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -419,10 +443,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"should\": [{\"match\": {\"text_entry\": {\"query\": \"my lrd\",\"fuzziness\": 2,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"PONIUS\",\"fuzziness\": 2,\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"Mesenger\",\"fuzziness\": 2,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -452,10 +478,12 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         int total = getSize(builder);
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).setFrom(0).setSize(total)
                 .get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\"query\": {\"bool\": { \"must_not\":[{ \"match\":{\"speaker\":{\"query\":\"QUEEN GERTRUDE\",\"type\":\"phrase\"}}}], \"must\": [{\"match\": {\"text_entry\": {\"query\": \"Hamlet hamlet\",\"fuzziness\": 1,\"type\":\"phrase\",\"operator\": \"and\"}}},{\"match\": {\"speaker\": {\"query\": \"LAERTES\",\"fuzziness\": 1,\"operator\": \"and\"}}} ], \"minimum_should_match\":1 }},\r\n  \"size\":30000,\"ryft_enabled\": true\r\n}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -464,6 +492,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         WildcardQueryBuilder builder = QueryBuilders.wildcardQuery("text_entry", "w?rlds");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -475,6 +504,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -504,14 +534,15 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @Test
     public void testDatetimeTerm() throws InterruptedException, ExecutionException {
-        TermQueryBuilder builder = QueryBuilders.termQuery("timestamp", "2014-01-01 07:00:00");
+        TermQueryBuilder builder = QueryBuilders.termQuery("registered", "2014-01-01 07:00:00");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"term\": {\n" +
-                "      \"timestamp\": {\n" +
+                "      \"registered\": {\n" +
                 "        \"value\": \"2014-01-01 07:00:00\",\n" +
                 "        \"type\": \"datetime\",\n" +
                 "        \"format\": \"yyyy-MM-dd HH:mm:ss\"\n" +
@@ -522,19 +553,21 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     @Test
     public void testDatetimeRange() throws InterruptedException, ExecutionException {
-        RangeQueryBuilder builder = QueryBuilders.rangeQuery("timestamp").gt("2014-01-01 07:00:00").lt("2014-01-07 07:00:00");
+        RangeQueryBuilder builder = QueryBuilders.rangeQuery("registered").gt("2014-01-01 07:00:00").lt("2014-01-07 07:00:00");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"range\" : {\n" +
-                "      \"timestamp\" : {\n" +
+                "      \"registered\" : {\n" +
                 "        \"gt\" : \"2014-01-01 07:00:00\",\n" +
                 "        \"lt\" : \"2014-01-07 07:00:00\",\n" +
                 "        \"type\": \"datetime\",\n" +
@@ -546,6 +579,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}\n";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -554,6 +588,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         TermQueryBuilder builder = QueryBuilders.termQuery("age", 22);
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -568,6 +603,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -576,6 +612,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         RangeQueryBuilder builder = QueryBuilders.rangeQuery("age").gt(22).lt(29);
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -591,6 +628,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}\n";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -599,6 +637,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -614,6 +653,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}\n";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -622,6 +662,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("122.176.86.200").field("ipv4");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -636,15 +677,16 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     @Test
     public void testIpv6Term() throws InterruptedException, ExecutionException {
-        QueryBuilder builder = QueryBuilders.simpleQueryStringQuery("21DA:D3:0:2F3B:2AA:FF:FE28:9C5A").field("ipv6");
+        QueryBuilder builder = QueryBuilders.matchPhraseQuery("ipv6", "21DA:D3:0:2F3B:2AA:FF:FE28:9C5A");
         logger.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(ALTERNATIVE_INDEX_NAME).setQuery(builder).get();
-        logger.info("" + searchResponse.getHits().getTotalHits());
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
 
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
@@ -659,6 +701,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 "}";
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{ALTERNATIVE_INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -683,17 +726,17 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     private void elasticSubsetRyft(SearchResponse searchResponse, SearchResponse ryftResponse) {
         assertResponse(searchResponse);
         assertResponse(ryftResponse);
-        assertTrue(ryftResponse.getHits().getHits().length >= searchResponse.getHits().getHits().length);
+        assertTrue(ryftResponse.getHits().getTotalHits() >= searchResponse.getHits().getTotalHits());
 
         SearchHit[] elasticHits = searchResponse.getHits().getHits();
-        Map<String, SearchHit> hitMap = new HashMap<String, SearchHit>();
-        for (int i = 0; i < elasticHits.length; i++) {
-            hitMap.put(elasticHits[i].getId(), elasticHits[i]);
+        Map<String, SearchHit> hitMap = new HashMap<>();
+        for (SearchHit elasticHit : elasticHits) {
+            hitMap.put(elasticHit.getId(), elasticHit);
         }
 
         SearchHit[] ryftHits = ryftResponse.getHits().getHits();
-        for (int i = 0; i < ryftHits.length; i++) {
-            hitMap.remove(ryftHits[i].getId());
+        for (SearchHit ryftHit : ryftHits) {
+            hitMap.remove(ryftHit.getId());
         }
 
         if (!hitMap.isEmpty()) {
