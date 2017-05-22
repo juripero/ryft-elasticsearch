@@ -130,6 +130,7 @@ sudo docker-compose start
 ```
 
 If you follow [Jenkins installation](#jenkins-installation) you should use **ryft-elasticsearch-deploy** job for restarting elastic search.
+https://docs.google.com/document/d/1O40WOdZo56MkXEEHxTuDZHxJofYKtGqDWWrsNbkcqtg/edit#
 
 Attention all data that was indexed via ES would be deleted completely!
 Remove all indices via next command:
