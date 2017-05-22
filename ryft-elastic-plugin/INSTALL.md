@@ -7,12 +7,14 @@ To install ryft-elastic-plugin please use Jenkins server
 Next it deploys that tarball into specified Ryft machine. So you just need to launch it with needed version and machine IP.
 
 **Java 8 pre-requisite for elasticsearch** 
-```sudo add-apt-repository ppa:openjdk-r/ppa
+```bash
+sudo add-apt-repository ppa:openjdk-r/ppa
 sudo apt-get update
 sudo apt-get install openjdk-8-jdk
 ```
 **Confirm java 8 is installed**
-```sudo update-alternatives --config java
+```bash
+sudo update-alternatives --config java
 sudo update-alternatives --config javac
 ```
 
