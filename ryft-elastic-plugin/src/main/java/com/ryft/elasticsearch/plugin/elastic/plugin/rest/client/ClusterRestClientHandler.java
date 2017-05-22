@@ -64,7 +64,6 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
                 ryftResponse.setErrors(new String[]{new String(accumulator.array()).trim()});
             }
             NettyUtils.setAttribute(RYFT_RESPONSE_ATTR, ryftResponse, ctx);
-            countDownLatch.countDown();
             return null;
         });
         countDownLatch.countDown();
