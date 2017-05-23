@@ -8,16 +8,19 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
+
+import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.CountDownLatch;
+
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
 /**
- *
  * @author denis
  */
 public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object> {
@@ -41,6 +44,11 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse) {
             LOGGER.debug("Message received {}", msg);
+        } else if (msg instanceof LastHttpContent) {
+            LOGGER.debug("Last http content {}", msg);
+            HttpContent m = (HttpContent) msg;
+            accumulator.writeBytes(m.content());
+            parseFullReply(ctx);
         } else if (msg instanceof HttpContent) {
             LOGGER.debug("Content received {}", msg);
             HttpContent m = (HttpContent) msg;
@@ -48,26 +56,23 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
         }
     }
 
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    private void parseFullReply(ChannelHandlerContext ctx) throws Exception {
         // Ugly construction because of SecurityManager used by ES
         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-            RyftResponse ryftResponse = null;
+            RyftResponse ryftResponse;
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                if (accumulator.isReadable()) {
-                    ryftResponse = mapper.readValue(accumulator.array(), RyftResponse.class);
-                }
+                ryftResponse = mapper.readValue(accumulator.toString(StandardCharsets.UTF_8), RyftResponse.class);
             } catch (Exception ex) {
                 LOGGER.error("Failed to parse RYFT response", ex);
                 ryftResponse = new RyftResponse();
-                ryftResponse.setErrors(new String[]{new String(accumulator.array()).trim()});
+                ryftResponse.setErrors(new String[]{accumulator.toString(StandardCharsets.UTF_8)});
             }
             NettyUtils.setAttribute(RYFT_RESPONSE_ATTR, ryftResponse, ctx);
             return null;
         });
         countDownLatch.countDown();
+        accumulator.clear();
         ctx.channel().close();
     }
-
 }

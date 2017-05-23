@@ -42,7 +42,7 @@ public class RyftRestClient implements PostConstruct {
         b = b.group(workerGroup)//
                 .channel(NioSocketChannel.class)//
                 .option(ChannelOption.SO_KEEPALIVE, true)//
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 40000)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) throws Exception {
