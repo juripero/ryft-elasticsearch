@@ -63,7 +63,7 @@ public class RyftRequestProcessor extends RyftProcessor {
         executor.submit(() -> executeRequest(requestEvent));
     }
 
-    protected void executeRequest(RyftClusterRequestEvent requestEvent) {
+    private void executeRequest(RyftClusterRequestEvent requestEvent) {
         try {
             List<ShardRouting> shardRoutings = requestEvent.getShards();
             Map<Integer, List<ShardRouting>> groupedShards = shardRoutings.stream()
@@ -86,7 +86,7 @@ public class RyftRequestProcessor extends RyftProcessor {
 
         Map<Integer, Optional<ChannelFuture>> ryftChannelFutures = groupedShards.entrySet().stream().map(entry -> {
             Optional<ChannelFuture> maybeRyftChannelFuture = sendToRyft(requestEvent, entry.getValue(), countDownLatch);
-            return new AbstractMap.SimpleEntry<Integer, Optional<ChannelFuture>>(entry.getKey(), maybeRyftChannelFuture);
+            return new AbstractMap.SimpleEntry<>(entry.getKey(), maybeRyftChannelFuture);
         }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
         countDownLatch.await();
@@ -97,7 +97,7 @@ public class RyftRequestProcessor extends RyftProcessor {
                     .orElse(new RyftResponse(null, null, null, String.format("Can not get results for shard %d", entry.getKey())));
             ShardRouting indexShard = entry.getValue().map(channelFuture
                     -> NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.INDEX_SHARD_ATTR)).get();
-            return new AbstractMap.SimpleEntry<ShardRouting, RyftResponse>(indexShard, ryftResponse);
+            return new AbstractMap.SimpleEntry<>(indexShard, ryftResponse);
         }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     }
 
@@ -134,8 +134,7 @@ public class RyftRequestProcessor extends RyftProcessor {
             request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
             LOGGER.info("Send request: {}", request);
-            ChannelFuture cf = ryftChannel.writeAndFlush(request);
-            return cf;
+            return ryftChannel.writeAndFlush(request);
         });
     }
 
@@ -151,8 +150,8 @@ public class RyftRequestProcessor extends RyftProcessor {
         if (!errorResponses.isEmpty()) {
             LOGGER.warn("Receive errors from shards: {}", errorResponses.toString());
             Map<Integer, List<ShardRouting>> shardsToSearch = new HashMap<>();
-            errorResponses.entrySet().stream().forEach((entry) -> {
-                Integer shardId = entry.getKey().getId();
+            errorResponses.forEach((key, value) -> {
+                Integer shardId = key.getId();
                 List<ShardRouting> shards = groupedShards.get(shardId);
                 if (!shards.isEmpty()) {
                     shardsToSearch.put(shardId, shards);
@@ -179,7 +178,7 @@ public class RyftRequestProcessor extends RyftProcessor {
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
-        Long totalHits = 0l;
+        Long totalHits = 0L;
         for (Entry<ShardRouting, RyftResponse> entry : resultResponses.entrySet()) {
             totalShards += 1;
             RyftResponse ryftResponse = entry.getValue();
@@ -213,10 +212,8 @@ public class RyftRequestProcessor extends RyftProcessor {
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
                 null, null, false, false);
 
-        SearchResponse searchResponse = new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
                 failures.toArray(new ShardSearchFailure[failures.size()]));
-
-        return searchResponse;
     }
 
     private SearchShardTarget getSearchShardTarget(ShardRouting shardRouting) {
