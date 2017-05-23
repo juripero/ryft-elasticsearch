@@ -61,7 +61,7 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
             } catch (Exception ex) {
                 LOGGER.error("Failed to parse RYFT response", ex);
                 ryftResponse = new RyftResponse();
-                ryftResponse.setErrors(new String[]{new String(accumulator.array()).trim()});
+                ryftResponse.setMessage(ex.getMessage());
             }
             NettyUtils.setAttribute(RYFT_RESPONSE_ATTR, ryftResponse, ctx);
             return null;

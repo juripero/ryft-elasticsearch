@@ -19,12 +19,11 @@ public class RyftResponse {
     private String message;
 
     public RyftResponse() {
-        // TODO Auto-generated constructor stub
     }
 
     @JsonCreator
-    public RyftResponse(@JsonProperty("results") ArrayList<ObjectNode> results,//
-            @JsonProperty("stats") RyftStats stats, //
+    public RyftResponse(@JsonProperty("results") ArrayList<ObjectNode> results,
+            @JsonProperty("stats") RyftStats stats,
             @JsonProperty("errors") String[] errors,
             @JsonProperty("message") String message) {
         super();
@@ -32,11 +31,6 @@ public class RyftResponse {
         this.stats = stats;
         this.errors = errors;
         this.message = message;
-    }
-
-    @JsonProperty("results")
-    public ArrayList<ObjectNode> getResults() {
-        return results;
     }
 
     @JsonProperty("errors")
@@ -48,8 +42,18 @@ public class RyftResponse {
         this.errors = errors;
     }
 
+    @JsonProperty("message")
+    public String getMessage() {
+        return message;
+    }
+
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    @JsonProperty("results")
+    public ArrayList<ObjectNode> getResults() {
+        return results;
     }
 
     public void setResults(ArrayList<ObjectNode> results) {
@@ -64,9 +68,12 @@ public class RyftResponse {
         this.stats = stats;
     }
 
-    @JsonProperty("message")
-    public String getMessage() {
-        return message;
+    public Boolean hasErrors() {
+        return !((message == null) || (message.isEmpty())) || !((errors == null) || (errors.length > 0));
+    }
+
+    public Boolean hasResults() {
+        return !((results == null) || (results.isEmpty()));
     }
 
     @Override
