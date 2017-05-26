@@ -20,6 +20,7 @@ import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.unit.Fuzziness;
@@ -511,19 +512,21 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @Test
     public void testRawTextSearch() throws InterruptedException, ExecutionException {
+        ClusterState clusterState = client.admin().cluster().prepareState().setIndices(INDEX_NAME).get().getState();
+        String s = String.format("/%1$s/nodes/0/indices/%2$s/%3$d/index/_0.%2$sjsonfld",
+                clusterState.getClusterName().value(), INDEX_NAME, 1);
+
         String ryftQuery = "{\n" +
                 "  \"query\": {\n" +
                 "    \"match_phrase\": {\n" +
                 "      \"_all\": {\n" +
-                "        \"query\": \"BIFLEX\",\n" +
-                "        \"fuzziness\": 1,\n" +
-                "        \"width\": \"line\"\n" +
+                "        \"query\": \"green\"\n" +
                 "      }\n" +
                 "    }\n" +
                 "  },\n" +
                 "  \"ryft\": {\n" +
                 "    \"enabled\": true,\n" +
-                "    \"files\": [\"/nodes/0/indices/integration/1/index/*.integrationjsonfld\"],\n" +
+                "    \"files\": [\"" + s + "\"],\n" +
                 "    \"format\": \"utf8\"\n" +
                 "  }\n" +
                 "}\n";
