@@ -25,6 +25,7 @@ import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import java.net.URI;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +174,12 @@ public class SearchRequestProcessor extends RyftProcessor {
             NettyUtils.setAttribute(ClusterRestClientHandler.INDEX_SHARD_ATTR, shardRouting, ryftChannel);
             ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, searchUri.toString());
-            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + props.get().getStr(PropertiesProvider.RYFT_REST_AUTH));
+            if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
+                String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
+                String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
+                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
+            }
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
             LOGGER.info("Send request: {}", request);
             return ryftChannel.writeAndFlush(request);

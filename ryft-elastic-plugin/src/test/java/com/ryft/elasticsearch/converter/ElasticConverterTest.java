@@ -1,8 +1,5 @@
 package com.ryft.elasticsearch.converter;
 
-import com.ryft.elasticsearch.converter.ContextFactory;
-import com.ryft.elasticsearch.converter.ElasticConverter;
-import com.ryft.elasticsearch.converter.ElasticConversionModule;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.utils.JSR250Module;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;

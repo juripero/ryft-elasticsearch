@@ -43,7 +43,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     protected Integer getLimit() {
-        return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_SIZE);
+        return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_LIMIT);
     }
 
     protected ElasticConverterRyft.ElasticConverterFormat.RyftFormat getFormat() {

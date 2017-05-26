@@ -37,7 +37,7 @@ public class RyftRestClient implements PostConstruct {
 
     @Override
     public void onPostConstruct() {
-        EventLoopGroup workerGroup = new NioEventLoopGroup(props.getInt(PropertiesProvider.WROKER_THREAD_COUNT));
+        EventLoopGroup workerGroup = new NioEventLoopGroup(props.getInt(PropertiesProvider.WORKER_THREAD_COUNT));
         b = new Bootstrap();
         b = b.group(workerGroup)//
                 .channel(NioSocketChannel.class)//

@@ -23,14 +23,16 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     private static final ESLogger LOGGER = Loggers.getLogger(PropertiesProvider.class);
     // Global properties
     public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
-    public static final String SEARCH_QUERY_SIZE = "ryft_query_limit";
+    public static final String SEARCH_QUERY_LIMIT = "ryft_query_limit";
     // Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
     public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
-    public static final String WROKER_THREAD_COUNT = "ryft_rest_client_thread_num";
-    public static final String HOST = "ryft_rest_client_host";
-    public static final String PORT = "ryft_rest_client_port";
-    public static final String RYFT_REST_AUTH = "ryft_rest_auth";
+    public static final String WORKER_THREAD_COUNT = "ryft_rest_client_thread_num";
+    public static final String HOST = "ryft_rest_service_host";
+    public static final String PORT = "ryft_rest_service_port";
+    public static final String RYFT_REST_AUTH_ENABLED = "ryft_rest_auth_enabled";
+    public static final String RYFT_REST_LOGIN = "ryft_rest_auth_login";
+    public static final String RYFT_REST_PASSWORD = "ryft_rest_auth_password";
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
     // Query properties
@@ -44,15 +46,17 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     @Override
     public void onPostConstruct() {
         defaults.put(RYFT_INTEGRATION_ENABLED, "false");
-        defaults.put(SEARCH_QUERY_SIZE, "1000");
+        defaults.put(SEARCH_QUERY_LIMIT, "1000");
         defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
-        defaults.put(WROKER_THREAD_COUNT, "2");
+        defaults.put(WORKER_THREAD_COUNT, "2");
         defaults.put(HOST, "172.16.13.3");
         defaults.put(PORT, "8765");
         defaults.put(REQ_THREAD_NUM, "2");
         defaults.put(RESP_THREAD_NUM, "2");
-        defaults.put(RYFT_REST_AUTH, "YWRtaW46YWRt  aW4=");
+        defaults.put(RYFT_REST_AUTH_ENABLED, true);
+        defaults.put(RYFT_REST_LOGIN, "admin");
+        defaults.put(RYFT_REST_PASSWORD, "admin");
         defaults.put(RYFT_FORMAT, ElasticConverterRyft.ElasticConverterFormat.RyftFormat.JSON);
         defaults.put(RYFT_CASE_SENSITIVE, "false");
 
@@ -62,11 +66,11 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
             FileInputStream file = AccessController.doPrivileged((PrivilegedAction<FileInputStream>) () -> {
                 File jarPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
                 String propertiesPath = jarPath.getParentFile().getAbsolutePath();
-                System.out.println(" propertiesPath-" + propertiesPath);
+                LOGGER.info("propertiesPath: " + propertiesPath);
                 try {
                     return new FileInputStream(propertiesPath + "/ryft.elastic.plugin.properties");
                 } catch (Exception e) {
-                    LOGGER.error("Failed to load properties");
+                    LOGGER.error("Failed to load properties", e);
                     return null;
                 }
             });
