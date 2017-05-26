@@ -10,7 +10,7 @@ import org.elasticsearch.common.logging.Loggers;
 import com.ryft.elasticsearch.plugin.disruptor.messages.DisruptorEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.EventType;
 import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
-import com.ryft.elasticsearch.plugin.processors.RyftProcessor;
+import com.ryft.elasticsearch.rest.processors.RyftProcessor;
 import com.lmax.disruptor.EventHandler;
 
 @Singleton

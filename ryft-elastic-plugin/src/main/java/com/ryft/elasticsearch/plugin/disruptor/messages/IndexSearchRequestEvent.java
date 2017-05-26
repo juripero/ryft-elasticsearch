@@ -1,9 +1,9 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionCriticalException;
-import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQuery;
-import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
+import com.ryft.elasticsearch.plugin.PropertiesProvider;
+import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;

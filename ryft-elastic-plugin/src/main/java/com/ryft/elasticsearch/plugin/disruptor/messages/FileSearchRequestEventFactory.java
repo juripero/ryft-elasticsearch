@@ -1,7 +1,7 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQuery;
-import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
+import com.ryft.elasticsearch.plugin.RyftProperties;
 
 public interface FileSearchRequestEventFactory {
 

@@ -13,10 +13,10 @@ import com.lmax.disruptor.RingBuffer;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEventFactory;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
-import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftSearchService;
-import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftClusterServiceFactory;
+import com.ryft.elasticsearch.plugin.service.RyftSearchService;
 import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEventFactory;
+import com.ryft.elasticsearch.plugin.service.RyftSearchServiceFactory;
 
 public class DisruptorMessageBusModule extends AbstractModule {
 
@@ -43,7 +43,7 @@ public class DisruptorMessageBusModule extends AbstractModule {
         bind(FileSearchRequestEventFactory.class).toProvider(
                 FactoryProvider.newFactory(FileSearchRequestEventFactory.class, FileSearchRequestEvent.class)).in(Singleton.class);
 
-        bind(RyftClusterServiceFactory.class).toProvider(FactoryProvider.newFactory(RyftClusterServiceFactory.class, RyftSearchService.class)).in(Singleton.class);
+        bind(RyftSearchServiceFactory.class).toProvider(FactoryProvider.newFactory(RyftSearchServiceFactory.class, RyftSearchService.class)).in(Singleton.class);
     }
 
 }
