@@ -47,7 +47,7 @@ public class SearchInterceptor implements ActionInterceptor {
                 RyftClusterRequestEvent clusterRequestEvent = ryftClusterService.getClusterRequestEvent(ryftRequestParameters);
                 Boolean isRyftIntegrationElabled;
                 if (clusterRequestEvent != null) {
-                    isRyftIntegrationElabled = clusterRequestEvent.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
+                    isRyftIntegrationElabled = ryftRequestParameters.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
                 } else {
                     isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
                 }
