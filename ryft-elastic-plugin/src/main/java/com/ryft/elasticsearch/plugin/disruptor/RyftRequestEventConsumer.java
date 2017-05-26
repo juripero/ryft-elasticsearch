@@ -9,12 +9,12 @@ import org.elasticsearch.common.logging.Loggers;
 
 import com.ryft.elasticsearch.plugin.disruptor.messages.DisruptorEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.EventType;
-import com.ryft.elasticsearch.plugin.disruptor.messages.InternalEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
 import com.ryft.elasticsearch.plugin.processors.RyftProcessor;
 import com.lmax.disruptor.EventHandler;
 
 @Singleton
-public class RyftRequestEventConsumer implements EventHandler<DisruptorEvent<InternalEvent>> {
+public class RyftRequestEventConsumer implements EventHandler<DisruptorEvent<RequestEvent>> {
     private final ESLogger logger = Loggers.getLogger(getClass());
 
     Map<EventType, RyftProcessor> processors;
@@ -25,7 +25,7 @@ public class RyftRequestEventConsumer implements EventHandler<DisruptorEvent<Int
     }
 
     @Override
-    public void onEvent(DisruptorEvent<InternalEvent> event, long sequence, boolean endOfBatch) throws Exception {
+    public void onEvent(DisruptorEvent<RequestEvent> event, long sequence, boolean endOfBatch) throws Exception {
         logger.info("Message consumed {}", event.getEvent().getEventType());
         processors.get(event.getEvent().getEventType()).process(event.getEvent());
     }

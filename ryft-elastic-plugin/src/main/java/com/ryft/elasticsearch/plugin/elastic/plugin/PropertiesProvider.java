@@ -3,7 +3,6 @@ package com.ryft.elasticsearch.plugin.elastic.plugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;

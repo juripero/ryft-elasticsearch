@@ -2,6 +2,6 @@ package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 public enum EventType {
     
-    ES_REQUEST,RYFT_RESPONSE
+    INDEX_SEARCH_REQUEST, FILE_SEARCH_REQUEST
 
 }

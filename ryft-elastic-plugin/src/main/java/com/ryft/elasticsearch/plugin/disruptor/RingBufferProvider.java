@@ -34,7 +34,7 @@ public class RingBufferProvider<T> implements Provider<RingBuffer<DisruptorEvent
     @Override
     public void onPostConstruct() {
         Executor executor = Executors.newCachedThreadPool();
-        Factory<T> factory = new Factory<T>();
+        Factory<T> factory = new Factory<>();
         disruptor = AccessController.doPrivileged((PrivilegedAction<Disruptor>) () -> {
             return new Disruptor<>(factory, props.getInt(PropertiesProvider.DISRUPTOR_CAPACITY), executor);
         });

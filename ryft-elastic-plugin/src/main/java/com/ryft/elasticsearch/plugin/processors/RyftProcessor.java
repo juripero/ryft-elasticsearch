@@ -4,7 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.ryft.elasticsearch.plugin.disruptor.PostConstruct;
-import com.ryft.elasticsearch.plugin.disruptor.messages.InternalEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public abstract class RyftProcessor implements PostConstruct {
@@ -17,7 +17,7 @@ public abstract class RyftProcessor implements PostConstruct {
                 .newFixedThreadPool(getPoolSize(), new ThreadFactoryBuilder().setNameFormat(getName()).build());
     }
 
-    public abstract void process(InternalEvent event);
+    public abstract void process(RequestEvent event);
 
     /**
      * Should return name for current pool impl

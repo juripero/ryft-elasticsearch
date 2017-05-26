@@ -26,8 +26,7 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEvent;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEventFactory;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftExpressionExactSearch;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftInputSpecifierRecord;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftOperator;
@@ -43,6 +42,7 @@ import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.shard.IndexShard;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEventFactory;
 
 public class RestClientHandlerTest {
 //
@@ -63,8 +63,8 @@ public class RestClientHandlerTest {
 //    private EmbeddedChannel channel;
 //    private RestClientHandler handler;
 //    @Inject
-//    public RyftClusterRequestEventFactory ryftRequestEventFactory;
-//    private RyftClusterRequestEvent event;
+//    public IndexSearchRequestEventFactory ryftRequestEventFactory;
+//    private IndexSearchRequestEvent event;
 //    IndexShard indexShard;
 //    ActionListener<SearchResponse> listener;
 //
@@ -76,8 +76,8 @@ public class RestClientHandlerTest {
 //            protected void configure() {
 //                install(new JSR250Module());
 //                install(new ClusterModule(Settings.EMPTY));
-//                bind(RyftClusterRequestEventFactory.class).toProvider(
-//                        FactoryProvider.newFactory(RyftClusterRequestEventFactory.class, RyftClusterRequestEvent.class));
+//                bind(IndexSearchRequestEventFactory.class).toProvider(
+//                        FactoryProvider.newFactory(IndexSearchRequestEventFactory.class, IndexSearchRequestEvent.class));
 //            }
 //        }).injectMembers(this);
 //        indexShard = mock(IndexShard.class);

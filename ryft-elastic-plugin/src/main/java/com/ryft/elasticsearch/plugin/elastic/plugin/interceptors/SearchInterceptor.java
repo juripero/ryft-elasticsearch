@@ -9,32 +9,31 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.tasks.Task;
 
 import com.ryft.elasticsearch.plugin.disruptor.EventProducer;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEvent;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftClusterRequestEventFactory;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConversionException;
 import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverter;
 import com.ryft.elasticsearch.plugin.elastic.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
-import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftClusterService;
+import com.ryft.elasticsearch.plugin.elastic.plugin.cluster.RyftSearchService;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
 
 public class SearchInterceptor implements ActionInterceptor {
 
     private static final ESLogger LOGGER = Loggers.getLogger(SearchInterceptor.class);
-    private final EventProducer<RyftClusterRequestEvent> producer;
+    private final EventProducer<RequestEvent> producer;
     private final ElasticConverter elasticConverter;
     private final RyftProperties properties;
-    private final RyftClusterService ryftClusterService;
+    private final RyftSearchService ryftSearchService;
 
     @Inject
     public SearchInterceptor(RyftProperties ryftProperties,
-            EventProducer<RyftClusterRequestEvent> producer, ElasticConverter elasticConverter,
-            RyftClusterService ryftClusterService) {
+            EventProducer<RequestEvent> producer, ElasticConverter elasticConverter,
+            RyftSearchService ryftSearchService) {
         this.properties = ryftProperties;
         this.producer = producer;
         this.elasticConverter = elasticConverter;
-        this.ryftClusterService = ryftClusterService;
+        this.ryftSearchService = ryftSearchService;
     }
 
     @Override
@@ -44,16 +43,16 @@ public class SearchInterceptor implements ActionInterceptor {
             if (ryftRequestParameters == null) {
                 return false;
             } else {
-                RyftClusterRequestEvent clusterRequestEvent = ryftClusterService.getClusterRequestEvent(ryftRequestParameters);
+                RequestEvent requestEvent = ryftSearchService.getClusterRequestEvent(ryftRequestParameters);
                 Boolean isRyftIntegrationElabled;
-                if (clusterRequestEvent != null) {
+                if (requestEvent != null) {
                     isRyftIntegrationElabled = ryftRequestParameters.getRyftProperties().getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
                 } else {
                     isRyftIntegrationElabled = properties.getBool(PropertiesProvider.RYFT_INTEGRATION_ENABLED);
                 }
-                if (isRyftIntegrationElabled && (clusterRequestEvent != null)) {
-                    clusterRequestEvent.setCallback(listener);
-                    producer.send(clusterRequestEvent);
+                if (isRyftIntegrationElabled && (requestEvent != null)) {
+                    requestEvent.setCallback(listener);
+                    producer.send(requestEvent);
                     return true;
                 }
                 return false;

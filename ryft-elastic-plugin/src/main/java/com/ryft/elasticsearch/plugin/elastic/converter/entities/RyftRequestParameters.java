@@ -1,7 +1,11 @@
 package com.ryft.elasticsearch.plugin.elastic.converter.entities;
 
+import com.ryft.elasticsearch.plugin.elastic.converter.ElasticConverterRyft;
 import com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQuery;
+import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import java.util.Arrays;
+import java.util.List;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 
@@ -32,9 +36,18 @@ public class RyftRequestParameters {
         return ryftProperties;
     }
 
+    public Boolean isFileSearch() {
+        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List)) {
+            return true;
+        } else return ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
+                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.RAW)
+                || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
+    }
+
     @Override
     public String toString() {
-        return "RyftRequestParameters{" + "query=" + query + ", indices=" + indices + '}';
+        return "RyftRequestParameters{" + "query=" + query + ", indices=" + Arrays.toString(indices) + '}';
     }
 
 }
