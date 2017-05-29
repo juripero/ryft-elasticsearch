@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.elasticsearch.action.ActionModule;
-import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.plugins.Plugin;
 

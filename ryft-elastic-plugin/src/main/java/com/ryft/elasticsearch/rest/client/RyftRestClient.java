@@ -52,11 +52,6 @@ public class RyftRestClient implements PostConstruct {
                 });
     }
 
-    public Optional<Channel> get() {
-        String host = props.getStr(PropertiesProvider.HOST);
-        return get(host);
-    }
-
     public Optional<Channel> get(String host) {
         Integer port = props.getInt(PropertiesProvider.PORT);
         return get(new InetSocketAddress(host, port));
