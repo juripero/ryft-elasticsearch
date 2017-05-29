@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.plugin.disruptor;
 
+import com.ryft.elasticsearch.utils.PostConstruct;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Set;
@@ -12,8 +13,8 @@ import org.elasticsearch.common.inject.Singleton;
 
 import com.ryft.elasticsearch.plugin.disruptor.messages.DisruptorEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.Factory;
-import com.ryft.elasticsearch.plugin.elastic.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.elastic.plugin.RyftProperties;
+import com.ryft.elasticsearch.plugin.PropertiesProvider;
+import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -34,7 +35,7 @@ public class RingBufferProvider<T> implements Provider<RingBuffer<DisruptorEvent
     @Override
     public void onPostConstruct() {
         Executor executor = Executors.newCachedThreadPool();
-        Factory<T> factory = new Factory<T>();
+        Factory<T> factory = new Factory<>();
         disruptor = AccessController.doPrivileged((PrivilegedAction<Disruptor>) () -> {
             return new Disruptor<>(factory, props.getInt(PropertiesProvider.DISRUPTOR_CAPACITY), executor);
         });
