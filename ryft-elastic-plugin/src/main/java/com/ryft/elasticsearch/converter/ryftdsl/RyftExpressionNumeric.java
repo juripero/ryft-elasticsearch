@@ -1,7 +1,9 @@
 package com.ryft.elasticsearch.converter.ryftdsl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class RyftExpressionNumeric extends RyftExpressionRange {
 
@@ -28,10 +30,18 @@ public class RyftExpressionNumeric extends RyftExpressionRange {
 
     @Override
     protected List<String> getParameters() {
-        return Arrays.asList(new String[]{
-            String.format("\"%s\"", separator),
-            String.format("\"%s\"", decimal)
-        });
+        List<String> result = new ArrayList<>();
+
+        result.add(String.format("\"%s\"", separator));
+        result.add(String.format("\"%s\"", decimal));
+
+        if (line != null) {
+            result.add(String.format("LINE=%b", line));
+        }
+        if (width != null) {
+            result.add(String.format("WIDTH=%d", width));
+        }
+        return result;
     }
 
 }

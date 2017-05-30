@@ -75,83 +75,101 @@ public class RyftQueryFactory {
     }
 
     public RyftQuery buildTermQuery(TermQueryParameters termQueryParameters) throws ElasticConversionException {
+        RyftQuery finalQuery;
         switch (termQueryParameters.getDataType()) {
             case STRING:
-                return buildQueryStringTerm(
+                finalQuery = buildQueryStringTerm(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getRyftOperator());
+                break;
             case DATETIME:
-                return buildQueryDateTimeTerm(
+                finalQuery = buildQueryDateTimeTerm(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFormat(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getRyftOperator());
+                break;
             case NUMBER:
-                return buildQueryNumericTerm(
+                finalQuery = buildQueryNumericTerm(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getSeparator(),
                         termQueryParameters.getDecimal(),
                         termQueryParameters.getRyftOperator());
+                break;
             case NUMBER_ARRAY:
-                return buildQueryNumericArrayTerm(
+                finalQuery = buildQueryNumericArrayTerm(
                         termQueryParameters.getSearchArray(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getSeparator(),
                         termQueryParameters.getDecimal(),
                         termQueryParameters.getRyftOperator());
+                break;
             case CURRENCY:
-                return buildQueryCurrencyTerm(
+                finalQuery = buildQueryCurrencyTerm(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getCurrency(),
                         termQueryParameters.getSeparator(),
                         termQueryParameters.getDecimal(),
                         termQueryParameters.getRyftOperator());
+                break;
             case IPV4:
-                return buildQueryIpv4Term(
+                finalQuery = buildQueryIpv4Term(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getRyftOperator());
+                break;
             case IPV6:
-                return buildQueryIpv6Term(
+                finalQuery = buildQueryIpv6Term(
                         termQueryParameters.getSearchValue(),
                         termQueryParameters.getFieldName(),
                         termQueryParameters.getRyftOperator());
+                break;
             default:
                 throw new ElasticConversionException("Unknown data type");
         }
-
+        if (termQueryParameters.getLine() != null) {
+            return finalQuery.toLineQuery();
+        } else if (termQueryParameters.getWidth() != null) {
+            return finalQuery.toWidthQuery(termQueryParameters.getWidth());
+        } else {
+            return finalQuery;
+        }
     }
 
     public RyftQuery buildRangeQuery(RangeQueryParameters rangeQueryParameters) throws ElasticConversionException {
         rangeQueryParameters.check();
+        RyftQuery finalQuery;
         switch (rangeQueryParameters.getDataType()) {
             case DATETIME:
-                return buildQueryDateTimeRange(
+                finalQuery = buildQueryDateTimeRange(
                         rangeQueryParameters.getLowerBound(),
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFormat(),
                         rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             case NUMBER:
-                return buildQueryNumericRange(
+                finalQuery = buildQueryNumericRange(
                         rangeQueryParameters.getLowerBound(),
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getSeparator(),
                         rangeQueryParameters.getDecimal(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             case NUMBER_ARRAY:
-                return buildQueryNumericArrayTerm(
+                finalQuery = buildQueryNumericArrayTerm(
                         rangeQueryParameters.getSearchArray(),
                         rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getSeparator(),
                         rangeQueryParameters.getDecimal(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             case CURRENCY:
-                return buildQueryCurrencyRange(
+                finalQuery = buildQueryCurrencyRange(
                         rangeQueryParameters.getLowerBound(),
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFieldName(),
@@ -159,22 +177,31 @@ public class RyftQueryFactory {
                         rangeQueryParameters.getSeparator(),
                         rangeQueryParameters.getDecimal(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             case IPV4:
-                return buildQueryIpv4Range(
+                finalQuery = buildQueryIpv4Range(
                         rangeQueryParameters.getLowerBound(),
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             case IPV6:
-                return buildQueryIpv6Range(
+                finalQuery = buildQueryIpv6Range(
                         rangeQueryParameters.getLowerBound(),
                         rangeQueryParameters.getUpperBound(),
                         rangeQueryParameters.getFieldName(),
                         rangeQueryParameters.getRyftOperator());
+                break;
             default:
                 throw new ElasticConversionException("Unknown data type");
         }
-
+        if (rangeQueryParameters.getLine() != null) {
+            return finalQuery.toLineQuery();
+        } else if (rangeQueryParameters.getWidth() != null) {
+            return finalQuery.toWidthQuery(rangeQueryParameters.getWidth());
+        } else {
+            return finalQuery;
+        }
     }
 
     private RyftQuery buildQueryMatchPhrase(String searchText, String fieldName,
