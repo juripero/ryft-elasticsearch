@@ -6,6 +6,8 @@
 
 * [Supported elasticsearch API requests](ryft-elastic-plugin/README.md)
 
+* [Cluster mode](ryft-elastic-plugin/CLUSTER.md)
+
 * [Logstash](doc/logstash.md)
 
 * [Kibana](doc/kibana.md)

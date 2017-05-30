@@ -7,34 +7,43 @@ import org.elasticsearch.common.inject.TypeLiteral;
 import org.elasticsearch.common.inject.multibindings.Multibinder;
 
 import com.ryft.elasticsearch.plugin.disruptor.messages.DisruptorEvent;
-import com.ryft.elasticsearch.plugin.disruptor.messages.InternalEvent;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEvent;
-import com.ryft.elasticsearch.plugin.disruptor.messages.RyftRequestEventFactory;
+import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.RingBuffer;
+import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEventFactory;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.service.RyftSearchService;
 import org.elasticsearch.common.inject.assistedinject.FactoryProvider;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEventFactory;
+import com.ryft.elasticsearch.plugin.service.RyftSearchServiceFactory;
 
 public class DisruptorMessageBusModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(new TypeLiteral<EventProducer<RyftRequestEvent>>() {
-        }).to(new TypeLiteral<InternalEventProducer<RyftRequestEvent>>() {
+        bind(new TypeLiteral<EventProducer<RequestEvent>>() {
+        }).to(new TypeLiteral<InternalEventProducer<RequestEvent>>() {
         });
 
-        Multibinder<EventHandler<DisruptorEvent<InternalEvent>>> binder = Multibinder.newSetBinder(binder(),
-                new TypeLiteral<EventHandler<DisruptorEvent<InternalEvent>>>() {
+        Multibinder<EventHandler<DisruptorEvent<RequestEvent>>> binder = Multibinder.newSetBinder(binder(),
+                new TypeLiteral<EventHandler<DisruptorEvent<RequestEvent>>>() {
         });
 
         binder.addBinding().to(new TypeLiteral<RyftRequestEventConsumer>() {
         }).asEagerSingleton();
 
-        bind(new TypeLiteral<RingBuffer<DisruptorEvent<InternalEvent>>>() {
-        }).toProvider(Key.get(new TypeLiteral<RingBufferProvider<InternalEvent>>() {
+        bind(new TypeLiteral<RingBuffer<DisruptorEvent<RequestEvent>>>() {
+        }).toProvider(Key.get(new TypeLiteral<RingBufferProvider<RequestEvent>>() {
         })).in(Singleton.class);
 
-        bind(RyftRequestEventFactory.class).toProvider(
-                FactoryProvider.newFactory(RyftRequestEventFactory.class, RyftRequestEvent.class)).in(Singleton.class);
+        bind(IndexSearchRequestEventFactory.class).toProvider(
+                FactoryProvider.newFactory(IndexSearchRequestEventFactory.class, IndexSearchRequestEvent.class)).in(Singleton.class);
+
+        bind(FileSearchRequestEventFactory.class).toProvider(
+                FactoryProvider.newFactory(FileSearchRequestEventFactory.class, FileSearchRequestEvent.class)).in(Singleton.class);
+
+        bind(RyftSearchServiceFactory.class).toProvider(FactoryProvider.newFactory(RyftSearchServiceFactory.class, RyftSearchService.class)).in(Singleton.class);
     }
 
 }
