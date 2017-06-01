@@ -61,6 +61,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     @Override
     public void process(RequestEvent event) {
+        LOGGER.info("Processing event: {}", event);
         executor.submit(() -> {
             try {
                 event.getCallback().onResponse(executeRequest(event));
@@ -146,7 +147,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private Optional<ChannelFuture> sendToRyft(IndexSearchRequestEvent requestEvent,
             List<ShardRouting> shards, CountDownLatch countDownLatch) {
-        ShardRouting shard = shards.stream().findFirst().get();
+        ShardRouting shard = shards.stream().findAny().get();
         shards.remove(shard);
         if (shard != null) {
             URI uri;
@@ -181,7 +182,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
             }
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
-            LOGGER.info("Send request: {}", request);
+            LOGGER.debug("Send request: {}", request);
             return ryftChannel.writeAndFlush(request);
         });
     }
@@ -206,10 +207,10 @@ public class SearchRequestProcessor extends RyftProcessor {
                 }
             });
             if (shardsToSearch.isEmpty()) {
-                LOGGER.info("No more replicas to search");
+                LOGGER.info("No more replicas to search. Search time: {}", searchTime);
                 return constructSearchResponse(ryftResponses, searchTime);
             } else {
-                LOGGER.info("Retry search requests to replica");
+                LOGGER.info("Retry search requests to error shards.");
                 Long start = System.currentTimeMillis();
                 Map<SearchShardTarget, RyftResponse> result = sendToRyft(requestEvent, shardsToSearch);
                 searchTime += System.currentTimeMillis() - start;
@@ -217,11 +218,12 @@ public class SearchRequestProcessor extends RyftProcessor {
                 return getSearchResponse(requestEvent, shardsToSearch, resultResponses, searchTime);
             }
         } else {
+            LOGGER.info("Search successful. Search time: {}", searchTime);
             return constructSearchResponse(ryftResponses, searchTime);
         }
     }
 
-    private SearchResponse constructSearchResponse(Map<SearchShardTarget, RyftResponse> resultResponses, Long tookInMillis) {
+    private SearchResponse constructSearchResponse(Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) {
         List<InternalSearchHit> searchHits = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
@@ -253,6 +255,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 totalHits += ryftResponse.getStats().getMatches();
             }
         }
+        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHits.size(), failures.size());
         InternalSearchHits hits = new InternalSearchHits(
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 totalHits == 0 ? searchHits.size() : totalHits, Float.NEGATIVE_INFINITY);
@@ -260,7 +263,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
                 null, null, false, false);
 
-        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                 failures.toArray(new ShardSearchFailure[failures.size()]));
     }
 

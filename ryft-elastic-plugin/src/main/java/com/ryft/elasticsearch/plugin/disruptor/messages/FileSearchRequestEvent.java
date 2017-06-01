@@ -33,7 +33,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         try {
             URI result = new URI("http://"
                     + getHost() + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
-                    + "/search?query=" + query
+                    + "/search?query=" + encodedQuery
                     + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
                     + "&local=false"
                     + "&stats=true"
@@ -68,7 +68,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
 
     @Override
     public String toString() {
-        return "FileSearchRequestEvent{query=" + query + '}';
+        return "FileSearchRequestEvent{query=" + query + "files=" + getFilenames() +'}';
     }
     
     
