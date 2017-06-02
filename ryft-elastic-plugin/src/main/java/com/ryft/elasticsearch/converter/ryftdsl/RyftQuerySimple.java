@@ -33,4 +33,9 @@ public class RyftQuerySimple implements RyftQuery {
         return new RyftQuerySimple(inputSpecifier, operator, expression.toLineExpression());
     }
 
+    @Override
+    public RyftQuery toWidthQuery(Integer width) {
+        return new RyftQuerySimple(inputSpecifier, operator, expression.toWidthExpression(width));
+    }
+
 }

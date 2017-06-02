@@ -71,6 +71,12 @@ public class ElasticConverterRangeField extends ElasticConverterField {
             String fieldName = convertingContext.getContentParser().currentName();
             rangeQueryParameters.setFieldName(fieldName);
 
+            if (convertingContext.getLine() != null) {
+                rangeQueryParameters.setLine(convertingContext.getLine());
+            } else if (convertingContext.getWidth() != null) {
+                rangeQueryParameters.setWidth(convertingContext.getWidth());
+            }
+
             for (Map.Entry<String, Object> entry : fieldQueryMap.entrySet()) {
                 String key = entry.getKey();
                 Object value = entry.getValue();

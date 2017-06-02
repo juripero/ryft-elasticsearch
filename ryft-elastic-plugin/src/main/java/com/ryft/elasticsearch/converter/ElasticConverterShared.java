@@ -110,4 +110,21 @@ public class ElasticConverterShared {
             return ElasticConversionUtil.getString(convertingContext);
         }
     }
+
+    public static class ElasticConverterWidth implements ElasticConvertingElement<Void> {
+
+        public static final String NAME = "width";
+
+        @Override
+        public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+            LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
+            Object width = ElasticConversionUtil.getObject(convertingContext);
+            if (width instanceof String && width.equals("line")) {
+                convertingContext.setLine(true);
+            } else if (width instanceof Integer) {
+                convertingContext.setWidth((Integer) width);
+            }
+            return null;
+        }
+    }
 }

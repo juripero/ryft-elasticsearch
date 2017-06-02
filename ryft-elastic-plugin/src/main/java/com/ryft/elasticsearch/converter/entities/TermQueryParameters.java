@@ -17,6 +17,8 @@ public class TermQueryParameters extends QueryParameters<String> {
     private String separator = ",";
     private String decimal = ".";
     private String currency = "$";
+    protected Integer width;
+    protected Boolean line;
 
     public ElasticConvertingContext.ElasticDataType getDataType() {
         return dataType;
@@ -64,5 +66,21 @@ public class TermQueryParameters extends QueryParameters<String> {
 
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public Integer getWidth() {
+        return width;
+    }
+
+    public void setWidth(Integer width) {
+        this.width = width;
+    }
+
+    public Boolean getLine() {
+        return line;
+    }
+
+    public void setLine(Boolean line) {
+        this.line = line;
     }
 }
