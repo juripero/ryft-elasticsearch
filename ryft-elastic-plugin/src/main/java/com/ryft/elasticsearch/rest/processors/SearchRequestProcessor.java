@@ -157,6 +157,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 if (maybeRyftResponse.isPresent()) {
                     return maybeRyftResponse;
                 } else {
+                    LOGGER.info("Attempt to search on other shard.");
                     return sendToRyft(requestEvent, shards, countDownLatch);
                 }
             } catch (ElasticConversionCriticalException ex) {

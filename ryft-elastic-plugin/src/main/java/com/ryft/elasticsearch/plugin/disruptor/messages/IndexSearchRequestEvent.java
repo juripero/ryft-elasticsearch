@@ -77,7 +77,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Override
     public String toString() {
-        return "RyftClusterRequestEvent{query=" + query + ", shards=" + shards + '}';
+        return "IndexSearchRequestEvent{query=" + query + ", index=" + shards.get(0).getIndex() + ", shards=" + shards.size() + '}';
     }
 
 }
