@@ -14,14 +14,16 @@ public class RyftRequestParameters {
     private final RyftProperties ryftProperties;
     private final RyftQuery query;
     private final String[] indices;
+    private final String agg;
 
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
-            @Assisted RyftQuery ryftQuery, @Assisted String[] indices) {
+            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted String agg) {
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = ryftQuery;
         this.indices = indices;
+        this.agg = agg;
     }
 
     public RyftQuery getQuery() {
@@ -43,6 +45,10 @@ public class RyftRequestParameters {
         } else return ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
                 && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.RAW)
                 || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
+    }
+
+    public String getAgg() {
+        return agg;
     }
 
     @Override

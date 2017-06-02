@@ -24,8 +24,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query);
+            @Assisted RyftQuery query, @Assisted String agg) throws ElasticConversionCriticalException {
+        super(clusterService, ryftProperties, query, agg);
     }
 
     public URI getRyftSearchURL() throws ElasticConversionCriticalException {

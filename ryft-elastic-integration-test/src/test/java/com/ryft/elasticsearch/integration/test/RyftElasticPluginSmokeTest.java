@@ -96,7 +96,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     @AfterClass
     public static void afterClass() {
         logger.info("Deleting created indices");
-        getClient().admin().indices().prepareDelete(INDEX_NAME).get();
+//        getClient().admin().indices().prepareDelete(INDEX_NAME).get();
     }
 
     /**

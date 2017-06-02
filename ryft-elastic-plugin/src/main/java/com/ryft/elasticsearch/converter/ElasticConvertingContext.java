@@ -46,6 +46,7 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
+    private String agg = "";
 
     @Inject
     public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
@@ -157,5 +158,12 @@ public class ElasticConvertingContext {
     public void setIndices(String[] indices) {
         this.indices = indices;
     }
-    
+
+    public String getAgg() {
+        return agg;
+    }
+
+    public void setAgg(String agg) {
+        this.agg = agg;
+    }
 }

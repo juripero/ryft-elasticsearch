@@ -62,6 +62,8 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterFormat.NAME).to(ElasticConverterFormat.class);
         convertersBinder.addBinding(ElasticConverterCaseSensitive.NAME).to(ElasticConverterCaseSensitive.class);
 
+        convertersBinder.addBinding(ElasticConverterAgg.NAME).to(ElasticConverterAgg.class);
+
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
 
         bind(RyftRequestParametersFactory.class).toProvider(

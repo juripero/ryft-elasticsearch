@@ -12,6 +12,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 public interface IndexSearchRequestEventFactory {
 
     public IndexSearchRequestEvent create(RyftProperties ryftProperties, 
-            RyftQuery ryftQuery, List<ShardRouting> shards);
+            RyftQuery ryftQuery, List<ShardRouting> shards, String agg);
 
 }

@@ -5,8 +5,10 @@ import com.ryft.elasticsearch.converter.ElasticConverterRyft;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.inject.Inject;
@@ -20,14 +22,18 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected final String query;
 
+    protected final String agg;
+
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
-            @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query) throws ElasticConversionCriticalException {
+                                 @Assisted RyftProperties ryftProperties,
+                                 @Assisted RyftQuery query,
+                                 @Assisted String agg) throws ElasticConversionCriticalException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
+        this.agg = agg;
         try {
             this.query = URLEncoder.encode(query.buildRyftString(), "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -52,5 +58,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected Boolean getCaseSensitive() {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
+    }
+
+    public String getAgg() {
+        return agg;
     }
 }

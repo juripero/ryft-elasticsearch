@@ -3,6 +3,7 @@ package com.ryft.elasticsearch.rest.processors;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -23,14 +24,8 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import java.net.URI;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,7 +36,9 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchShardTarget;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.*;
+import org.elasticsearch.search.aggregations.bucket.histogram.*;
+import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
@@ -73,6 +70,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private SearchResponse executeRequest(RequestEvent event)
             throws ElasticConversionCriticalException, InterruptedException {
+        LOGGER.info("Got AGG!!");
         if (event instanceof IndexSearchRequestEvent) {
             return executeRequest((IndexSearchRequestEvent) event);
         }
@@ -99,7 +97,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         Long start = System.currentTimeMillis();
         Map<SearchShardTarget, RyftResponse> resultResponses = sendToRyft(requestEvent);
         Long searchTime = System.currentTimeMillis() - start;
-        return constructSearchResponse(resultResponses, searchTime);
+        return constructSearchResponse(requestEvent, resultResponses, searchTime);
     }
 
     private Map<SearchShardTarget, RyftResponse> sendToRyft(
@@ -207,7 +205,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             });
             if (shardsToSearch.isEmpty()) {
                 LOGGER.info("No more replicas to search");
-                return constructSearchResponse(ryftResponses, searchTime);
+                return constructSearchResponse(requestEvent, ryftResponses, searchTime);
             } else {
                 LOGGER.info("Retry search requests to replica");
                 Long start = System.currentTimeMillis();
@@ -217,11 +215,11 @@ public class SearchRequestProcessor extends RyftProcessor {
                 return getSearchResponse(requestEvent, shardsToSearch, resultResponses, searchTime);
             }
         } else {
-            return constructSearchResponse(ryftResponses, searchTime);
+            return constructSearchResponse(requestEvent, ryftResponses, searchTime);
         }
     }
 
-    private SearchResponse constructSearchResponse(Map<SearchShardTarget, RyftResponse> resultResponses, Long tookInMillis) {
+    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long tookInMillis) {
         List<InternalSearchHit> searchHits = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
@@ -257,11 +255,36 @@ public class SearchRequestProcessor extends RyftProcessor {
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 totalHits == 0 ? searchHits.size() : totalHits, Float.NEGATIVE_INFINITY);
 
-        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
-                null, null, false, false);
+        if (requestEvent.getAgg().isEmpty()) {
+            InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
+                    null, null, false, false);
 
-        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
-                failures.toArray(new ShardSearchFailure[failures.size()]));
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+                    failures.toArray(new ShardSearchFailure[failures.size()]));
+        } else {
+            List<InternalAggregation> aggregations = new ArrayList<>();
+            InternalHistogram.Bucket bucket1 = new RyftHistogramFactory().createBucket(1388527200000L, 6, InternalAggregations.EMPTY, false, new ValueFormatter.DateTime("yyyy-MM-dd HH:mm:ss"));
+            InternalHistogram.Bucket bucket2 = new RyftHistogramFactory().createBucket(1475269200000L, 1, InternalAggregations.EMPTY, false, new ValueFormatter.DateTime("yyyy-MM-dd HH:mm:ss"));
+
+            List<Histogram.Bucket> buckets = new ArrayList<>();
+            buckets.add(bucket1);
+            buckets.add(bucket2);
+
+            InternalHistogram histogram = new RyftHistogramFactory().create("2", buckets, null, 0L,
+                    null,
+                    ValueFormatter.RAW,
+                    false,
+                    Collections.emptyList(),
+                    null);
+
+            aggregations.add(histogram);
+            InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, new InternalAggregations(aggregations),
+                    null, null, false, false);
+
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+                    failures.toArray(new ShardSearchFailure[failures.size()]));
+        }
+
     }
 
     private SearchShardTarget getSearchShardTarget(ShardRouting shardRouting) {
@@ -286,6 +309,13 @@ public class SearchRequestProcessor extends RyftProcessor {
             searchHit.sourceRef(new BytesArray(hit.toString()));
         }
         return searchHit;
+    }
+
+    public static class RyftHistogramFactory extends InternalHistogram.Factory {
+
+        public RyftHistogramFactory() {
+            super();
+        }
     }
 
     @Override

@@ -6,6 +6,6 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 public interface FileSearchRequestEventFactory {
 
     public FileSearchRequestEvent create(RyftProperties ryftProperties, 
-            RyftQuery ryftQuery);
+            RyftQuery ryftQuery, String agg);
 
 }

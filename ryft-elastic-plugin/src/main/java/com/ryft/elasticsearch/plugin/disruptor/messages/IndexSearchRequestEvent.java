@@ -29,8 +29,8 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query);
+            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, @Assisted String agg) throws ElasticConversionCriticalException {
+        super(clusterService, ryftProperties, query, agg);
         this.settings = settings;
         this.shards = shards;
     }

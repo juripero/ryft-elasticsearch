@@ -100,7 +100,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private RyftRequestParameters getRyftRequestParameters(ElasticConvertingContext convertingContext, RyftQuery ryftQuery) {
-        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices());
+        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getAgg());
         result.getRyftProperties().putAll(convertingContext.getQueryProperties());
         return result;
     }
