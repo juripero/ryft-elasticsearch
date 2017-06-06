@@ -2,6 +2,7 @@ package com.ryft.elasticsearch.rest.processors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import io.netty.channel.ChannelFuture;
@@ -70,7 +71,6 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private SearchResponse executeRequest(RequestEvent event)
             throws ElasticConversionCriticalException, InterruptedException {
-        LOGGER.info("Got AGG!!");
         if (event instanceof IndexSearchRequestEvent) {
             return executeRequest((IndexSearchRequestEvent) event);
         }
@@ -255,7 +255,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 totalHits == 0 ? searchHits.size() : totalHits, Float.NEGATIVE_INFINITY);
 
-        if (requestEvent.getAgg().isEmpty()) {
+        if (requestEvent.getAgg().getAggregationType() == AggregationParameters.AggregationType.NONE) {
             InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
                     null, null, false, false);
 

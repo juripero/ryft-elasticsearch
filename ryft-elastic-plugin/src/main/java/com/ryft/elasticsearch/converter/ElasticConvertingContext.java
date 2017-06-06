@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.converter;
 
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
@@ -46,7 +47,7 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
-    private String agg = "";
+    private AggregationParameters agg = new AggregationParameters(AggregationParameters.AggregationType.NONE);
 
     @Inject
     public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
@@ -159,11 +160,11 @@ public class ElasticConvertingContext {
         this.indices = indices;
     }
 
-    public String getAgg() {
+    public AggregationParameters getAgg() {
         return agg;
     }
 
-    public void setAgg(String agg) {
+    public void setAgg(AggregationParameters agg) {
         this.agg = agg;
     }
 }

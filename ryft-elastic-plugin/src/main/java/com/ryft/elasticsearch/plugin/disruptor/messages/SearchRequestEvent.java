@@ -2,6 +2,7 @@ package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.converter.ElasticConverterRyft;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -22,13 +23,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected final String query;
 
-    protected final String agg;
+    protected final AggregationParameters agg;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
                                  @Assisted RyftProperties ryftProperties,
                                  @Assisted RyftQuery query,
-                                 @Assisted String agg) throws ElasticConversionCriticalException {
+                                 @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
@@ -60,7 +61,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
-    public String getAgg() {
+    public AggregationParameters getAgg() {
         return agg;
     }
 }

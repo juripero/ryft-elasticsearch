@@ -2,6 +2,7 @@ package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import static com.ryft.elasticsearch.plugin.disruptor.messages.EventType.FILE_SEARCH_REQUEST;
 import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -24,7 +25,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted String agg) throws ElasticConversionCriticalException {
+            @Assisted RyftQuery query, @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
         super(clusterService, ryftProperties, query, agg);
     }
 
