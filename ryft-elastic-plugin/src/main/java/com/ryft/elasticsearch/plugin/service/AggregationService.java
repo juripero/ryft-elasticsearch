@@ -36,9 +36,9 @@ public class AggregationService {
         AggregationBuilder aggregation = AggregationBuilders
                 .dateHistogram("2")
                 .field(aggregationParameters.getField())
-                .interval(DateHistogramInterval.MONTH)
+                .interval(new DateHistogramInterval(aggregationParameters.getInterval()))
                 .timeZone(aggregationParameters.getTimeZone())
-                .minDocCount(0L)
+                .minDocCount(aggregationParameters.getMinDocCount())
                 .extendedBounds(aggregationParameters.getMinBound(), aggregationParameters.getMaxBound());
 
         SearchResponse searchResponse = client
