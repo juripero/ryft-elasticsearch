@@ -31,7 +31,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
@@ -59,6 +58,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     @Override
     public void process(RequestEvent event) {
+        LOGGER.info("Processing event: {}", event);
         executor.submit(() -> {
             try {
                 event.getCallback().onResponse(executeRequest(event));
@@ -144,7 +144,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private Optional<ChannelFuture> sendToRyft(IndexSearchRequestEvent requestEvent,
             List<ShardRouting> shards, CountDownLatch countDownLatch) {
-        ShardRouting shard = shards.stream().findFirst().get();
+        ShardRouting shard = shards.stream().findAny().get();
         shards.remove(shard);
         if (shard != null) {
             URI uri;
@@ -154,6 +154,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 if (maybeRyftResponse.isPresent()) {
                     return maybeRyftResponse;
                 } else {
+                    LOGGER.info("Attempt to search on other shard.");
                     return sendToRyft(requestEvent, shards, countDownLatch);
                 }
             } catch (ElasticConversionCriticalException ex) {
@@ -179,7 +180,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
             }
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
-            LOGGER.info("Send request: {}", request);
+            LOGGER.debug("Send request: {}", request);
             return ryftChannel.writeAndFlush(request);
         });
     }
@@ -204,10 +205,10 @@ public class SearchRequestProcessor extends RyftProcessor {
                 }
             });
             if (shardsToSearch.isEmpty()) {
-                LOGGER.info("No more replicas to search");
+                LOGGER.info("No more replicas to search. Search time: {}", searchTime);
                 return constructSearchResponse(requestEvent, ryftResponses, searchTime);
             } else {
-                LOGGER.info("Retry search requests to replica");
+                LOGGER.info("Retry search requests to error shards.");
                 Long start = System.currentTimeMillis();
                 Map<SearchShardTarget, RyftResponse> result = sendToRyft(requestEvent, shardsToSearch);
                 searchTime += System.currentTimeMillis() - start;
@@ -215,16 +216,16 @@ public class SearchRequestProcessor extends RyftProcessor {
                 return getSearchResponse(requestEvent, shardsToSearch, resultResponses, searchTime);
             }
         } else {
+            LOGGER.info("Search successful. Search time: {}", searchTime);
             return constructSearchResponse(requestEvent, ryftResponses, searchTime);
         }
     }
 
-    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long tookInMillis) throws ElasticConversionCriticalException {
+    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws ElasticConversionCriticalException {
         List<InternalSearchHit> searchHits = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
-        Long totalHits = 0L;
         for (Entry<SearchShardTarget, RyftResponse> entry : resultResponses.entrySet()) {
             totalShards += 1;
             RyftResponse ryftResponse = entry.getValue();
@@ -243,17 +244,15 @@ public class SearchRequestProcessor extends RyftProcessor {
                 }
             }
             if (ryftResponse.hasResults()) {
-                IntStream.range(0, ryftResponse.getResults().size()).mapToObj(index
-                        -> processSearchResult(ryftResponse.getResults().get(index), searchShardTarget, index)
+                ryftResponse.getResults().stream().map(result
+                        -> processSearchResult(result, searchShardTarget)
                 ).collect(Collectors.toCollection(() -> searchHits));
             }
-            if ((ryftResponse.getStats() != null) && (ryftResponse.getStats().getMatches() != null)) {
-                totalHits += ryftResponse.getStats().getMatches();
-            }
         }
+        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHits.size(), failures.size());
         InternalSearchHits hits = new InternalSearchHits(
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
-                totalHits == 0 ? searchHits.size() : totalHits, Float.NEGATIVE_INFINITY);
+                searchHits.size(), Float.NEGATIVE_INFINITY);
 
         if (requestEvent.getAgg().getAggregationType() == AggregationParameters.AggregationType.NONE) {
             InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
@@ -281,22 +280,31 @@ public class SearchRequestProcessor extends RyftProcessor {
         return new SearchShardTarget(shardRouting.currentNodeId(), shardRouting.index(), shardRouting.getId());
     }
 
-    private InternalSearchHit processSearchResult(ObjectNode hit, SearchShardTarget searchShardTarget, Integer defaultId) {
-        String uid = hit.has("_uid") ? hit.get("_uid").asText() : String.valueOf(defaultId);
-        String type = hit.has("type") ? hit.get("type").asText() : "";
+    private InternalSearchHit processSearchResult(ObjectNode hit, SearchShardTarget searchShardTarget) {
+        LOGGER.debug("Processing search result: {}", hit);
+        InternalSearchHit searchHit;
+        try {
+            String uid = hit.has("_uid") ? hit.get("_uid").asText() : String.valueOf(hit.hashCode());
+            String type = hit.has("type") ? hit.get("type").asText() : "";
 
-        InternalSearchHit searchHit = new InternalSearchHit(0, uid, new Text(type),
-                ImmutableMap.of());
-        searchHit.shardTarget(searchShardTarget);
+            searchHit = new InternalSearchHit(0, uid, new Text(type),
+                    ImmutableMap.of());
+            searchHit.shardTarget(searchShardTarget);
 
-        String error = hit.has("error") ? hit.get("error").asText() : "";
-        if (!error.isEmpty()) {
-            searchHit.sourceRef(new BytesArray("{\"error\": \"" + error + "\"}"));
-        } else {
-            hit.remove("_index");
-            hit.remove("_uid");
-            hit.remove("type");
-            searchHit.sourceRef(new BytesArray(hit.toString()));
+            String error = hit.has("error") ? hit.get("error").asText() : "";
+            if (!error.isEmpty()) {
+                searchHit.sourceRef(new BytesArray("{\"error\": \"" + error + "\"}"));
+            } else {
+                hit.remove("_index");
+                hit.remove("_uid");
+                hit.remove("type");
+                searchHit.sourceRef(new BytesArray(hit.toString()));
+            }
+            return searchHit;
+        } catch (Exception ex){
+            LOGGER.error("Search result processing error.", ex);
+            searchHit = new InternalSearchHit(0, "", new Text(""), ImmutableMap.of());
+            searchHit.sourceRef(new BytesArray("{\"error\": \"" + ex.toString() + "\"}"));
         }
         return searchHit;
     }

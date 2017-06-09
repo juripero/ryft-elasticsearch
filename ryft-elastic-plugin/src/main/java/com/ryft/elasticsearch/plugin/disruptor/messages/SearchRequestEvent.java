@@ -22,6 +22,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final RyftProperties ryftProperties;
 
     protected final String query;
+    protected final String encodedQuery;
 
     protected final AggregationParameters agg;
 
@@ -34,9 +35,10 @@ public abstract class SearchRequestEvent extends RequestEvent {
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
+        this.query = query.buildRyftString();
         this.agg = agg;
         try {
-            this.query = URLEncoder.encode(query.buildRyftString(), "UTF-8");
+            this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
             throw new ElasticConversionCriticalException(ex);
         }

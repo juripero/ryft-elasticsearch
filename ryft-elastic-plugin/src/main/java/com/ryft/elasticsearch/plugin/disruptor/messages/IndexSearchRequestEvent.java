@@ -41,7 +41,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
             validateRequest();
             URI result = new URI("http://"
                     + getHost(shardRouting) + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
-                    + "/search?query=" + query
+                    + "/search?query=" + encodedQuery
                     + "&file=" + getFilenames(shardRouting).stream().collect(Collectors.joining("&file="))
                     + "&local=true"
                     + "&stats=true"
@@ -78,7 +78,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Override
     public String toString() {
-        return "RyftClusterRequestEvent{query=" + query + ", shards=" + shards + '}';
+        return "IndexSearchRequestEvent{query=" + query + ", index=" + shards.get(0).getIndex() + ", shards=" + shards.size() + '}';
     }
 
 }
