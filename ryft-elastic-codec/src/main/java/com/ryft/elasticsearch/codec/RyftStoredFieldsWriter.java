@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsWriter;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
@@ -15,6 +16,7 @@ import org.apache.lucene.index.MergeState;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
+import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.TrackingDirectoryWrapper;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
@@ -26,7 +28,7 @@ import org.apache.lucene.util.IOUtils;
 public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     Logger log = Logger.getLogger(RyftStoredFieldsWriter.class.getName());
     public final static String FIELDS_EXTENSION = "jsonfld";
-    private OutputStreamWriter out;
+    private IndexOutput out;
     StoredFieldsWriter writer;
 
     public RyftStoredFieldsWriter(StoredFieldsWriter delegate, Directory directory, SegmentInfo segment,
@@ -44,7 +46,8 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
             int end = dir.indexOf(")");
             String dirname = dir.substring(start, end);
             String fileName = segmentFileName(segment.name, "",  indexName + FIELDS_EXTENSION);
-            out = new OutputStreamWriter(new FileOutputStream(dirname + "/" + fileName, true));
+//            out = new OutputStreamWriter(new FileOutputStream(dirname + "/" + fileName, true));
+            out = directory.createOutput(IndexFileNames.segmentFileName(segment.name, "", indexName + FIELDS_EXTENSION), context);
             // Hooking directory to manage(delete when needed) our file too
             dirWrapper.getCreatedFiles().add(fileName);
             success = true;
@@ -125,6 +128,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public void finish(FieldInfos fis, int numDocs) throws IOException {
         writer.finish(fis, numDocs);
+        CodecUtil.writeFooter(out);
     }
 
     @Override
@@ -140,7 +144,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     }
 
     private void write(String s) throws IOException {
-        out.write(s);
+        out.writeBytes(s.getBytes(), s.length());
     }
     public static String segmentFileName(String segmentName, String segmentSuffix, String ext) {
         if (ext.length() > 0 || segmentSuffix.length() > 0) {

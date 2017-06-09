@@ -69,7 +69,7 @@ public class RyftResponse {
     }
 
     public Boolean hasErrors() {
-        return !((message == null) || (message.isEmpty())) || !((errors == null) || (errors.length > 0));
+        return !((message == null) || (message.isEmpty())) || !((errors == null) || (errors.length == 0));
     }
 
     public Boolean hasResults() {
@@ -116,7 +116,21 @@ public class RyftResponse {
 
     @Override
     public String toString() {
-        return "RyftResponse [results=" + results + ", stats=" + stats + "]";
+        StringBuilder sb = new StringBuilder("RyftResponse{ ");
+        if ((results != null) && (!results.isEmpty())) {
+            sb.append(" results=").append(results.size());
+        }
+        if (stats != null) {
+            sb.append(" stats=").append(stats);
+        }
+        if ((errors != null) && (errors.length > 0)) {
+            sb.append(" errors=").append(errors.length);
+        }
+        if ((message != null) && (!message.isEmpty())) {
+            sb.append(" message=").append(message);
+        }
+        sb.append(" }");
+        return sb.toString();
     }
 
 }
