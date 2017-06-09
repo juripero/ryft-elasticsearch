@@ -258,7 +258,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
                     null, null, false, false);
 
-            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                     failures.toArray(new ShardSearchFailure[failures.size()]));
         } else {
             InternalSearchResponse internalSearchResponse;
@@ -270,7 +270,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 throw new ElasticConversionCriticalException("Cannot apply aggregation", e);
             }
 
-            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, tookInMillis,
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                     failures.toArray(new ShardSearchFailure[failures.size()]));
         }
 
