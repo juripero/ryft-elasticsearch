@@ -69,6 +69,8 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggMinDoc.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggMinDoc.class);
         convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggBounds.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggBounds.class);
 
+        convertersBinder.addBinding(ElasticConverterFiltered.NAME).to(ElasticConverterFiltered.class);
+
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
 
         bind(RyftRequestParametersFactory.class).toProvider(

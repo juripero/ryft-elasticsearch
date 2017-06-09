@@ -30,6 +30,9 @@ public class AggregationService {
     public static InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
                                                         AggregationParameters aggregationParameters)
             throws UnknownHostException, ElasticConversionCriticalException {
+        if (internalSearchHits.getTotalHits() == 0) {
+            return InternalAggregations.EMPTY;
+        }
         prepareTempIndex(internalSearchHits, aggregationParameters);
 
         // Only date_histogram aggregation is currently supported

@@ -31,7 +31,15 @@ public class ElasticConverterShared {
         @Override
         public String convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            return ElasticConversionUtil.getString(convertingContext);
+            String format = ElasticConversionUtil.getString(convertingContext);
+
+            if (format.equals("epoch_millis")) {
+                // Epoch millis in requests is sent mainly by Kibana for timeseries datasets
+                // We have to explicitly set data type here because we cannot force Kibana to specify it
+                convertingContext.setDataType(ElasticConvertingContext.ElasticDataType.DATETIME);
+            }
+
+            return format;
         }
     }
 

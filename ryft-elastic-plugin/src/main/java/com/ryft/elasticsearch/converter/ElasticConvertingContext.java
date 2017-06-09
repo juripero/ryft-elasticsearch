@@ -48,6 +48,7 @@ public class ElasticConvertingContext {
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
     private AggregationParameters agg = new AggregationParameters(AggregationParameters.AggregationType.NONE);
+    private Boolean filtered = false;
 
     @Inject
     public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
@@ -166,5 +167,13 @@ public class ElasticConvertingContext {
 
     public void setAgg(AggregationParameters agg) {
         this.agg = agg;
+    }
+
+    public Boolean getFiltered() {
+        return filtered;
+    }
+
+    public void setFiltered(Boolean filtered) {
+        this.filtered = filtered;
     }
 }
