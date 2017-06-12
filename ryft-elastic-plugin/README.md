@@ -683,6 +683,57 @@ Resulting RYFT query:
 (RECORD.ip_addr CONTAINS IPV6("2001::db8" <= IP < "2001::db9"))
 ```
 
+
+### Filter queries
+
+Filter queries can be used to further limit the results that are returned from a search query. Functionally, they work
+as an extra set of AND queries.
+
+Filter queries are also required for the proper work of timeseries datasets in Kibana.
+
+Query:
+```json
+{"query": {
+    "filtered": {
+      "query": {
+        "query": {
+          "term": {
+            "registered": {
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "type": "datetime",
+              "value": "2014-01-01 07:00:00"
+            }
+          }
+        },
+        "ryft_enabled": true
+      },
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "registered": {
+                  "gte": 1338646255122,
+                  "lte": 1496412655122,
+                  "format": "epoch_millis"
+                }
+              }
+            }
+          ],
+          "must_not": []
+        }
+      }
+    }
+  }}
+```
+
+Resulting RYFT query:
+```
+((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 17:10:55))) OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 17:10:55)))) AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))
+```
+
+
+
 ### Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
