@@ -709,6 +709,54 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
+    @Test
+    public void testFilters() throws InterruptedException, ExecutionException {
+        QueryBuilder builder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchPhraseQuery("ipv6", "21DA:D3:0:2F3B:2AA:FF:FE28:9C5A"))
+                .must(QueryBuilders.rangeQuery("registered").format("epoch_millis").from(1339168100654L).to(1496934500654L));
+        logger.info("Testing query: {}", builder.toString());
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
+        logger.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+
+        String ryftQuery = "{\n" +
+                "  \"query\": {\n" +
+                "    \"filtered\": {\n" +
+                "      \"query\": {\n" +
+                "        \"query\": {\n" +
+                "          \"term\": {\n" +
+                "            \"ipv6\": {\n" +
+                "              \"type\": \"ipv6\",\n" +
+                "              \"value\": \"21DA:D3:0:2F3B:2AA:FF:FE28:9C5A\"\n" +
+                "            }\n" +
+                "          }\n" +
+                "        },\n" +
+                "        \"ryft_enabled\": true\n" +
+                "      },\n" +
+                "      \"filter\": {\n" +
+                "        \"bool\": {\n" +
+                "          \"must\": [\n" +
+                "            {\n" +
+                "              \"range\": {\n" +
+                "                \"registered\": {\n" +
+                "                  \"gte\": 1339168100654,\n" +
+                "                  \"lte\": 1496934500654,\n" +
+                "                  \"format\": \"epoch_millis\"\n" +
+                "                }\n" +
+                "              }\n" +
+                "            }\n" +
+                "          ],\n" +
+                "          \"must_not\": []\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
+        logger.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
     public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
         String elasticQuery = "{\"query\":{" + "\"match_phrase\": { " + "\"doc.text_entry\": {"
                 + "\"query\":\"To be, or not to be\"," + "\"metric\": \"Fhs\"," + "\"fuzziness\": 5" + "}" + "}" + "}}";
