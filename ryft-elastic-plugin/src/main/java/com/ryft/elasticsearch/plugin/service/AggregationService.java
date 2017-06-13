@@ -2,11 +2,13 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.converter.entities.AggregationParameters;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
@@ -17,8 +19,10 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.LinkedHashMap;
 
 public class AggregationService {
 
@@ -71,10 +75,29 @@ public class AggregationService {
                 .build();
         client.admin().indices().prepareCreate(INDEX_NAME).setSettings(settings).get();
 
+        String index = internalSearchHits.getAt(0).getIndex();
+        GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
+
+        String format;
+
+        try {
+            MappingMetaData properties = mappingsResponse
+                    .getMappings()
+                    .get(index)
+                    .get("data");
+            LinkedHashMap<String, LinkedHashMap<String, String>> propertiesMap = (LinkedHashMap<String, LinkedHashMap<String, String>>) properties.getSourceAsMap().get("properties");
+            LinkedHashMap<String, String> fieldMap = propertiesMap.get(aggregationParameters.getField());
+
+            format = fieldMap.get("format");
+        } catch (Exception e) {
+            LOGGER.error("Could not get index mapping, falling back to default date mapping");
+            format = "yyyy-MM-dd HH:mm:ss";
+        }
+
         client.admin().indices().preparePutMapping(INDEX_NAME).setType("agg").setSource("{\n" +
                 "    \"agg\" : {\n" +
                 "        \"properties\" : {\n" +
-                "            \"" + aggregationParameters.getField() + "\" : {\"type\" : \"date\", \"format\" : \"yyyy-MM-dd HH:mm:ss\"}\n" +
+                "            \"" + aggregationParameters.getField() + "\" : {\"type\" : \"date\", \"format\" : \"" + format + "\"}\n" +
                 "        }\n" +
                 "    }\n" +
                 "}").get();
