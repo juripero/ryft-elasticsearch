@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Contains parsed query parameters that are required to create a ryft query, for cases where the
  * {@link ElasticConvertingContext.ElasticSearchType} is "term"
- * Used by {@link com.ryft.elasticsearch.plugin.elastic.converter.ryftdsl.RyftQueryFactory}
+ * Used by {@link com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory}
  */
 public class TermQueryParameters extends QueryParameters<String> {
 

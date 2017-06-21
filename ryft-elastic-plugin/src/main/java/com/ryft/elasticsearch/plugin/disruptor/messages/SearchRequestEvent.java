@@ -2,11 +2,14 @@ package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.converter.ElasticConverterRyft;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.inject.Inject;
@@ -21,15 +24,19 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final String query;
     protected final String encodedQuery;
 
+    protected final AggregationParameters agg;
+
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
-            @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query) throws ElasticConversionCriticalException {
+                                 @Assisted RyftProperties ryftProperties,
+                                 @Assisted RyftQuery query,
+                                 @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = query.buildRyftString();
+        this.agg = agg;
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -54,5 +61,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected Boolean getCaseSensitive() {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
+    }
+
+    public AggregationParameters getAgg() {
+        return agg;
     }
 }

@@ -4,6 +4,6 @@ import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 
 public interface RyftRequestParametersFactory {
     
-    public RyftRequestParameters create(RyftQuery ryftQuery, String[] indices);
+    public RyftRequestParameters create(RyftQuery ryftQuery, String[] indices, AggregationParameters agg);
 
 }

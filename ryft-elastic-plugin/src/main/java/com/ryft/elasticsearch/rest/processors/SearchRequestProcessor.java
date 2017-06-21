@@ -2,7 +2,10 @@ package com.ryft.elasticsearch.rest.processors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
+import com.ryft.elasticsearch.plugin.service.AggregationService;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -23,14 +26,9 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import java.net.URI;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.UnknownHostException;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,7 +38,7 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchShardTarget;
-import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
@@ -99,7 +97,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         Long start = System.currentTimeMillis();
         Map<SearchShardTarget, RyftResponse> resultResponses = sendToRyft(requestEvent);
         Long searchTime = System.currentTimeMillis() - start;
-        return constructSearchResponse(resultResponses, searchTime);
+        return constructSearchResponse(requestEvent, resultResponses, searchTime);
     }
 
     private Map<SearchShardTarget, RyftResponse> sendToRyft(
@@ -189,7 +187,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
             Map<Integer, List<ShardRouting>> groupedShards,
-            Map<SearchShardTarget, RyftResponse> ryftResponses, Long searchTime) throws InterruptedException {
+            Map<SearchShardTarget, RyftResponse> ryftResponses, Long searchTime) throws InterruptedException, ElasticConversionCriticalException {
         Map<SearchShardTarget, RyftResponse> errorResponses = ryftResponses.entrySet().stream()
                 .filter(entry -> entry.getValue().hasErrors())
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
@@ -208,7 +206,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             });
             if (shardsToSearch.isEmpty()) {
                 LOGGER.info("No more replicas to search. Search time: {}", searchTime);
-                return constructSearchResponse(ryftResponses, searchTime);
+                return constructSearchResponse(requestEvent, ryftResponses, searchTime);
             } else {
                 LOGGER.info("Retry search requests to error shards.");
                 Long start = System.currentTimeMillis();
@@ -219,11 +217,11 @@ public class SearchRequestProcessor extends RyftProcessor {
             }
         } else {
             LOGGER.info("Search successful. Search time: {}", searchTime);
-            return constructSearchResponse(ryftResponses, searchTime);
+            return constructSearchResponse(requestEvent, ryftResponses, searchTime);
         }
     }
 
-    private SearchResponse constructSearchResponse(Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) {
+    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws ElasticConversionCriticalException {
         List<InternalSearchHit> searchHits = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
@@ -256,11 +254,26 @@ public class SearchRequestProcessor extends RyftProcessor {
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 searchHits.size(), Float.NEGATIVE_INFINITY);
 
-        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
-                null, null, false, false);
+        if (requestEvent.getAgg().getAggregationType() == AggregationParameters.AggregationType.NONE) {
+            InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
+                    null, null, false, false);
 
-        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
-                failures.toArray(new ShardSearchFailure[failures.size()]));
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
+                    failures.toArray(new ShardSearchFailure[failures.size()]));
+        } else {
+            InternalSearchResponse internalSearchResponse;
+            try {
+                InternalAggregations aggregations = AggregationService.applyAggregation(hits, requestEvent.getAgg());
+                internalSearchResponse = new InternalSearchResponse(hits, aggregations,
+                        null, null, false, false);
+            } catch (UnknownHostException e) {
+                throw new ElasticConversionCriticalException("Cannot apply aggregation", e);
+            }
+
+            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
+                    failures.toArray(new ShardSearchFailure[failures.size()]));
+        }
+
     }
 
     private SearchShardTarget getSearchShardTarget(ShardRouting shardRouting) {

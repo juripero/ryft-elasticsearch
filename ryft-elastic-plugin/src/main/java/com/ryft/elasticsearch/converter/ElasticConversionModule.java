@@ -62,6 +62,15 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterFormat.NAME).to(ElasticConverterFormat.class);
         convertersBinder.addBinding(ElasticConverterCaseSensitive.NAME).to(ElasticConverterCaseSensitive.class);
 
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.NAME).to(ElasticConverterAggDateHistogram.class);
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggField.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggField.class);
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggInterval.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggInterval.class);
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggTimeZone.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggTimeZone.class);
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggMinDoc.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggMinDoc.class);
+        convertersBinder.addBinding(ElasticConverterAggDateHistogram.ElasticConverterAggBounds.NAME).to(ElasticConverterAggDateHistogram.ElasticConverterAggBounds.class);
+
+        convertersBinder.addBinding(ElasticConverterFiltered.NAME).to(ElasticConverterFiltered.class);
+
         convertersBinder.addBinding(ElasticConverterUnknown.NAME).to(ElasticConverterUnknown.class);
 
         bind(RyftRequestParametersFactory.class).toProvider(

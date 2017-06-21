@@ -140,6 +140,16 @@ public abstract class ElasticConversionUtil {
         }
     }
 
+    static Long getLong(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        String value = getString(convertingContext);
+        try {
+            return Long.parseLong(value);
+        } catch (RuntimeException ex) {
+            throw new ElasticConversionException(
+                    String.format("Can not parse value \"%s\" as Integer.", value), ex);
+        }
+    }
+
     static Boolean getBoolean(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         String value = getString(convertingContext);
         try {

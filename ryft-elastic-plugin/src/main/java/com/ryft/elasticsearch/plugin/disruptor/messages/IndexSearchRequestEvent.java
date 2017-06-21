@@ -1,6 +1,7 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
+import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -29,8 +30,8 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query);
+            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
+        super(clusterService, ryftProperties, query, agg);
         this.settings = settings;
         this.shards = shards;
     }
