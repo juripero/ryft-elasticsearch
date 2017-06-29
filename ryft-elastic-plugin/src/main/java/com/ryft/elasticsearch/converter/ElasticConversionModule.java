@@ -27,6 +27,7 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterMatch.NAME).to(ElasticConverterMatch.class);
         convertersBinder.addBinding(ElasticConverterMatchPhrase.NAME).to(ElasticConverterMatchPhrase.class);
         convertersBinder.addBinding(ElasticConverterWildcard.NAME).to(ElasticConverterWildcard.class);
+        convertersBinder.addBinding(ElasticConverterRegex.NAME).to(ElasticConverterRegex.class);
         convertersBinder.addBinding(ElasticConverterTerm.NAME).to(ElasticConverterTerm.class);
         convertersBinder.addBinding(ElasticConverterRangeField.NAME).to(ElasticConverterRangeField.class);
         convertersBinder.addBinding(ElasticConverterField.NAME).to(ElasticConverterField.class);

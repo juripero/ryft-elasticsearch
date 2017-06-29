@@ -1062,4 +1062,27 @@ public class ElasticConverterTest {
                         "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
                 ryftRequest.getQuery().buildRyftString());
     }
+
+    @Test
+    public void RegexSearchTest() throws Exception {
+        String query = "{\n"
+                + "  \"query\": {\n"
+                + "    \"regexp\": {\n"
+                + "      \"_all\": {\n"
+                + "        \"value\": \"W[0-9].+\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft\": {\n"
+                + "    \"enabled\": true,\n"
+                + "    \"files\": [\"shakespear.txt\"],\n"
+                + "    \"format\": \"utf8\"\n"
+                + "  }\n"
+                + "}\n";
+        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
+        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
+        assertNotNull(ryftRequest);
+        assertEquals("(RAW_TEXT CONTAINS PCRE2(\"W[0-9].+\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
 }

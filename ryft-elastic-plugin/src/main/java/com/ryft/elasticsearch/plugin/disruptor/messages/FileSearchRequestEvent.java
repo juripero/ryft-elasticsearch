@@ -30,13 +30,22 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     }
 
     public URI getRyftSearchURL() throws ElasticConversionCriticalException {
+        int clusterSize = clusterState.getNodes().dataNodes().size();
+
+        String local;
+        if (clusterSize > 1) {
+            local = "false";
+        } else {
+            local = "true";
+        }
+
         validateRequest();
         try {
             URI result = new URI("http://"
                     + getHost() + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
                     + "/search?query=" + encodedQuery
                     + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
-                    + "&local=false"
+                    + "&local=" + local
                     + "&stats=true"
                     + "&cs=" + getCaseSensitive()
                     + "&format=" + getFormat().name().toLowerCase()

@@ -69,6 +69,13 @@ public class RyftQueryFactory {
                         fuzzyQueryParameters.getRyftOperator(),
                         fuzzyQueryParameters.getWidth(),
                         fuzzyQueryParameters.getLine());
+            case REGEX:
+                return buildQueryRegex(
+                        fuzzyQueryParameters.getSearchValue(),
+                        fuzzyQueryParameters.getFieldName(),
+                        fuzzyQueryParameters.getRyftOperator(),
+                        fuzzyQueryParameters.getWidth(),
+                        fuzzyQueryParameters.getLine());
             default:
                 throw new ElasticConversionException("Unknown search type");
         }
@@ -248,6 +255,24 @@ public class RyftQueryFactory {
                                          Integer width, Boolean line) {
         String searchTextFormatted = searchText.replace("?", "\"?\"");
         RyftExpression ryftExpression = new RyftExpressionExactSearch(searchTextFormatted);
+        return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
+                ryftOperator, ryftExpression);
+    }
+
+    private RyftQuery buildQueryRegex(String searchText, String fieldName, RyftOperator ryftOperator,
+                                      Integer width, Boolean line) {
+        searchText = "\"" + searchText + "\"";
+
+        RyftExpression ryftExpression;
+
+        if (line != null) {
+            ryftExpression = new RyftExpressionRegex(searchText, line);
+        } else if (width != null) {
+            ryftExpression = new RyftExpressionRegex(searchText, width);
+        } else {
+            ryftExpression = new RyftExpressionRegex(searchText);
+        }
+
         return new RyftQuerySimple(new RyftInputSpecifierRecord(fieldName),
                 ryftOperator, ryftExpression);
     }

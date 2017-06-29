@@ -373,6 +373,41 @@ Resulting RYFT query:
 (RECORD.postcode CONTAINS ""?"Z99 "??"Z")
 ```
 
+
+### Regex queries
+Regex within query should be pcre2-compliant.
+
+The pcre2 primitive is supported for RAW_TEXT only.  No RECORD based queries are supported at this time.
+
+Full form:
+```json
+{
+  "query": {
+    "regexp": {
+      "postcode": {
+        "value": "W[0-9].+"
+      }
+    }
+  }
+}
+```
+
+Simplified form:
+```json
+{
+  "query": {
+    "regexp": {
+      "postcode": "W[0-9].+"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.postcode CONTAINS PCRE2("W[0-9].+"))
+```
+
 ### Date-Time queries
 Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
 

@@ -121,7 +121,7 @@ public class RyftDslExpressionTest {
     public void TestExpressionRegex() throws ElasticConversionException {
         String value = "[^HmsS]";
         RyftExpression ryftExpression = new RyftExpressionRegex(value);
-        String expected = String.format("REGEX(%s)", value);
+        String expected = String.format("PCRE2(%s)", value);
         LOGGER.info(expected);
         assertEquals(expected, ryftExpression.buildRyftString());
     }
