@@ -777,7 +777,8 @@ All configuration properties can be defined in config file and some properties c
 |-------------------------------------|---------------------------------------|
 | ryft_rest_client_host               | RYFT service host                     |
 | ryft_rest_client_port               | RYFT service port                     |
-| ryft_rest_auth                      | RYFT auth string/base64 encoded pair login:pass   |
+| ryft_rest_auth_login                | RYFT service login                    |
+| ryft_rest_auth_password             | RYFT service password                 |
 | ryft_request_processing_thread_num  | Thread number for request processing  |
 | ryft_response_processing_thread_num | Thread number for response processing |
 | ryft_query_limit                    | Results limit                         |
