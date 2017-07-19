@@ -5,6 +5,7 @@ import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionRange.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.util.*;
 
 /**
@@ -49,6 +50,7 @@ public class RyftQueryDateTimeUtil {
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat(format);
+        sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
         if (operatorCompareLower.isPresent() && operatorCompareUpper.isPresent()) {
             Date dateLower = sdf.parse(lowerBound.get(operatorCompareLower.get()));
             Date dateUpper = sdf.parse(upperBound.get(operatorCompareUpper.get()));
@@ -111,6 +113,7 @@ public class RyftQueryDateTimeUtil {
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat(format);
+        sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
         if (operatorCompareLower.isPresent() && operatorCompareUpper.isPresent()) {
             Date lowerDate;
             Date upperDate;
@@ -139,6 +142,7 @@ public class RyftQueryDateTimeUtil {
             //Special case - if the first is the same as the last, we do not need an extra expression to retrieve the
             //days that fall between them
             SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+            sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
             if (!fmt.format(lowerDate).equals(fmt.format(upperDate))) {
                 finalQueries.add(middleDayQuery);
             }

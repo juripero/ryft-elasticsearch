@@ -1,14 +1,5 @@
 package com.ryft.elasticsearch.converter.ryftdsl;
 
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryComplex;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftInputSpecifierRecord;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionExactSearch;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftInputSpecifier;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpression;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuerySimple;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftInputSpecifierRawText;
 import static com.ryft.elasticsearch.converter.ryftdsl.RyftOperator.*;
 import static com.ryft.elasticsearch.converter.ryftdsl.RyftQueryComplex.RyftLogicalOperator.*;
 import static org.junit.Assert.assertEquals;

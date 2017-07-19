@@ -13,6 +13,7 @@ import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -291,6 +292,7 @@ public class RyftQueryFactory {
 
         try {
             SimpleDateFormat sdf = new SimpleDateFormat(format);
+            sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
             Date date = sdf.parse(searchText);
 
             if (dateFormat != null && timeFormat != null) {

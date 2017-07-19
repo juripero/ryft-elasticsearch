@@ -1054,10 +1054,10 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
-        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 17:10:55))) " +
+        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) " +
                         "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) " +
                         "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) " +
-                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 17:10:55)))) " +
+                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) " +
                         "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) " +
                         "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
                 ryftRequest.getQuery().buildRyftString());

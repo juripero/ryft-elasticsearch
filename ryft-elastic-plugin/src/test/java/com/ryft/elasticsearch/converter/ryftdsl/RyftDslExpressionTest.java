@@ -1,22 +1,14 @@
 package com.ryft.elasticsearch.converter.ryftdsl;
 
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionCurrency;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionDate;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionFuzzySearch;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionExactSearch;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionNumeric;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpression;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionIPv6;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionIPv4;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionTime;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionRegex;
 import com.ryft.elasticsearch.converter.ElasticConversionException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionFuzzySearch.RyftFuzzyMetric;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftExpressionRange.RyftOperatorCompare;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Random;
+import java.util.TimeZone;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import static org.junit.Assert.*;
@@ -86,6 +78,7 @@ public class RyftDslExpressionTest {
     public void TestExpressionDate() throws ElasticConversionException {
         Date dateNow = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
         RyftExpression ryftExpression = new RyftExpressionDate(dateNow, RyftOperatorCompare.EQ);
         String expected = String.format("DATE(YYYY-MM-DD = %s)", dateFormat.format(dateNow));
         LOGGER.info(expected);
@@ -93,6 +86,7 @@ public class RyftDslExpressionTest {
 
         Date dateBeforeNow = new Date(dateNow.getTime() - 3600000L * 48);
         dateFormat = new SimpleDateFormat("MM_dd_yyyy");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
         ryftExpression = new RyftExpressionDate(dateBeforeNow, RyftOperatorCompare.LT, RyftOperatorCompare.LTE, dateNow, "MM_dd_yyyy HH:mm:ss.SS");
         expected = String.format("DATE(%s < MM_DD_YYYY <= %s)", dateFormat.format(dateBeforeNow), dateFormat.format(dateNow));
         LOGGER.info(expected);
@@ -103,14 +97,16 @@ public class RyftDslExpressionTest {
     public void TestExpressionTime() throws ElasticConversionException {
         Random random = new Random();
         Date dateNow = new Date();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        RyftExpression ryftExpression = new RyftExpressionDate(dateNow, RyftOperatorCompare.EQ);
-        String expected = String.format("DATE(YYYY-MM-DD = %s)", dateFormat.format(dateNow));
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+        RyftExpression ryftExpression = new RyftExpressionTime(dateNow, RyftOperatorCompare.EQ);
+        String expected = String.format("TIME(HH:MM:SS = %s)", dateFormat.format(dateNow));
         LOGGER.info(expected);
         assertEquals(expected, ryftExpression.buildRyftString());
 
         Date dateBeforeNow = new Date(dateNow.getTime() - random.nextInt(1000000));
         dateFormat = new SimpleDateFormat("HH.mm.ss.SS");
+        dateFormat.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
         ryftExpression = new RyftExpressionTime(dateBeforeNow, RyftOperatorCompare.LT, RyftOperatorCompare.LTE, dateNow, "HH.mm.ss.SS");
         expected = String.format("TIME(%s < HH.MM.SS.ss <= %s)", dateFormat.format(dateBeforeNow).substring(0, 11), dateFormat.format(dateNow).substring(0, 11));
         LOGGER.info(expected);

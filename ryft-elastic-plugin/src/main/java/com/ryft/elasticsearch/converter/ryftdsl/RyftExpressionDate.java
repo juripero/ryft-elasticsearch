@@ -3,10 +3,10 @@ package com.ryft.elasticsearch.converter.ryftdsl;
 import com.ryft.elasticsearch.converter.ElasticConversionException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +39,12 @@ public class RyftExpressionDate extends RyftExpressionRange {
 
     public static DateFormat getDateFormat(String format) {
         String datePattern = getDatePattern(format);
-        return (datePattern == null) ? null : new SimpleDateFormat(datePattern);
+        DateFormat df = null;
+        if (datePattern != null) {
+            df = new SimpleDateFormat(datePattern);
+            df.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+        }
+        return df;
     }
 
     private String getVariableName(String format) throws ElasticConversionException {
