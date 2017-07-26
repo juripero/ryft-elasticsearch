@@ -1,8 +1,6 @@
 package com.ryft.elasticsearch.codec;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,11 +20,12 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 
 /**
- * 
+ *
  * @author imasternoy
  */
 public class RyftStoredFieldsWriter extends StoredFieldsWriter {
-    Logger log = Logger.getLogger(RyftStoredFieldsWriter.class.getName());
+
+    private static final Logger LOGGER = Logger.getLogger(RyftStoredFieldsWriter.class.getName());
     public final static String FIELDS_EXTENSION = "jsonfld";
     private IndexOutput out;
     StoredFieldsWriter writer;
@@ -45,7 +44,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
             int start = dir.indexOf("/");
             int end = dir.indexOf(")");
             String dirname = dir.substring(start, end);
-            String fileName = segmentFileName(segment.name, "",  indexName + FIELDS_EXTENSION);
+            String fileName = segmentFileName(segment.name, "", indexName + FIELDS_EXTENSION);
 //            out = new OutputStreamWriter(new FileOutputStream(dirname + "/" + fileName, true));
             out = directory.createOutput(IndexFileNames.segmentFileName(segment.name, "", indexName + FIELDS_EXTENSION), context);
             // Hooking directory to manage(delete when needed) our file too
@@ -67,7 +66,7 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
     public int merge(MergeState mergeState) throws IOException {
         long time = System.currentTimeMillis();
         int merged = super.merge(mergeState);
-        log.log(Level.FINE, "Merged finished elapsed: {0}", new Object[] { System.currentTimeMillis() - time });
+        LOGGER.log(Level.FINE, "Merged finished elapsed: {0}", new Object[]{System.currentTimeMillis() - time});
         return merged;
     }
 
@@ -77,46 +76,41 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
         String name = field.name();
 
         switch (name) {
-        case "_source":
-            BytesRef bytes = field.binaryValue();
-            if (bytes == null) {
-                log.log(Level.SEVERE, "No value for _source field");
+            case "_source":
+                BytesRef bytes = field.binaryValue();
+                if (bytes == null) {
+                    LOGGER.log(Level.SEVERE, "No value for _source field");
+                    break;
+                }
+                String fieldToWrite = field.binaryValue().utf8ToString();
+                int closing = fieldToWrite.lastIndexOf("}");
+                if (closing == -1) {
+                    LOGGER.log(Level.SEVERE, "Failed to find closing bracket for JSON {0}", fieldToWrite);
+                    write(fieldToWrite);
+                } else {
+                    write(fieldToWrite.substring(0, closing)); // removed last curly
+                    // bracket
+                }
                 break;
-            }
-            String fieldToWrite = new String(field.binaryValue().utf8ToString());
-            int closing = fieldToWrite.lastIndexOf("}");
-            if (closing == -1) {
-                log.log(Level.SEVERE, "Failed to find closing bracket for JSON " + fieldToWrite);
-                write(fieldToWrite);
-            } else {
-                write(fieldToWrite.substring(0, closing)); // removed last curly
-                                                           // bracket
-            }
-            break;
-        case "_uid":
-            String fieldValue = field.stringValue();
-            if (fieldValue == null) {
-                log.log(Level.SEVERE, "Failed to determine _uid field value");
+            case "_uid":
+                String fieldValue = field.stringValue();
+                if (fieldValue == null) {
+                    LOGGER.log(Level.SEVERE, "Failed to determine _uid field value");
+                    break;
+                }
+                int pos = fieldValue.indexOf("#");
+                if (pos != -1) {
+                    String data = String.format(",\"%s\": \"%s\", \"type\": \"%s\"}",
+                            field.name(), fieldValue.substring(pos + 1), fieldValue.substring(0, pos));
+                    write(data);
+                } else {
+                    write("}");
+                    LOGGER.log(Level.SEVERE, "Failed to parse _uid field value: {0}", fieldValue);
+                    break;
+                }
                 break;
-            }
-            int pos = fieldValue.indexOf("#");
-            if (pos != -1) {
-                write(",");
-                write("\"" + field.name() + "\"" + ":" + " \"");
-                write(fieldValue.substring(pos + 1));
-                write("\",");
-                // newLine();
-                write("\"type\": \"");
-                write(fieldValue.substring(0, pos));
-                write("\"}");
-            } else {
-                write("}");
-                log.log(Level.SEVERE, "Failed to parse _uid field value: {0}", fieldValue);
+            default:
                 break;
-            }
-            break;
-        default:
-            break;
         }
     }
 
@@ -143,22 +137,28 @@ public class RyftStoredFieldsWriter extends StoredFieldsWriter {
         }
     }
 
-    private void write(String s) throws IOException {
-        out.writeBytes(s.getBytes(), s.length());
+    private void write(byte[] bytes) throws IOException {
+        out.writeBytes(bytes, bytes.length);
     }
+
+    private void write(String s) throws IOException {
+        LOGGER.log(Level.FINEST, "Write: {0}", s);
+        write(s.getBytes());
+    }
+
     public static String segmentFileName(String segmentName, String segmentSuffix, String ext) {
         if (ext.length() > 0 || segmentSuffix.length() > 0) {
-          StringBuilder sb = new StringBuilder(segmentName.length() + 2 + segmentSuffix.length() + ext.length());
-          sb.append(segmentName);
-          if (segmentSuffix.length() > 0) {
-            sb.append('_').append(segmentSuffix);
-          }
-          if (ext.length() > 0) {
-            sb.append('.').append(ext);
-          }
-          return sb.toString();
+            StringBuilder sb = new StringBuilder(segmentName.length() + 2 + segmentSuffix.length() + ext.length());
+            sb.append(segmentName);
+            if (segmentSuffix.length() > 0) {
+                sb.append('_').append(segmentSuffix);
+            }
+            if (ext.length() > 0) {
+                sb.append('.').append(ext);
+            }
+            return sb.toString();
         } else {
-          return segmentName;
+            return segmentName;
         }
-      }
+    }
 }
