@@ -2,13 +2,13 @@
 
 ### Match query syntax:
 Full form:
-```json
+```
 {
     "query": {
         "match": {
             "field_name": {
                 "query": "search query",
-                "operator": <"and","or">,
+                "operator": "and",
                 "fuzziness": <"AUTO", 0, 1, 2>,
                 "type": "phrase",
                 "metric": <"FEDS", "FHS">
@@ -43,7 +43,7 @@ Fuzziness AUTO will result in the following distances:
 
 2 for strings of more than five characters
 
-#####Simple fuzzy match query example:
+##### Simple fuzzy match query example:
 We are looking for speaker "MARCELLUS" with one mistake in his name 
 ```json
 {
@@ -180,7 +180,7 @@ Resulting RYFT query:
 ### Boolean query syntax:
 
 ```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
-```json
+```
 {
   "query": {
     "bool" : {
