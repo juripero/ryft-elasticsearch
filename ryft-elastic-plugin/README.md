@@ -373,6 +373,41 @@ Resulting RYFT query:
 (RECORD.postcode CONTAINS ""?"Z99 "??"Z")
 ```
 
+
+### Regex queries
+Regex within query should be pcre2-compliant.
+
+The pcre2 primitive is supported for RAW_TEXT only.  No RECORD based queries are supported at this time.
+
+Full form:
+```json
+{
+  "query": {
+    "regexp": {
+      "postcode": {
+        "value": "W[0-9].+"
+      }
+    }
+  }
+}
+```
+
+Simplified form:
+```json
+{
+  "query": {
+    "regexp": {
+      "postcode": "W[0-9].+"
+    }
+  }
+}
+```
+
+Resulting RYFT query:
+```
+(RECORD.postcode CONTAINS PCRE2("W[0-9].+"))
+```
+
 ### Date-Time queries
 Date format pattern specified according to rules described [here](http://www.joda.org/joda-time/apidocs/org/joda/time/format/DateTimeFormat.html). 
 
@@ -683,6 +718,57 @@ Resulting RYFT query:
 (RECORD.ip_addr CONTAINS IPV6("2001::db8" <= IP < "2001::db9"))
 ```
 
+
+### Filter queries
+
+Filter queries can be used to further limit the results that are returned from a search query. Functionally, they work
+as an extra set of AND queries.
+
+Filter queries are also required for the proper work of timeseries datasets in Kibana.
+
+Query:
+```json
+{"query": {
+    "filtered": {
+      "query": {
+        "query": {
+          "term": {
+            "registered": {
+              "format": "yyyy-MM-dd HH:mm:ss",
+              "type": "datetime",
+              "value": "2014-01-01 07:00:00"
+            }
+          }
+        },
+        "ryft_enabled": true
+      },
+      "filter": {
+        "bool": {
+          "must": [
+            {
+              "range": {
+                "registered": {
+                  "gte": 1338646255122,
+                  "lte": 1496412655122,
+                  "format": "epoch_millis"
+                }
+              }
+            }
+          ],
+          "must_not": []
+        }
+      }
+    }
+  }}
+```
+
+Resulting RYFT query:
+```
+((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 17:10:55))) OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 17:10:55)))) AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))
+```
+
+
+
 ### Plugin configuration
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
@@ -691,7 +777,8 @@ All configuration properties can be defined in config file and some properties c
 |-------------------------------------|---------------------------------------|
 | ryft_rest_client_host               | RYFT service host                     |
 | ryft_rest_client_port               | RYFT service port                     |
-| ryft_rest_auth                      | RYFT auth string/base64 encoded pair login:pass   |
+| ryft_rest_auth_login                | RYFT service login                    |
+| ryft_rest_auth_password             | RYFT service password                 |
 | ryft_request_processing_thread_num  | Thread number for request processing  |
 | ryft_response_processing_thread_num | Thread number for response processing |
 | ryft_query_limit                    | Results limit                         |

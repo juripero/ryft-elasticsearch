@@ -11,28 +11,20 @@
 # <http://www.elastic.co/guide/en/elasticsearch/reference/current/setup-configuration.html>
 #
 
-index.codec: RyftCodec
 #node:
 #  data: true
 #  master: true
 index:
+  codec: RyftCodec
   compound_format: false
   compound_on_flush: false
   shard.check_on_startup: false
-  number_of_replicas: 0
-  number_of_shards: 1
-  merge:
-    policy.merge_factor: 2
-    policy.min_merge_size: 10mb
-    policy.max_merge_docs: 100
-    scheduler.max_thread_count: 1
 
-index.unassigned.node_left.delayed_timeout: 5m
 # ---------------------------------- Cluster -----------------------------------
 #
 # Use a descriptive name for your cluster:
 #
-# cluster.name: my-application
+cluster.name: ryft-cluster
 #
 # ------------------------------------ Node ------------------------------------
 #
@@ -83,7 +75,7 @@ network.host: 0.0.0.0
 # Pass an initial list of hosts to perform discovery when new node is started:
 # The default list of hosts is ["127.0.0.1", "[::1]"]
 #
-# discovery.zen.ping.unicast.hosts: ["host1", "host2"]
+discovery.zen.ping.unicast.hosts: ["127.0.0.1", "[::1]"]
 #
 # Prevent the "split brain" by configuring the majority of nodes (total number of nodes / 2 + 1):
 #

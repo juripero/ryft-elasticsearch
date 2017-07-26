@@ -23,7 +23,12 @@ Logstash [file input plugin](https://www.elastic.co/guide/en/logstash/current/pl
 ```
 rm -f /tmp/*.sincedb
 ```
-Filter sections use plugins [grok](https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html), [date](https://www.elastic.co/guide/en/logstash/current/plugins-filters-date.html), [mutate](https://www.elastic.co/guide/en/logstash/current/plugins-filters-mutate.html) and [drop](https://www.elastic.co/guide/en/logstash/current/plugins-filters-drop.html) to match log lines by predefined regular expressions, parse datetime field, drop non parsed lines and some odd fields in order to make parsed data pretty. Custom patterns contains in folder `/etc/logstash/patterns`.
+Filter sections use plugins [grok](https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html), [date](https://www.elastic.co/guide/en/logstash/current/plugins-filters-date.html), [mutate](https://www.elastic.co/guide/en/logstash/current/plugins-filters-mutate.html) and [drop](https://www.elastic.co/guide/en/logstash/current/plugins-filters-drop.html) to match log lines by predefined regular expressions, parse datetime field, drop non parsed lines and some odd fields in order to make parsed data pretty. Custom patterns contains in folder `/etc/logstash/patterns`.  For example:
+
+```
+cat /etc/logstash/patterns/ryftone.pattern
+RYFT_TIMESTAMP %{DAY} %{MONTH} %{MONTHDAY} %{TIME} %{YEAR}
+```
 
 Output section writes parsed data to corresponding elasticsearch index grouped by date. Output plugin [elasticsearch](https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html) is used here.
 You can [list all indices](https://www.elastic.co/guide/en/elasticsearch/reference/current/cat-indices.html#cat-indices) from elasticsearch to ensure that logstash works.
