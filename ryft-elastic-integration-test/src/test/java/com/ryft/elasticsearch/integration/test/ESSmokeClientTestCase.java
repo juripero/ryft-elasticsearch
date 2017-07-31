@@ -69,7 +69,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
      */
     public static final String TESTS_CLUSTER_DEFAULT = "localhost:9300";
 
-    protected static final ESLogger logger = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
+    protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
 
     private static final AtomicInteger counter = new AtomicInteger();
     private static Client client;
@@ -87,12 +87,12 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
         TransportClient client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
 
-        logger.info("--> Elasticsearch Java TransportClient started");
+        LOGGER.info("--> Elasticsearch Java TransportClient started");
 
         Exception clientException = null;
         try {
             ClusterHealthResponse health = client.admin().cluster().prepareHealth().get();
-            logger.info("--> connected to [{}] cluster which is running [{}] node(s).",
+            LOGGER.info("--> connected to [{}] cluster which is running [{}] node(s).",
                     health.getClusterName(), health.getNumberOfNodes());
         } catch (Exception e) {
             clientException = e;
@@ -126,7 +126,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
             try {
                 client = startClient();
             } catch (UnknownHostException e) {
-                logger.error("can not start the client", e);
+                LOGGER.error("can not start the client", e);
             }
             assertThat(client, notNullValue());
         }
@@ -138,7 +138,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         clusterAddresses = System.getProperty(TESTS_CLUSTER);
         if (clusterAddresses == null || clusterAddresses.isEmpty()) {
             clusterAddresses = TESTS_CLUSTER_DEFAULT;
-            logger.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER, TESTS_CLUSTER_DEFAULT);
+            LOGGER.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER, TESTS_CLUSTER_DEFAULT);
         }
     }
 
