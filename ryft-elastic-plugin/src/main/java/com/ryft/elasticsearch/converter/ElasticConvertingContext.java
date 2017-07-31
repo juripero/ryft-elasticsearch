@@ -1,10 +1,10 @@
 package com.ryft.elasticsearch.converter;
 
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +16,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 
 public class ElasticConvertingContext {
 
@@ -47,7 +48,7 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
-    private AggregationParameters agg = new AggregationParameters(AggregationParameters.AggregationType.NONE);
+    private final List<AggregationBuilder> aggregations = new ArrayList<>();
     private Boolean filtered = false;
 
     @Inject
@@ -161,14 +162,6 @@ public class ElasticConvertingContext {
         this.indices = indices;
     }
 
-    public AggregationParameters getAgg() {
-        return agg;
-    }
-
-    public void setAgg(AggregationParameters agg) {
-        this.agg = agg;
-    }
-
     public Boolean getFiltered() {
         return filtered;
     }
@@ -176,4 +169,9 @@ public class ElasticConvertingContext {
     public void setFiltered(Boolean filtered) {
         this.filtered = filtered;
     }
+
+    public List<AggregationBuilder> getAggregations() {
+        return aggregations;
+    }
+   
 }

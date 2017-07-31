@@ -2,7 +2,6 @@ package com.ryft.elasticsearch.rest.processors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
@@ -26,7 +25,6 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
@@ -253,27 +251,11 @@ public class SearchRequestProcessor extends RyftProcessor {
         InternalSearchHits hits = new InternalSearchHits(
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 searchHits.size(), Float.NEGATIVE_INFINITY);
-
-        if (requestEvent.getAgg().getAggregationType() == AggregationParameters.AggregationType.NONE) {
-            InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, InternalAggregations.EMPTY,
-                    null, null, false, false);
-
-            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
-                    failures.toArray(new ShardSearchFailure[failures.size()]));
-        } else {
-            InternalSearchResponse internalSearchResponse;
-            try {
-                InternalAggregations aggregations = AggregationService.applyAggregation(hits, requestEvent.getAgg());
-                internalSearchResponse = new InternalSearchResponse(hits, aggregations,
-                        null, null, false, false);
-            } catch (UnknownHostException e) {
-                throw new ElasticConversionCriticalException("Cannot apply aggregation", e);
-            }
-
-            return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
-                    failures.toArray(new ShardSearchFailure[failures.size()]));
-        }
-
+        InternalAggregations aggregations = AggregationService.applyAggregation(hits, requestEvent);
+        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, aggregations,
+                null, null, false, false);
+        return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
+                failures.toArray(new ShardSearchFailure[failures.size()]));
     }
 
     private SearchShardTarget getSearchShardTarget(ShardRouting shardRouting) {
@@ -301,7 +283,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                 searchHit.sourceRef(new BytesArray(hit.toString()));
             }
             return searchHit;
-        } catch (Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("Search result processing error.", ex);
             searchHit = new InternalSearchHit(0, "", new Text(""), ImmutableMap.of());
             searchHit.sourceRef(new BytesArray("{\"error\": \"" + ex.toString() + "\"}"));

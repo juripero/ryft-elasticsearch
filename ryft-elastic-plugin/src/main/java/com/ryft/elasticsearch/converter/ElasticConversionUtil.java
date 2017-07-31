@@ -2,12 +2,14 @@ package com.ryft.elasticsearch.converter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.elasticsearch.common.xcontent.XContentParser;
 
 public abstract class ElasticConversionUtil {
 
-    static String getNextElasticPrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+    public static String getNextElasticPrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         try {
             XContentParser parser = convertingContext.getContentParser();
             String currentPrimitive = parser.currentName();
@@ -28,6 +30,29 @@ public abstract class ElasticConversionUtil {
         XContentParser parser = convertingContext.getContentParser();
         return (parser.currentToken().equals(XContentParser.Token.END_OBJECT)
                 || parser.currentToken().equals(XContentParser.Token.END_ARRAY));
+    }
+
+    public static Map<String, String> getMap(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
+                parser.nextToken();
+            }
+            Map<String, String> result = new HashMap<>();
+            if (XContentParser.Token.START_OBJECT.equals(parser.currentToken())) {
+                parser.nextToken();
+                while (!XContentParser.Token.END_OBJECT.equals(parser.currentToken())) {
+                    String key = parser.currentName();
+                    String value = getString(convertingContext);
+                    result.put(key, value);
+                    parser.nextToken();
+                }
+                return result;
+            }
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
+        throw new ElasticConversionException("Can not extract map.");
     }
 
     static <T> List<T> getArray(ElasticConvertingContext convertingContext) throws ElasticConversionException {

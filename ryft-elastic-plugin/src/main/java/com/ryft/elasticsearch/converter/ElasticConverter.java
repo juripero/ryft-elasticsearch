@@ -39,7 +39,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
 
     @Override
     public RyftRequestParameters convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        LOGGER.trace("Request payload: {}", convertingContext.getOriginalQuery());
+        LOGGER.debug("Request payload: {}", convertingContext.getOriginalQuery());
         String currentName;
         try {
             convertingContext.getContentParser().nextToken();
@@ -113,7 +113,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private RyftRequestParameters getRyftRequestParameters(ElasticConvertingContext convertingContext, RyftQuery ryftQuery) {
-        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getAgg());
+        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getAggregations());
         result.getRyftProperties().putAll(convertingContext.getQueryProperties());
         return result;
     }
