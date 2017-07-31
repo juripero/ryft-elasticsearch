@@ -1,14 +1,13 @@
 package com.ryft.elasticsearch.converter;
 
+import com.google.common.collect.Lists;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
-import com.ryft.elasticsearch.utils.JSR250Module;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
+import com.ryft.elasticsearch.utils.JSR250Module;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Singleton;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +31,6 @@ public class ElasticConverterTest {
             protected void configure() {
                 install(new JSR250Module());
                 install(new ElasticConversionModule());
-                bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
             }
         }).injectMembers(this);
     }
@@ -433,6 +431,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", WIDTH=30, DIST=1)) OR (RAW_TEXT CONTAINS FEDS(\"mother\", WIDTH=30, DIST=1)))",
                 ryftRequest.getQuery().buildRyftString());
     }
@@ -459,6 +462,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", LINE=true, DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", LINE=true, DIST=1)))",
                 ryftRequest.getQuery().buildRyftString());
     }
@@ -484,6 +492,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("(RAW_TEXT CONTAINS FEDS(\"good mother\", LINE=true, DIST=1))",
                 ryftRequest.getQuery().buildRyftString());
     }
@@ -507,6 +520,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("(RAW_TEXT CONTAINS \"m\"?\"ther\")",
                 ryftRequest.getQuery().buildRyftString());
     }
@@ -543,6 +561,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("passengers.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("((RAW_TEXT CONTAINS ES(\"mary jane\", LINE=true)) AND (RAW_TEXT CONTAINS ES(\"smith\", LINE=true)))",
                 ryftRequest.getQuery().buildRyftString());
 
@@ -565,6 +588,11 @@ public class ElasticConverterTest {
         request = new SearchRequest(new String[]{""}, query2.getBytes());
         RyftRequestParameters ryftRequest2 = elasticConverter.convert(request);
         assertNotNull(ryftRequest2);
+        assertTrue(ryftRequest2.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("passengers.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("((((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) "
                 + "AND (RAW_TEXT CONTAINS ES(\"romeo\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) "
                 + "AND (RAW_TEXT CONTAINS ES(\"knight\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"romeo\", LINE=true)) "
@@ -1011,55 +1039,60 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
     @Test
     public void FilteredQueryTest() throws Exception {
-        String query = "{" +
-                "\"query\": {\n" +
-                "    \"filtered\": {\n" +
-                "      \"query\": {\n" +
-                "        \"query\": {\n" +
-                "          \"term\": {\n" +
-                "            \"registered\": {\n" +
-                "              \"format\": \"yyyy-MM-dd HH:mm:ss\",\n" +
-                "              \"type\": \"datetime\",\n" +
-                "              \"value\": \"2014-01-01 07:00:00\"\n" +
-                "            }\n" +
-                "          }\n" +
-                "        },\n" +
-                "        \"ryft_enabled\": true\n" +
-                "      },\n" +
-                "      \"filter\": {\n" +
-                "        \"bool\": {\n" +
-                "          \"must\": [\n" +
-                "            {\n" +
-                "              \"range\": {\n" +
-                "                \"registered\": {\n" +
-                "                  \"gte\": 1338646255122,\n" +
-                "                  \"lte\": 1496412655122,\n" +
-                "                  \"format\": \"epoch_millis\"\n" +
-                "                }\n" +
-                "              }\n" +
-                "            }\n" +
-                "          ],\n" +
-                "          \"must_not\": []\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }" +
-                "}";
+        String query = "{"
+                + "\"query\": {\n"
+                + "    \"filtered\": {\n"
+                + "      \"query\": {\n"
+                + "        \"query\": {\n"
+                + "          \"term\": {\n"
+                + "            \"registered\": {\n"
+                + "              \"format\": \"yyyy-MM-dd HH:mm:ss\",\n"
+                + "              \"type\": \"datetime\",\n"
+                + "              \"value\": \"2014-01-01 07:00:00\"\n"
+                + "            }\n"
+                + "          }\n"
+                + "        },\n"
+                + "        \"ryft_enabled\": true\n"
+                + "      },\n"
+                + "      \"filter\": {\n"
+                + "        \"bool\": {\n"
+                + "          \"must\": [\n"
+                + "            {\n"
+                + "              \"range\": {\n"
+                + "                \"registered\": {\n"
+                + "                  \"gte\": 1338646255122,\n"
+                + "                  \"lte\": 1496412655122,\n"
+                + "                  \"format\": \"epoch_millis\"\n"
+                + "                }\n"
+                + "              }\n"
+                + "            }\n"
+                + "          ],\n"
+                + "          \"must_not\": []\n"
+                + "        }\n"
+                + "      }\n"
+                + "    }\n"
+                + "  }"
+                + "}";
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
-        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) " +
-                        "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) " +
-                        "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) " +
-                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) " +
-                        "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) " +
-                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
+        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) "
+                + "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) "
+                + "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) "
+                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) "
+                + "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) "
+                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
@@ -1082,6 +1115,11 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("(RAW_TEXT CONTAINS PCRE2(\"W[0-9].+\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
