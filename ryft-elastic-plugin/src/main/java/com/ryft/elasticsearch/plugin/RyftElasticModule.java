@@ -12,8 +12,11 @@ import com.ryft.elasticsearch.converter.ElasticConversionModule;
 import com.ryft.elasticsearch.plugin.interceptors.ActionInterceptor;
 import com.ryft.elasticsearch.plugin.interceptors.IndexInterceptor;
 import com.ryft.elasticsearch.plugin.interceptors.SearchInterceptor;
+import com.ryft.elasticsearch.plugin.service.AggregationService;
+import com.ryft.elasticsearch.plugin.service.RyftSearchService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.processors.ProcessorsModule;
+import org.elasticsearch.client.transport.TransportClient;
 
 /**
  *
@@ -26,8 +29,6 @@ public class RyftElasticModule extends AbstractModule {
         install(new JSR250Module());
 
         bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
-        // TODO: [imasternoy] Think about provider for this
-        // bind(RyftRestClient.class);
         bind(RestSearchActionFilter.class);
 
         MapBinder<String, ActionInterceptor> interceptors = MapBinder.newMapBinder(binder(), String.class,
@@ -42,7 +43,9 @@ public class RyftElasticModule extends AbstractModule {
 
         bind(RyftRestClient.class).in(Singleton.class);
         bind(RyftPluginGlobalSettingsProvider.class).in(Singleton.class);
-
+        
+        bind(TransportClient.class).toProvider(ElasticClientProvider.class).in(Singleton.class);
+        bind(AggregationService.class);
+        bind(RyftSearchService.class);
     }
-
 }

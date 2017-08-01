@@ -9,27 +9,33 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 
-import java.net.InetAddress;
 import java.util.List;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
+import org.elasticsearch.common.inject.Inject;
 
 public class AggregationService {
 
     private static final ESLogger LOGGER = Loggers.getLogger(AggregationService.class);
     private static final String TEMPINDEX_PREFIX = ".tmpagg";
 
-    public static InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
+    private final Client client;
+    
+    @Inject
+    public AggregationService(TransportClient client) {
+        this.client = client;
+    }
+
+    public InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
             SearchRequestEvent requestEvent) throws ElasticConversionCriticalException {
         List<AggregationBuilder> aggregations = requestEvent.getAggregations();
         if ((internalSearchHits.getTotalHits() == 0)
@@ -38,9 +44,8 @@ public class AggregationService {
             return InternalAggregations.EMPTY;
         } else {
             String tempIndexName = getTempIndexName(requestEvent);
-            Client client = getClient();
             try {
-                prepareTempIndex(internalSearchHits, tempIndexName, client);
+                prepareTempIndex(internalSearchHits, tempIndexName);
                 SearchResponse searchResponse = client
                         .prepareSearch(tempIndexName)
                         .setQuery(QueryBuilders.matchAllQuery())
@@ -49,12 +54,11 @@ public class AggregationService {
                 return (InternalAggregations) searchResponse.getAggregations();
             } finally {
                 client.admin().indices().prepareDelete(tempIndexName).get();
-                client.close();
             }
         }
     }
 
-    private static void prepareTempIndex(InternalSearchHits internalSearchHits, String tempIndexName, Client client)
+    private void prepareTempIndex(InternalSearchHits internalSearchHits, String tempIndexName)
             throws ElasticConversionCriticalException {
         LOGGER.debug("Creating temp index {}.", tempIndexName);
 
@@ -104,16 +108,7 @@ public class AggregationService {
                 .get();
     }
 
-    private static Client getClient() {
-        Settings clientSettings = Settings.settingsBuilder()
-                .put("client.transport.ignore_cluster_name", true).build();
-        return TransportClient.builder()
-                .settings(clientSettings)
-                .build()
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300));
-    }
-
-    private static String getTempIndexName(SearchRequestEvent requestEvent) {
+    private String getTempIndexName(SearchRequestEvent requestEvent) {
         return String.format("%s%d", TEMPINDEX_PREFIX, requestEvent.hashCode());
     }
 }

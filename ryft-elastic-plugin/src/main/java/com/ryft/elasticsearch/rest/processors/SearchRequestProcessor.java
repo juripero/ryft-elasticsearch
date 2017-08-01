@@ -47,11 +47,14 @@ public class SearchRequestProcessor extends RyftProcessor {
     private static final ESLogger LOGGER = Loggers.getLogger(SearchRequestProcessor.class);
     private final RyftRestClient channelProvider;
     private final PropertiesProvider props;
+    private final AggregationService aggregationService;
 
     @Inject
-    public SearchRequestProcessor(PropertiesProvider properties, RyftRestClient channelProvider) {
+    public SearchRequestProcessor(PropertiesProvider properties, RyftRestClient channelProvider,
+            AggregationService aggregationService) {
         this.props = properties;
         this.channelProvider = channelProvider;
+        this.aggregationService = aggregationService;
     }
 
     @Override
@@ -80,14 +83,10 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private SearchResponse executeRequest(IndexSearchRequestEvent requestEvent)
             throws InterruptedException, ElasticConversionCriticalException {
-        Long start = System.currentTimeMillis();
-        List<ShardRouting> shardRoutings = requestEvent.getShards();
-        Map<Integer, List<ShardRouting>> groupedShards = shardRoutings.stream()
+        Map<Integer, List<ShardRouting>> groupedShards = requestEvent.getShards().stream()
+                .filter(shard -> shard.started())
                 .collect(Collectors.groupingBy(ShardRouting::getId));
-        Map<SearchShardTarget, RyftResponse> ryftResponses = sendToRyft(requestEvent, groupedShards);
-        Long searchTime = System.currentTimeMillis() - start;
-        return getSearchResponse(requestEvent, groupedShards,
-                ryftResponses, searchTime);
+        return getSearchResponse(requestEvent, groupedShards);
     }
 
     private SearchResponse executeRequest(FileSearchRequestEvent requestEvent)
@@ -184,6 +183,15 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
+            Map<Integer, List<ShardRouting>> groupedShards) throws InterruptedException, ElasticConversionCriticalException {
+        Long start = System.currentTimeMillis();
+        Map<SearchShardTarget, RyftResponse> ryftResponses = sendToRyft(requestEvent, groupedShards);
+        Long searchTime = System.currentTimeMillis() - start;
+        return getSearchResponse(requestEvent, groupedShards,
+                ryftResponses, searchTime);
+    }
+
+    private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
             Map<Integer, List<ShardRouting>> groupedShards,
             Map<SearchShardTarget, RyftResponse> ryftResponses, Long searchTime) throws InterruptedException, ElasticConversionCriticalException {
         Map<SearchShardTarget, RyftResponse> errorResponses = ryftResponses.entrySet().stream()
@@ -251,7 +259,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         InternalSearchHits hits = new InternalSearchHits(
                 searchHits.toArray(new InternalSearchHit[searchHits.size()]),
                 searchHits.size(), Float.NEGATIVE_INFINITY);
-        InternalAggregations aggregations = AggregationService.applyAggregation(hits, requestEvent);
+        InternalAggregations aggregations = aggregationService.applyAggregation(hits, requestEvent);
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, aggregations,
                 null, null, false, false);
         return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
