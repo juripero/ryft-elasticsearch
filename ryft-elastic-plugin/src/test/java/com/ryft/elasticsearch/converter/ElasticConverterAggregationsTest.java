@@ -6,10 +6,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import static org.hamcrest.Matchers.samePropertyValuesAs;
+import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,11 +49,21 @@ public class ElasticConverterAggregationsTest {
                 + "      }\n"
                 + "    }\n"
                 + "  },\n"
-                + "  \"aggs\":{\n"
+                + "  \"aggs\": {\n"
                 + "    \"agg_name\": {\n"
                 + "      \"date_histogram\": {\n"
-                + "        \"field\" : \"date\",\n"
-                + "        \"interval\" : \"1.5h\"\n"
+                + "        \"field\": \"date\",\n"
+                + "        \"interval\": \"1.5h\",\n"
+                + "        \"offset\": \"+6h\","
+                + "        \"time_zone\": \"-01:00\","
+                + "        \"format\": \"yyyy-MM-dd\","
+                + "        \"extended_bounds\" : {\n"
+                + "          \"min\" : \"2016-01-22\",\n"
+                + "          \"max\" : \"2017-08-01\"\n"
+                + "        },"
+                + "        \"order\": {"
+                + "          \"_count\" : \"asc\""
+                + "        }"
                 + "      }\n"
                 + "    }\n"
                 + "  }\n"
@@ -63,10 +75,13 @@ public class ElasticConverterAggregationsTest {
                 ryftRequestParameters.getQuery().buildRyftString());
         assertNotNull(ryftRequestParameters.getAggregations());
         assertFalse(ryftRequestParameters.getAggregations().isEmpty());
-        AggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
-        AggregationBuilder expectedAgg = AggregationBuilders.dateHistogram("agg_name")
-                .field("date").interval(new DateHistogramInterval("1.5h"));
-        assertThat(actualAgg, samePropertyValuesAs(expectedAgg));
+        DateHistogramBuilder actualAgg = (DateHistogramBuilder) ryftRequestParameters.getAggregations().get(0);
+        DateHistogramBuilder expectedAgg = AggregationBuilders.dateHistogram("agg_name")
+                .field("date").interval(new DateHistogramInterval("1.5h")).offset("+6h")
+                .timeZone("-01:00").format("yyyy-MM-dd").extendedBounds("2016-01-22", "2017-08-01")
+                .order(Histogram.Order.COUNT_ASC);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
     }
 
 }
