@@ -32,6 +32,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
@@ -39,13 +40,24 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     // index field from super will be deleted after test
     private static final String INDEX_NAME = "integration";
 
-    private String testDataContent;
-    private ArrayList<TestData> testData;
+    private static ObjectMapper mapper;
+    private static String testDataContent;
+    private static ArrayList<TestData> testData;
 
     private Client client;
 
+    @BeforeClass
+    public static void prepareData() throws IOException {
+        mapper = new ObjectMapper();
+        ClassLoader classLoader = RyftElasticPluginSmokeTest.class.getClassLoader();
+        File file = new File(classLoader.getResource("dataset.json").getFile());
+        testDataContent = new String(Files.readAllBytes(file.toPath()));
+        testData = mapper.readValue(testDataContent, new TypeReference<List<TestData>>() {
+        });
+    }
+
     @Before
-    public void before() throws IOException {
+    public void before() {
         client = getClient();
         // START SNIPPET: java-doc-admin-cluster-health
         ClusterHealthResponse health = client.admin().cluster().prepareHealth().setWaitForYellowStatus().get();
@@ -70,13 +82,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                     + "    }\n"
                     + "}").get();
 
-            ClassLoader classLoader = getClass().getClassLoader();
-            File file = new File(classLoader.getResource("dataset.json").getFile());
-            testDataContent = new String(Files.readAllBytes(file.toPath()));
-            ObjectMapper mapper = new ObjectMapper();
-            testData = mapper.readValue(testDataContent, new TypeReference<List<TestData>>() {
-            });
-
             BulkRequestBuilder bulkRequest = client.prepareBulk();
 
             testData.forEach(data -> {
@@ -93,12 +98,10 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
             if (bulkResponse.hasFailures()) {
                 LOGGER.error(bulkResponse.buildFailureMessage());
             } else {
-                client.admin().cluster().prepareHealth(INDEX_NAME)
-                        .setWaitForYellowStatus()
-                        .get();
                 LOGGER.info("Bulk indexing succeeded.");
             }
         }
+        client.admin().indices().prepareRefresh(INDEX_NAME).get();
     }
 
     @AfterClass
