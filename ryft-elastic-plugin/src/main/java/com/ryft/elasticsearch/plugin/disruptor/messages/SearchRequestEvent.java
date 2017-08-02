@@ -14,7 +14,7 @@ import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public abstract class SearchRequestEvent extends RequestEvent {
 
@@ -25,19 +25,19 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final String query;
     protected final String encodedQuery;
 
-    protected final List<AggregationBuilder> aggregations;
+    protected final List<AbstractAggregationBuilder> aggregationBuilders;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
                                  @Assisted RyftProperties ryftProperties,
                                  @Assisted RyftQuery query,
-                                 @Assisted List<AggregationBuilder> aggregations) throws ElasticConversionCriticalException {
+                                 @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws ElasticConversionCriticalException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = query.buildRyftString();
-        this.aggregations = aggregations;
+        this.aggregationBuilders = aggregationBuilders;
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -64,7 +64,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
-    public List<AggregationBuilder> getAggregations() {
-        return aggregations;
+    public List<AbstractAggregationBuilder> getAggregationBuilders() {
+        return aggregationBuilders;
     }
 }

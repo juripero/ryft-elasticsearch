@@ -14,7 +14,7 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class IndexSearchRequestEvent extends SearchRequestEvent {
 
@@ -31,8 +31,8 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, @Assisted RyftProperties ryftProperties,
             @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, 
-            @Assisted List<AggregationBuilder> aggregations) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query, aggregations);
+            @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws ElasticConversionCriticalException {
+        super(clusterService, ryftProperties, query, aggregationBuilders);
         this.settings = settings;
         this.shards = shards;
     }

@@ -8,7 +8,7 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class ElasticConverterAggs implements ElasticConvertingElement<Void> {
 
@@ -29,9 +29,9 @@ public class ElasticConverterAggs implements ElasticConvertingElement<Void> {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
         String aggName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
         String aggType = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-        RyftProperties aggProperties = ElasticConversionUtil.getMap(convertingContext);
-        AggregationBuilder aggregationBuilder = aggregationFactory.get(aggType, aggName, aggProperties);
-        convertingContext.getAggregations().add(aggregationBuilder);
+        RyftProperties aggregationProperties = ElasticConversionUtil.getMap(convertingContext);
+        AbstractAggregationBuilder aggregationBuilder = aggregationFactory.get(aggType, aggName, aggregationProperties);
+        convertingContext.getAggregationBuilders().add(aggregationBuilder);
         return null;
     }
 

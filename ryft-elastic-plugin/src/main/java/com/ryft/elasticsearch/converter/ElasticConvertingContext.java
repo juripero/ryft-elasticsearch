@@ -16,7 +16,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class ElasticConvertingContext {
 
@@ -48,7 +48,7 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
-    private final List<AggregationBuilder> aggregations = new ArrayList<>();
+    private final List<AbstractAggregationBuilder> aggregationBuilders = new ArrayList<>();
     private Boolean filtered = false;
 
     @Inject
@@ -170,8 +170,8 @@ public class ElasticConvertingContext {
         this.filtered = filtered;
     }
 
-    public List<AggregationBuilder> getAggregations() {
-        return aggregations;
+    public List<AbstractAggregationBuilder> getAggregationBuilders() {
+        return aggregationBuilders;
     }
    
 }

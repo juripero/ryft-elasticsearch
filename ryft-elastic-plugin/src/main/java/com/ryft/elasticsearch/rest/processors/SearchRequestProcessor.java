@@ -63,7 +63,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         executor.submit(() -> {
             try {
                 event.getCallback().onResponse(executeRequest(event));
-            } catch (InterruptedException | ElasticConversionCriticalException ex) {
+            } catch (ElasticConversionCriticalException | InterruptedException | RuntimeException ex) {
                 LOGGER.error("Request processing error", ex);
                 event.getCallback().onFailure(ex);
             }

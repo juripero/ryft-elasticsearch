@@ -37,19 +37,22 @@ public class AggregationService {
 
     public InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
             SearchRequestEvent requestEvent) throws ElasticConversionCriticalException {
-        List<AggregationBuilder> aggregations = requestEvent.getAggregations();
+        List<AbstractAggregationBuilder> aggregationBuilders = requestEvent.getAggregationBuilders();
         if ((internalSearchHits.getTotalHits() == 0)
-                || (aggregations == null)
-                || (aggregations.isEmpty())) {
+                || (aggregationBuilders == null)
+                || (aggregationBuilders.isEmpty())) {
+            LOGGER.debug("No aggregation");
             return InternalAggregations.EMPTY;
         } else {
             String tempIndexName = getTempIndexName(requestEvent);
             try {
                 prepareTempIndex(internalSearchHits, tempIndexName);
+                AbstractAggregationBuilder aggregationBuilder = aggregationBuilders.get(0);
+                LOGGER.info("Start aggregation {}", aggregationBuilder);
                 SearchResponse searchResponse = client
                         .prepareSearch(tempIndexName)
                         .setQuery(QueryBuilders.matchAllQuery())
-                        .addAggregation(aggregations.get(0))
+                        .addAggregation(aggregationBuilder)
                         .get();
                 return (InternalAggregations) searchResponse.getAggregations();
             } finally {

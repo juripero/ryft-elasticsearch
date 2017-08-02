@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class FileSearchRequestEvent extends SearchRequestEvent {
     
@@ -25,8 +25,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<AggregationBuilder> aggregations) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query, aggregations);
+            @Assisted RyftQuery query, @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws ElasticConversionCriticalException {
+        super(clusterService, ryftProperties, query, aggregationBuilders);
     }
 
     public URI getRyftSearchURL() throws ElasticConversionCriticalException {

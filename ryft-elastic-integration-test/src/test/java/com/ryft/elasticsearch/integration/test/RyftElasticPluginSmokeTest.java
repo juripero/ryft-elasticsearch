@@ -26,10 +26,14 @@ import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
+import org.elasticsearch.search.aggregations.metrics.min.InternalMin;
+import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.min.MinBuilder;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -770,17 +774,17 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @Test
     public void testDateHistogramAggregation() throws InterruptedException, ExecutionException {
-        String histogramName = "1";
+        String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
-        AggregationBuilder aggregationBuilder = AggregationBuilders
-                .dateHistogram(histogramName).field("registered").interval(DateHistogramInterval.YEAR);
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .dateHistogram(aggregationName).field("registered").interval(DateHistogramInterval.YEAR);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
-        InternalHistogram<InternalHistogram.Bucket> histogram = (InternalHistogram) searchResponse.getAggregations().get(histogramName);
-        histogram.getBuckets().forEach((bucket) -> {
+        InternalHistogram<InternalHistogram.Bucket> aggregation = (InternalHistogram) searchResponse.getAggregations().get(aggregationName);
+        aggregation.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
         });
 
@@ -793,7 +797,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 + "    }\n"
                 + "  },\n"
                 + "  \"aggs\": {\n"
-                + "    \"" + histogramName + "\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
                 + "      \"date_histogram\": {\n"
                 + "        \"field\": \"registered\",\n"
                 + "        \"interval\": \"1y\"\n"
@@ -809,8 +813,48 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         ryftHistogram.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
         });
-        LOGGER.info("Ryft response has {} hits", ryftResponse.getHits().getTotalHits());
-        assertEquals("Histograms should have same buckets", histogram.getBuckets(), histogram.getBuckets());
+        assertEquals("Histograms should have same buckets", aggregation.getBuckets(), aggregation.getBuckets());
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testMinAggregation() throws InterruptedException, ExecutionException {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .min(aggregationName).field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toString());
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Min aggregation = (Min) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES min value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"min\": {\n"
+                + "        \"field\": \"age\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Min ryftAggregation = (Min) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT min value: {}", ryftAggregation.getValue());
+
+        assertEquals("Min values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 

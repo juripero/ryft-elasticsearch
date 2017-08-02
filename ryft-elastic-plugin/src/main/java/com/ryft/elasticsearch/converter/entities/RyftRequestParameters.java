@@ -8,23 +8,23 @@ import java.util.Arrays;
 import java.util.List;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class RyftRequestParameters {
 
     private final RyftProperties ryftProperties;
     private final RyftQuery query;
     private final String[] indices;
-    private final List<AggregationBuilder> aggregations;
+    private final List<AbstractAggregationBuilder> aggregationBuilders;
 
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
-            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted List<AggregationBuilder> aggregations) {
+            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted List<AbstractAggregationBuilder> aggregationBuilders) {
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = ryftQuery;
         this.indices = indices;
-        this.aggregations = aggregations;
+        this.aggregationBuilders = aggregationBuilders;
     }
 
     public RyftQuery getQuery() {
@@ -48,8 +48,8 @@ public class RyftRequestParameters {
                 || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
     }
 
-    public List<AggregationBuilder> getAggregations() {
-        return aggregations;
+    public List<AbstractAggregationBuilder> getAggregations() {
+        return aggregationBuilders;
     }
 
     @Override

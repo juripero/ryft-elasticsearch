@@ -1,6 +1,8 @@
 package com.ryft.elasticsearch.plugin;
 
+import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class RyftProperties extends Properties {
 
@@ -27,4 +29,9 @@ public class RyftProperties extends Properties {
         return (containsKey(key)) ? (RyftProperties) get(key) : null;
     }
 
+    public Map<String, Object> toMap() {
+        return entrySet().stream().collect(Collectors.toMap(
+                entry -> entry.getKey().toString(),
+                entry -> entry.getValue()));
+    }
 }
