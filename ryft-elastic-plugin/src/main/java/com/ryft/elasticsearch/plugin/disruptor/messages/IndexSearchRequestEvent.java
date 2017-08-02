@@ -1,6 +1,6 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -31,13 +31,13 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, @Assisted RyftProperties ryftProperties,
             @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, 
-            @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws ElasticConversionCriticalException {
+            @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws RyftSearchException {
         super(clusterService, ryftProperties, query, aggregationBuilders);
         this.settings = settings;
         this.shards = shards;
     }
 
-    public URI getRyftSearchURL(ShardRouting shardRouting) throws ElasticConversionCriticalException {
+    public URI getRyftSearchURL(ShardRouting shardRouting) throws RyftSearchException {
         try {
             validateRequest();
             URI result = new URI("http://"
@@ -51,7 +51,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                     + "&limit=" + getLimit());
             return result;
         } catch (URISyntaxException ex) {
-            throw new ElasticConversionCriticalException("Ryft search URL composition exceptoion", ex);
+            throw new RyftSearchException("Ryft search URL composition exceptoion", ex);
         }
     }
 

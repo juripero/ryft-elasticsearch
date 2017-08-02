@@ -1,8 +1,8 @@
 package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.io.IOException;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -36,7 +36,7 @@ public class AggregationService {
     }
 
     public InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
-            SearchRequestEvent requestEvent) throws ElasticConversionCriticalException {
+            SearchRequestEvent requestEvent) throws RyftSearchException {
         List<AbstractAggregationBuilder> aggregationBuilders = requestEvent.getAggregationBuilders();
         if ((internalSearchHits.getTotalHits() == 0)
                 || (aggregationBuilders == null)
@@ -62,7 +62,7 @@ public class AggregationService {
     }
 
     private void prepareTempIndex(InternalSearchHits internalSearchHits, String tempIndexName)
-            throws ElasticConversionCriticalException {
+            throws RyftSearchException {
         LOGGER.debug("Creating temp index {}.", tempIndexName);
 
         Settings indexSettings = Settings.builder().put("number_of_shards", 1)
@@ -87,7 +87,7 @@ public class AggregationService {
         } catch (IOException ex) {
             String errorMessage = String.format("Cannot get mappings of index %s.", index);
             LOGGER.error(errorMessage, ex);
-            throw new ElasticConversionCriticalException(errorMessage, ex);
+            throw new RyftSearchException(errorMessage, ex);
         }
 
         BulkRequestBuilder bulkRequest = client.prepareBulk();
@@ -101,7 +101,7 @@ public class AggregationService {
         if (bulkResponse.hasFailures()) {
             String errorMessage = String.format("Cannot upload data to temp index %s: %s", tempIndexName, bulkResponse.buildFailureMessage());
             LOGGER.error(errorMessage);
-            throw new ElasticConversionCriticalException(errorMessage);
+            throw new RyftSearchException(errorMessage);
         } else {
             LOGGER.info("Data uploaded to temp index {} succesfully.", tempIndexName);
         }

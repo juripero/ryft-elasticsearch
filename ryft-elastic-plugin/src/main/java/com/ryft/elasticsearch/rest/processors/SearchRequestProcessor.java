@@ -18,12 +18,12 @@ import org.elasticsearch.common.logging.Loggers;
 
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.net.URI;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,7 +63,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         executor.submit(() -> {
             try {
                 event.getCallback().onResponse(executeRequest(event));
-            } catch (ElasticConversionCriticalException | InterruptedException | RuntimeException ex) {
+            } catch (RyftSearchException | InterruptedException | RuntimeException ex) {
                 LOGGER.error("Request processing error", ex);
                 event.getCallback().onFailure(ex);
             }
@@ -71,18 +71,18 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private SearchResponse executeRequest(RequestEvent event)
-            throws ElasticConversionCriticalException, InterruptedException {
+            throws RyftSearchException, InterruptedException {
         if (event instanceof IndexSearchRequestEvent) {
             return executeRequest((IndexSearchRequestEvent) event);
         }
         if (event instanceof FileSearchRequestEvent) {
             return executeRequest((FileSearchRequestEvent) event);
         }
-        throw new ElasticConversionCriticalException("Unknown request event");
+        throw new RyftSearchException("Unknown request event");
     }
 
     private SearchResponse executeRequest(IndexSearchRequestEvent requestEvent)
-            throws InterruptedException, ElasticConversionCriticalException {
+            throws InterruptedException, RyftSearchException {
         Map<Integer, List<ShardRouting>> groupedShards = requestEvent.getShards().stream()
                 .filter(shard -> shard.started())
                 .collect(Collectors.groupingBy(ShardRouting::getId));
@@ -90,7 +90,7 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private SearchResponse executeRequest(FileSearchRequestEvent requestEvent)
-            throws InterruptedException, ElasticConversionCriticalException {
+            throws InterruptedException, RyftSearchException {
         Long start = System.currentTimeMillis();
         Map<SearchShardTarget, RyftResponse> resultResponses = sendToRyft(requestEvent);
         Long searchTime = System.currentTimeMillis() - start;
@@ -98,7 +98,7 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private Map<SearchShardTarget, RyftResponse> sendToRyft(
-            FileSearchRequestEvent requestEvent) throws InterruptedException, ElasticConversionCriticalException {
+            FileSearchRequestEvent requestEvent) throws InterruptedException, RyftSearchException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         Optional<ChannelFuture> maybeChannelFuture = sendToRyft(requestEvent.getRyftSearchURL(), null, countDownLatch);
         countDownLatch.await();
@@ -113,7 +113,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             resultResponses.put(searchShardTarget, ryftResponse);
             return resultResponses;
         } else {
-            throw new ElasticConversionCriticalException("Can not get response from RYFT");
+            throw new RyftSearchException("Can not get response from RYFT");
         }
     }
 
@@ -154,7 +154,7 @@ public class SearchRequestProcessor extends RyftProcessor {
                     LOGGER.info("Attempt to search on other shard.");
                     return sendToRyft(requestEvent, shards, countDownLatch);
                 }
-            } catch (ElasticConversionCriticalException ex) {
+            } catch (RyftSearchException ex) {
                 LOGGER.error("Can not get search URL", ex);
                 return sendToRyft(requestEvent, shards, countDownLatch);
             }
@@ -183,7 +183,7 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
-            Map<Integer, List<ShardRouting>> groupedShards) throws InterruptedException, ElasticConversionCriticalException {
+            Map<Integer, List<ShardRouting>> groupedShards) throws InterruptedException, RyftSearchException {
         Long start = System.currentTimeMillis();
         Map<SearchShardTarget, RyftResponse> ryftResponses = sendToRyft(requestEvent, groupedShards);
         Long searchTime = System.currentTimeMillis() - start;
@@ -193,7 +193,7 @@ public class SearchRequestProcessor extends RyftProcessor {
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
             Map<Integer, List<ShardRouting>> groupedShards,
-            Map<SearchShardTarget, RyftResponse> ryftResponses, Long searchTime) throws InterruptedException, ElasticConversionCriticalException {
+            Map<SearchShardTarget, RyftResponse> ryftResponses, Long searchTime) throws InterruptedException, RyftSearchException {
         Map<SearchShardTarget, RyftResponse> errorResponses = ryftResponses.entrySet().stream()
                 .filter(entry -> entry.getValue().hasErrors())
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
@@ -227,7 +227,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         }
     }
 
-    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws ElasticConversionCriticalException {
+    private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws RyftSearchException {
         List<InternalSearchHit> searchHits = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;

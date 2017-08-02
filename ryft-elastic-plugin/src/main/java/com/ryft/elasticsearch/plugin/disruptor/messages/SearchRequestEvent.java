@@ -1,6 +1,6 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ElasticConverterRyft;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
@@ -31,7 +31,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected SearchRequestEvent(ClusterService clusterService,
                                  @Assisted RyftProperties ryftProperties,
                                  @Assisted RyftQuery query,
-                                 @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws ElasticConversionCriticalException {
+                                 @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws RyftSearchException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
@@ -41,14 +41,14 @@ public abstract class SearchRequestEvent extends RequestEvent {
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
-            throw new ElasticConversionCriticalException(ex);
+            throw new RyftSearchException(ex);
         }
     }
 
-    protected void validateRequest() throws ElasticConversionCriticalException {
+    protected void validateRequest() throws RyftSearchException {
         if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
                 && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UNKNOWN_FORMAT)) {
-            throw new ElasticConversionCriticalException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
+            throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
         }
     }
 
