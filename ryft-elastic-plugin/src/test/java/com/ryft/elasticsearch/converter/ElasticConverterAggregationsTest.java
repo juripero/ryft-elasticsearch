@@ -16,6 +16,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuild
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
+import org.elasticsearch.search.aggregations.metrics.max.MaxBuilder;
 import org.elasticsearch.search.aggregations.metrics.min.MinBuilder;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -120,6 +121,45 @@ public class ElasticConverterAggregationsTest {
         MinBuilder actualAgg = (MinBuilder) ryftRequestParameters.getAggregations().get(0);
         Script script = new Script("my_script", ScriptService.ScriptType.FILE, null, ImmutableMap.of("field", "price"));
         MinBuilder expectedAgg = AggregationBuilders.min("agg_name")
+                .field("value").missing(1).script(script);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
+    public void maxAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"max\": {"
+                + "        \"field\": \"value\","
+                + "        \"missing\": 1,"
+                + "        \"script\": {"
+                + "          \"id\": \"my_script\","
+                + "          \"lang\": \"groovy\","
+                + "          \"params\": {"
+                + "            \"field\": \"price\""
+                + "          }"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        MaxBuilder actualAgg = (MaxBuilder) ryftRequestParameters.getAggregations().get(0);
+        Script script = new Script("my_script", ScriptService.ScriptType.INDEXED, "groovy", ImmutableMap.of("field", "price"));
+        MaxBuilder expectedAgg = AggregationBuilders.max("agg_name")
                 .field("value").missing(1).script(script);
         assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
                 actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());

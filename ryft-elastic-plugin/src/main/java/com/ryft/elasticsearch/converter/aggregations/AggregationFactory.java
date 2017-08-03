@@ -10,12 +10,14 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuild
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
+import org.elasticsearch.search.aggregations.metrics.max.MaxBuilder;
 import org.elasticsearch.search.aggregations.metrics.min.MinBuilder;
 
 public class AggregationFactory {
 
     private static final String DATE_HISTOGRAM_AGGREGATION = "date_histogram";
     private static final String MIN_AGGREGATION = "min";
+    private static final String MAX_AGGREGATION = "max";
     private static final String AVG_AGGREGATION = "avg";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
@@ -25,6 +27,8 @@ public class AggregationFactory {
                 return getDateHistogramAggregation(aggName, aggregationProperties);
             case MIN_AGGREGATION:
                 return getMinAggregation(aggName, aggregationProperties);
+            case MAX_AGGREGATION:
+                return getMaxAggregation(aggName, aggregationProperties);
             case AVG_AGGREGATION:
                 return getAvgAggregation(aggName, aggregationProperties);
             default:
@@ -59,6 +63,18 @@ public class AggregationFactory {
 
     private AbstractAggregationBuilder getMinAggregation(String aggName, RyftProperties aggregationProperties) {
         MinBuilder result = AggregationBuilders.min(aggName);
+        if (aggregationProperties.containsKey("script")) {
+            RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
+            result.script(getScript(scriptProperties));
+        }
+        result.field(aggregationProperties.getStr("field"))
+                .format(aggregationProperties.getStr("format"))
+                .missing(aggregationProperties.getInt("missing"));
+        return result;
+    }
+
+    private AbstractAggregationBuilder getMaxAggregation(String aggName, RyftProperties aggregationProperties) {
+        MaxBuilder result = AggregationBuilders.max(aggName);
         if (aggregationProperties.containsKey("script")) {
             RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
             result.script(getScript(scriptProperties));
