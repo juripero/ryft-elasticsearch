@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Files;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -25,12 +26,15 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
+import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.min.InternalMin;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.min.MinBuilder;
@@ -106,6 +110,8 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
             }
         }
         client.admin().indices().prepareRefresh(INDEX_NAME).get();
+        client.admin().cluster().prepareUpdateSettings().setTransientSettings(
+                ImmutableMap.of("script.engine.groovy.inline.aggs", "true")).get();
     }
 
     @AfterClass
@@ -779,7 +785,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .dateHistogram(aggregationName).field("registered").interval(DateHistogramInterval.YEAR);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
-        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -824,7 +829,6 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .min(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
-        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -855,6 +859,54 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         LOGGER.info("RYFT min value: {}", ryftAggregation.getValue());
 
         assertEquals("Min values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testAvgAggregation() throws InterruptedException, ExecutionException {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        Script script = new Script("_value * correction", ScriptService.ScriptType.INLINE, "groovy", ImmutableMap.of("correction", 1.2));
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
+                .field("age").script(script);
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Avg aggregation = (Avg) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES avg value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {"
+                + "    \"" + aggregationName + "\": {"
+                + "      \"avg\": {"
+                + "        \"field\": \"age\","
+                + "        \"script\" : {\n"
+                + "          \"lang\": \"groovy\",\n"
+                + "          \"inline\": \"_value * correction\",\n"
+                + "          \"params\" : {\n"
+                + "            \"correction\" : 1.2\n"
+                + "          }\n"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
+
+        assertEquals("Avg values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 

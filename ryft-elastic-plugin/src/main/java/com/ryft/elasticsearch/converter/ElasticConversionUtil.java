@@ -52,7 +52,7 @@ public abstract class ElasticConversionUtil {
                             value = getString(convertingContext);
                             break;
                         case VALUE_NUMBER:
-                            value = getInteger(convertingContext);
+                            value = getNumber(convertingContext);
                             break;
                         case VALUE_BOOLEAN:
                             value = getBoolean(convertingContext);
@@ -181,13 +181,17 @@ public abstract class ElasticConversionUtil {
         }
     }
 
-    static Long getLong(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+    static Number getNumber(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         String value = getString(convertingContext);
         try {
             return Long.parseLong(value);
-        } catch (RuntimeException ex) {
+        } catch (NumberFormatException ex) {
+        }
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException ex) {
             throw new ElasticConversionException(
-                    String.format("Can not parse value \"%s\" as Integer.", value), ex);
+                    String.format("Can not parse value \"%s\" as Number.", value), ex);
         }
     }
 
