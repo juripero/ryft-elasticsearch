@@ -71,21 +71,21 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
     protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
 
-    private static final AtomicInteger counter = new AtomicInteger();
+    private static final AtomicInteger COUNTER = new AtomicInteger();
     private static Client client;
     private static String clusterAddresses;
     protected String index;
 
     private static Client startClient(Path tempDir, TransportAddress... transportAddresses) {
         Settings clientSettings = Settings.settingsBuilder()
-                .put("name", "qa_smoke_client_" + counter.getAndIncrement())
+                .put("name", "qa_smoke_client_" + COUNTER.getAndIncrement())
                 .put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true) // prevents any settings to be replaced by system properties.
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
                 .put("node.mode", "network").build(); // we require network here!
 
         TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
-        TransportClient client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
+        client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
 
         LOGGER.info("--> Elasticsearch Java TransportClient started");
 
@@ -124,7 +124,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     public static Client getClient() {
         if (client == null) {
             try {
-                client = startClient();
+                startClient();
             } catch (UnknownHostException e) {
                 LOGGER.error("can not start the client", e);
             }

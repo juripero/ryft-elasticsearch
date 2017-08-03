@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,6 +23,8 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.unit.Fuzziness;
+import static org.elasticsearch.common.xcontent.ToXContent.EMPTY_PARAMS;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.index.query.MatchQueryBuilder.Operator;
 import org.elasticsearch.script.Script;
@@ -36,6 +37,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -95,7 +97,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 try {
                     json = mapper.writeValueAsString(data);
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    LOGGER.error(e.toString());
                 }
                 bulkRequest.add(client.prepareIndex(INDEX_NAME, "data", data.getId())
                         .setSource(json));
@@ -121,9 +123,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * match-phrase-query: Fuzziness 1 looking for about: Esse ipsum et laborum
      * labore original phrase: Esse ipsum et laborum labore
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testSimpleFuzzyMatch() throws InterruptedException, ExecutionException {
+    public void testSimpleFuzzyMatch() throws Exception {
         MatchQueryBuilder builder = QueryBuilders.matchPhraseQuery("about", "Esse ipsum et laborum labore")
                 .fuzziness(Fuzziness.ONE)
                 .operator(Operator.AND);
@@ -143,9 +147,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * match-phrase-query: Fuzziness 1 looking for about: Esse ipsum et laborum
      * labore original phrase: Esse ipsum et laborum labore
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testSimpleFuzzyMatch2() throws InterruptedException, ExecutionException {
+    public void testSimpleFuzzyMatch2() throws Exception {
         MatchQueryBuilder builder = QueryBuilders.matchPhraseQuery("about", "Esse ipsum et laborum labore")
                 .fuzziness(Fuzziness.AUTO)
                 .operator(Operator.AND);
@@ -165,9 +171,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * fuzzy-query: Fuzziness 1 looking for first name: pitra original first
      * name: Petra
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testSimpleFuzzyQuery() throws InterruptedException, ExecutionException {
+    public void testSimpleFuzzyQuery() throws Exception {
         FuzzyQueryBuilder builder = QueryBuilders.fuzzyQuery("firstName", "pitra")
                 .fuzziness(Fuzziness.ONE);
         LOGGER.info("Testing query: {}", builder.toString());
@@ -186,9 +194,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * fuzzy-query: Fuzziness 2 looking for first name: pira original first
      * name: Petra
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testSimpleFuzzyQuery2() throws InterruptedException, ExecutionException {
+    public void testSimpleFuzzyQuery2() throws Exception {
         FuzzyQueryBuilder builder = QueryBuilders.fuzzyQuery("firstName", "pira")
                 .fuzziness(Fuzziness.TWO);
         LOGGER.info("Testing query: {}", builder.toString());
@@ -209,9 +219,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     /**
      * Match-query: Fuzziness 1 Looking for: Esse ipum original : Esse ipsum
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testMatchMust() throws InterruptedException, ExecutionException {
+    public void testMatchMust() throws Exception {
         MatchQueryBuilder builder = QueryBuilders
                 .matchQuery("about", "Esse ipum")
                 .fuzziness(Fuzziness.ONE).operator(Operator.AND).fuzziness(Fuzziness.ONE);
@@ -231,9 +243,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     /**
      * Match-query: Fuzziness 2 Looking for: Esse pum original : Esse ipsum
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testMatchMust2() throws InterruptedException, ExecutionException {
+    public void testMatchMust2() throws Exception {
         MatchQueryBuilder builder = QueryBuilders
                 .matchQuery("about", "Esse pum")
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);
@@ -254,9 +268,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * Bool-match-must-query: Fuzziness 1 Looking for: Casillo and company:
      * ATMICA original : ATOMICA, Castillo
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchMust() throws InterruptedException, ExecutionException {
+    public void testBoolMatchMust() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("company", "ATMICA")
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);
@@ -284,9 +300,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * Bool-match-must-query: Fuzziness 2 Looking for: Csillo and company: ATICA
      * original : ATOMICA, Castillo
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchMust2() throws InterruptedException, ExecutionException {
+    public void testBoolMatchMust2() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("company", "ATICA")
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);
@@ -314,9 +332,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * Bool-match-must-query: Fuzziness 2 Looking for: 'Labors elt volutate' and
      * company: OTHWAY original : Laboris elit voluptate company: OTHERWAY
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchMust3() throws InterruptedException, ExecutionException {
+    public void testBoolMatchMust3() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("about", "Labors elt volutate")
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);
@@ -344,9 +364,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     /**
      * Bool-match-must-query: Fuzziness 2 Looking for: 'Labos el voluate' and
      * company: OTHWAY original : Laboris elit voluptate company: OTHERWAY
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchMust4() throws InterruptedException, ExecutionException {
+    public void testBoolMatchMust4() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("about", "Labos el voluate")
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);
@@ -375,9 +397,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-should-query: Fuzziness 1 Looking for: 'Offici fugia dolor
      * commod' OR 'Lore sin incididnt' original : Officia fugiat dolore commodo
      * , Lorem sint incididunt
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchShould() throws InterruptedException, ExecutionException {
+    public void testBoolMatchShould() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("about", "Offici fugia dolor commod")
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);
@@ -406,9 +430,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-should-query: Fuzziness 2 Looking for: 'Offic ugia olor ommod'
      * OR 'ore si ncididnt' original : Officia fugiat dolore commodo , Lorem
      * sint incididunt
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchShould2() throws InterruptedException, ExecutionException {
+    public void testBoolMatchShould2() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("about", "Offic ugia olor ommod")
                 .operator(Operator.AND).fuzziness(Fuzziness.TWO);
@@ -437,9 +463,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-should-query: Fuzziness 2 Looking for: 'green' and first name
      * 'Petra' or for 'green' and first name 'Hayden' Used minimum_should match
      * parameter and type:'phrase'
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchShould3() throws InterruptedException, ExecutionException {
+    public void testBoolMatchShould3() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("eyeColor", "gren")
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);
@@ -474,9 +502,11 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
      * Bool-match-should-query: Fuzziness 2 Looking for: 'green' and firstName
      * 'Petra' or for 'green' and first name not 'Hayden' Used minimum_should
      * match parameter and type:'phrase' AND MUST NOT:
+     *
+     * @throws java.lang.Exception
      */
     @Test
-    public void testBoolMatchShouldMustNot4() throws InterruptedException, ExecutionException {
+    public void testBoolMatchShouldMustNot4() throws Exception {
         MatchQueryBuilder builderSpeaker = QueryBuilders
                 .matchQuery("eyeColor", "gren")
                 .operator(Operator.AND).fuzziness(Fuzziness.AUTO);
@@ -508,7 +538,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testWildcardMatch() throws InterruptedException, ExecutionException {
+    public void testWildcardMatch() throws Exception {
         WildcardQueryBuilder builder = QueryBuilders.wildcardQuery("lastName", "Und?rwood");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -529,7 +559,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testRawTextSearch() throws InterruptedException, ExecutionException {
+    public void testRawTextSearch() throws Exception {
         ClusterState clusterState = client.admin().cluster().prepareState().setIndices(INDEX_NAME).get().getState();
         String file = String.format("/%1$s/nodes/0/indices/%2$s/*/index/_*.%2$sjsonfld",
                 clusterState.getClusterName().value(), INDEX_NAME);
@@ -556,7 +586,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testDatetimeTerm() throws InterruptedException, ExecutionException {
+    public void testDatetimeTerm() throws Exception {
         TermQueryBuilder builder = QueryBuilders.termQuery("registered", "2014-01-01 07:00:00");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -581,7 +611,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testDatetimeRange() throws InterruptedException, ExecutionException {
+    public void testDatetimeRange() throws Exception {
         RangeQueryBuilder builder = QueryBuilders.rangeQuery("registered").gt("2014-01-01 07:00:00").lt("2014-01-07 07:00:00");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -607,7 +637,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testNumericTerm() throws InterruptedException, ExecutionException {
+    public void testNumericTerm() throws Exception {
         TermQueryBuilder builder = QueryBuilders.termQuery("age", 22);
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -631,7 +661,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testNumericRange() throws InterruptedException, ExecutionException {
+    public void testNumericRange() throws Exception {
         RangeQueryBuilder builder = QueryBuilders.rangeQuery("age").gt(22).lt(29);
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -656,7 +686,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testCurrencyTerm() throws InterruptedException, ExecutionException {
+    public void testCurrencyTerm() throws Exception {
         QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -681,7 +711,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testIpv4Term() throws InterruptedException, ExecutionException {
+    public void testIpv4Term() throws Exception {
         QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("122.176.86.200").field("ipv4");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -705,7 +735,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testIpv6Term() throws InterruptedException, ExecutionException {
+    public void testIpv6Term() throws Exception {
         QueryBuilder builder = QueryBuilders.matchPhraseQuery("ipv6", "21DA:D3:0:2F3B:2AA:FF:FE28:9C5A");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(builder).get();
@@ -729,7 +759,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testFilters() throws InterruptedException, ExecutionException {
+    public void testFilters() throws Exception {
         QueryBuilder builder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.matchPhraseQuery("ipv6", "21DA:D3:0:2F3B:2AA:FF:FE28:9C5A"))
                 .must(QueryBuilders.rangeQuery("registered").format("epoch_millis").from(1339168100654L).to(1496934500654L));
@@ -777,12 +807,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testDateHistogramAggregation() throws InterruptedException, ExecutionException {
+    public void testDateHistogramAggregation() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .dateHistogram(aggregationName).field("registered").interval(DateHistogramInterval.YEAR);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -821,12 +853,14 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testMinAggregation() throws InterruptedException, ExecutionException {
+    public void testMinAggregation() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .min(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -856,17 +890,19 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         Min ryftAggregation = (Min) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT min value: {}", ryftAggregation.getValue());
 
-        assertEquals("Min values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
+        assertEquals("Min values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     @Test
-    public void testMaxAggregation() throws InterruptedException, ExecutionException {
+    public void testMaxAggregation() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .max(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -896,18 +932,20 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         Max ryftAggregation = (Max) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT max value: {}", ryftAggregation.getValue());
 
-        assertEquals("Max values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
+        assertEquals("Max values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     @Test
-    public void testAvgAggregation() throws InterruptedException, ExecutionException {
+    public void testAvgAggregation() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         Script script = new Script("_value * correction", ScriptService.ScriptType.INLINE, "groovy", ImmutableMap.of("correction", 1.2));
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
                 .field("age").script(script);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -944,11 +982,60 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
 
-        assertEquals("Avg values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 0.0);
+        assertEquals("Avg values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
-    public void ryftQuerySample() throws IOException, InterruptedException, ExecutionException {
+    @Test
+    public void testStatsAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.stats(aggregationName)
+                .field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Stats aggregation = (Stats) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES stats: avg={}, count={}, max={}, min={}, sum={}",
+                aggregation.getAvg(), aggregation.getCount(), aggregation.getMax(),
+                aggregation.getMin(), aggregation.getSum());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {"
+                + "    \"" + aggregationName + "\": {"
+                + "      \"stats\": {"
+                + "        \"field\": \"age\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Stats ryftAggregation = (Stats) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT stats: avg={}, count={}, max={}, min={}, sum={}",
+                ryftAggregation.getAvg(), ryftAggregation.getCount(), ryftAggregation.getMax(),
+                ryftAggregation.getMin(), ryftAggregation.getSum());
+
+        assertEquals("Avg values should be equal", aggregation.getAvg(), ryftAggregation.getAvg(), 1e-10);
+        assertEquals("Count values should be equal", aggregation.getCount(), ryftAggregation.getCount(), 1e-10);
+        assertEquals("Max values should be equal", aggregation.getMax(), ryftAggregation.getMax(), 1e-10);
+        assertEquals("Min values should be equal", aggregation.getMin(), ryftAggregation.getMin(), 1e-10);
+        assertEquals("Sum values should be equal", aggregation.getSum(), ryftAggregation.getSum(), 1e-10);
+    }
+
+    public void ryftQuerySample() throws Exception {
         String elasticQuery = "{\"query\":{" + "\"match_phrase\": { " + "\"doc.text_entry\": {"
                 + "\"query\":\"To be, or not to be\"," + "\"metric\": \"Fhs\"," + "\"fuzziness\": 5" + "}" + "}" + "}}";
         LOGGER.info("Testing query: {}", elasticQuery);

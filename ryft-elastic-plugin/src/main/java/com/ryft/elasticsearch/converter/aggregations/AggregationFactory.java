@@ -9,9 +9,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
-import org.elasticsearch.search.aggregations.metrics.avg.AvgBuilder;
-import org.elasticsearch.search.aggregations.metrics.max.MaxBuilder;
-import org.elasticsearch.search.aggregations.metrics.min.MinBuilder;
+import org.elasticsearch.search.aggregations.metrics.ValuesSourceMetricsAggregationBuilder;
 
 public class AggregationFactory {
 
@@ -19,6 +17,7 @@ public class AggregationFactory {
     private static final String MIN_AGGREGATION = "min";
     private static final String MAX_AGGREGATION = "max";
     private static final String AVG_AGGREGATION = "avg";
+    private static final String STATS_AGGREGATION = "stats";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -31,6 +30,8 @@ public class AggregationFactory {
                 return getMaxAggregation(aggName, aggregationProperties);
             case AVG_AGGREGATION:
                 return getAvgAggregation(aggName, aggregationProperties);
+            case STATS_AGGREGATION:
+                return getStatsAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -62,39 +63,31 @@ public class AggregationFactory {
     }
 
     private AbstractAggregationBuilder getMinAggregation(String aggName, RyftProperties aggregationProperties) {
-        MinBuilder result = AggregationBuilders.min(aggName);
-        if (aggregationProperties.containsKey("script")) {
-            RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
-            result.script(getScript(scriptProperties));
-        }
-        result.field(aggregationProperties.getStr("field"))
-                .format(aggregationProperties.getStr("format"))
-                .missing(aggregationProperties.getInt("missing"));
-        return result;
+        return initMetricAggregation(AggregationBuilders.min(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getMaxAggregation(String aggName, RyftProperties aggregationProperties) {
-        MaxBuilder result = AggregationBuilders.max(aggName);
-        if (aggregationProperties.containsKey("script")) {
-            RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
-            result.script(getScript(scriptProperties));
-        }
-        result.field(aggregationProperties.getStr("field"))
-                .format(aggregationProperties.getStr("format"))
-                .missing(aggregationProperties.getInt("missing"));
-        return result;
+        return initMetricAggregation(AggregationBuilders.max(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getAvgAggregation(String aggName, RyftProperties aggregationProperties) {
-        AvgBuilder result = AggregationBuilders.avg(aggName);
+        return initMetricAggregation(AggregationBuilders.avg(aggName), aggregationProperties);
+    }
+
+    private AbstractAggregationBuilder getStatsAggregation(String aggName, RyftProperties aggregationProperties) {
+        return initMetricAggregation(AggregationBuilders.stats(aggName), aggregationProperties);
+    }
+
+    private ValuesSourceMetricsAggregationBuilder initMetricAggregation(
+            ValuesSourceMetricsAggregationBuilder aggBuilder, RyftProperties aggregationProperties) {
         if (aggregationProperties.containsKey("script")) {
             RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
-            result.script(getScript(scriptProperties));
+            aggBuilder.script(getScript(scriptProperties));
         }
-        result.field(aggregationProperties.getStr("field"))
+        aggBuilder.field(aggregationProperties.getStr("field"))
                 .format(aggregationProperties.getStr("format"))
                 .missing(aggregationProperties.getInt("missing"));
-        return result;
+        return aggBuilder;
     }
 
     private Script getScript(RyftProperties scriptProperties) {
