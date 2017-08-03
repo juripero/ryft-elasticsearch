@@ -27,9 +27,6 @@ public class ElasticConverterAggregationsTest {
     @Inject
     public ElasticConverter elasticConverter;
 
-    @Inject
-    public ContextFactory contextFactory;
-
     @Before
     public void setUp() {
         Guice.createInjector(

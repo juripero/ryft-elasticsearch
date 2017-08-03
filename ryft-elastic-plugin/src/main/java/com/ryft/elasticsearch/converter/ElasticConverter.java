@@ -75,7 +75,8 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
         try {
             if (request instanceof SearchRequest) {
                 SearchRequest searchRequest = (SearchRequest) request;
-                ElasticConvertingContext convertingContext = contextFactory.create(searchRequest);
+                ElasticConvertingContext convertingContext = contextFactory.create();
+                convertingContext.setSearchRequest(searchRequest);
                 RyftRequestParameters result = convert(convertingContext);
                 adjustRequest(searchRequest);
                 return result;

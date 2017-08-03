@@ -11,7 +11,6 @@ import java.util.Map;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -34,9 +33,9 @@ public class ElasticConvertingContext {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConvertingContext.class);
 
-    private final XContentParser contentParser;
+    private XContentParser contentParser;
     private final Map<String, ElasticConvertingElement> elasticConverters;
-    private final String originalQuery;
+    private String originalQuery;
     private final RyftQueryFactory ryftQueryFactory;
     private ElasticSearchType searchType;
     private RyftOperator ryftOperator = RyftOperator.CONTAINS;
@@ -52,17 +51,23 @@ public class ElasticConvertingContext {
     private Boolean filtered = false;
 
     @Inject
-    public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
-            Map<String, ElasticConvertingElement> injectedConverters,
-            RyftQueryFactory ryftQueryFactory) throws IOException {
+    public ElasticConvertingContext(Map<String, ElasticConvertingElement> injectedConverters,
+            RyftQueryFactory ryftQueryFactory) {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
-        BytesReference searchContent = searchRequest.source();
-        String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
-        this.originalQuery = queryString;
-        this.contentParser = XContentFactory.xContent(queryString).createParser(queryString);
-        this.indices = searchRequest.indices();
         this.ryftQueryFactory = ryftQueryFactory;
         this.queryProperties = new HashMap<>();
+    }
+
+    public void setSearchRequest(SearchRequest searchRequest) throws ElasticConversionException, IOException {
+        BytesReference searchContent = searchRequest.source();
+        if (searchContent == null) {
+            throw new ElasticConversionException("Can not get search query");
+        } else {
+            String queryString = searchContent.toUtf8();
+            this.originalQuery = queryString;
+            this.contentParser = XContentFactory.xContent(queryString).createParser(queryString);
+        }
+        this.indices = searchRequest.indices();
     }
 
     public XContentParser getContentParser() {
@@ -173,5 +178,5 @@ public class ElasticConvertingContext {
     public List<AbstractAggregationBuilder> getAggregationBuilders() {
         return aggregationBuilders;
     }
-   
+
 }

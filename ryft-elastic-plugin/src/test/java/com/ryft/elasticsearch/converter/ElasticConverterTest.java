@@ -20,9 +20,6 @@ public class ElasticConverterTest {
     @Inject
     public ElasticConverter elasticConverter;
 
-    @Inject
-    public ContextFactory contextFactory;
-
     @Before
     public void setUp() {
         Guice.createInjector(
