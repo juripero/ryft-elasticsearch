@@ -25,6 +25,10 @@ public class RyftProperties extends Properties {
         return (containsKey(key)) ? Long.parseLong(getStr(key)) : null;
     }
 
+    public Double getDouble(String key) {
+        return (containsKey(key)) ? Double.parseDouble(getStr(key)) : null;
+    }
+
     public RyftProperties getRyftProperties(String key) {
         return (containsKey(key)) ? (RyftProperties) get(key) : null;
     }

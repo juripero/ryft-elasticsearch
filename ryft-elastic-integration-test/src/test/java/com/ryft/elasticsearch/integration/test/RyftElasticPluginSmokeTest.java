@@ -38,6 +38,7 @@ import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
+import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -1033,6 +1034,71 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertEquals("Max values should be equal", aggregation.getMax(), ryftAggregation.getMax(), 1e-10);
         assertEquals("Min values should be equal", aggregation.getMin(), ryftAggregation.getMin(), 1e-10);
         assertEquals("Sum values should be equal", aggregation.getSum(), ryftAggregation.getSum(), 1e-10);
+    }
+
+    @Test
+    public void testExtStatsAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.extendedStats(aggregationName)
+                .field("age").sigma(3.1415926);
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        ExtendedStats aggregation = (ExtendedStats) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES extended stats: avg={}, count={}, max={}, min={}, sum={},\n"
+                + "stddev={}, lower_stddev={}, upper_stddev={}, sqsum={}, variance={}",
+                aggregation.getAvg(), aggregation.getCount(), aggregation.getMax(),
+                aggregation.getMin(), aggregation.getSum(), aggregation.getStdDeviation(),
+                aggregation.getStdDeviationBound(ExtendedStats.Bounds.LOWER),
+                aggregation.getStdDeviationBound(ExtendedStats.Bounds.UPPER),
+                aggregation.getSumOfSquares(), aggregation.getVariance());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {"
+                + "    \"" + aggregationName + "\": {"
+                + "      \"extended_stats\": {"
+                + "        \"field\": \"age\","
+                + "        \"sigma\": 3.1415926"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        ExtendedStats ryftAggregation = (ExtendedStats) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("ES extended stats: avg={}, count={}, max={}, min={}, sum={},\n"
+                + "stddev={}, lower_stddev={}, upper_stddev={}, sqsum={}, variance={}",
+                aggregation.getAvg(), aggregation.getCount(), aggregation.getMax(),
+                aggregation.getMin(), aggregation.getSum(), aggregation.getStdDeviation(),
+                aggregation.getStdDeviationBound(ExtendedStats.Bounds.LOWER),
+                aggregation.getStdDeviationBound(ExtendedStats.Bounds.UPPER),
+                aggregation.getSumOfSquares(), aggregation.getVariance());
+
+        assertEquals("avg values should be equal", aggregation.getAvg(), ryftAggregation.getAvg(), 1e-10);
+        assertEquals("count values should be equal", aggregation.getCount(), ryftAggregation.getCount(), 1e-10);
+        assertEquals("max values should be equal", aggregation.getMax(), ryftAggregation.getMax(), 1e-10);
+        assertEquals("min values should be equal", aggregation.getMin(), ryftAggregation.getMin(), 1e-10);
+        assertEquals("sum values should be equal", aggregation.getSum(), ryftAggregation.getSum(), 1e-10);
+        assertEquals("stddev values should be equal", aggregation.getStdDeviation(), ryftAggregation.getStdDeviation(), 1e-10);
+        assertEquals("lower_stddev values should be equal", aggregation.getStdDeviationBound(ExtendedStats.Bounds.LOWER),
+                ryftAggregation.getStdDeviationBound(ExtendedStats.Bounds.LOWER), 1e-10);
+        assertEquals("upper_stddev values should be equal", aggregation.getStdDeviationBound(ExtendedStats.Bounds.UPPER),
+                ryftAggregation.getStdDeviationBound(ExtendedStats.Bounds.UPPER), 1e-10);
+        assertEquals("sqsum values should be equal", aggregation.getSumOfSquares(), ryftAggregation.getSumOfSquares(), 1e-10);
+        assertEquals("variance values should be equal", aggregation.getVariance(), ryftAggregation.getVariance(), 1e-10);
     }
 
     public void ryftQuerySample() throws Exception {

@@ -231,4 +231,36 @@ public class ElasticConverterAggregationsTest {
         assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
                 actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
     }
+
+    @Test
+    public void extStatsAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"extended_stats\": {"
+                + "        \"field\": \"value\","
+                + "        \"missing\": 1,"
+                + "        \"sigma\": 3.1415926"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.extendedStats("agg_name")
+                .field("value").missing(1).sigma(3.1415926);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
 }

@@ -18,6 +18,7 @@ public class AggregationFactory {
     private static final String MAX_AGGREGATION = "max";
     private static final String AVG_AGGREGATION = "avg";
     private static final String STATS_AGGREGATION = "stats";
+    private static final String EXT_STATS_AGGREGATION = "extended_stats";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -32,6 +33,8 @@ public class AggregationFactory {
                 return getAvgAggregation(aggName, aggregationProperties);
             case STATS_AGGREGATION:
                 return getStatsAggregation(aggName, aggregationProperties);
+            case EXT_STATS_AGGREGATION:
+                return getExtStatsAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -78,8 +81,13 @@ public class AggregationFactory {
         return initMetricAggregation(AggregationBuilders.stats(aggName), aggregationProperties);
     }
 
-    private ValuesSourceMetricsAggregationBuilder initMetricAggregation(
-            ValuesSourceMetricsAggregationBuilder aggBuilder, RyftProperties aggregationProperties) {
+    private AbstractAggregationBuilder getExtStatsAggregation(String aggName, RyftProperties aggregationProperties) {
+        return initMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties)
+                .sigma(aggregationProperties.getDouble("sigma"));
+    }
+
+    private <T extends ValuesSourceMetricsAggregationBuilder> T initMetricAggregation(
+            T aggBuilder, RyftProperties aggregationProperties) {
         if (aggregationProperties.containsKey("script")) {
             RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
             aggBuilder.script(getScript(scriptProperties));
