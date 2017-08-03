@@ -17,6 +17,7 @@ public class AggregationFactory {
     private static final String MIN_AGGREGATION = "min";
     private static final String MAX_AGGREGATION = "max";
     private static final String AVG_AGGREGATION = "avg";
+    private static final String SUM_AGGREGATION = "sum";
     private static final String STATS_AGGREGATION = "stats";
     private static final String EXT_STATS_AGGREGATION = "extended_stats";
 
@@ -29,6 +30,8 @@ public class AggregationFactory {
                 return getMinAggregation(aggName, aggregationProperties);
             case MAX_AGGREGATION:
                 return getMaxAggregation(aggName, aggregationProperties);
+            case SUM_AGGREGATION:
+                return getSumAggregation(aggName, aggregationProperties);
             case AVG_AGGREGATION:
                 return getAvgAggregation(aggName, aggregationProperties);
             case STATS_AGGREGATION:
@@ -71,6 +74,10 @@ public class AggregationFactory {
 
     private AbstractAggregationBuilder getMaxAggregation(String aggName, RyftProperties aggregationProperties) {
         return initMetricAggregation(AggregationBuilders.max(aggName), aggregationProperties);
+    }
+
+    private AbstractAggregationBuilder getSumAggregation(String aggName, RyftProperties aggregationProperties) {
+        return initMetricAggregation(AggregationBuilders.sum(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getAvgAggregation(String aggName, RyftProperties aggregationProperties) {

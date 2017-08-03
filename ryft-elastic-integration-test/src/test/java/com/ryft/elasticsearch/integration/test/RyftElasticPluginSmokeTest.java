@@ -39,6 +39,7 @@ import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
+import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -934,6 +935,48 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         LOGGER.info("RYFT max value: {}", ryftAggregation.getValue());
 
         assertEquals("Max values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testSumAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .sum(aggregationName).field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Sum aggregation = (Sum) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES sum value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"sum\": {\n"
+                + "        \"field\": \"age\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT sum value: {}", ryftAggregation.getValue());
+
+        assertEquals("Sum values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
