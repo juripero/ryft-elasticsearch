@@ -18,6 +18,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.common.xcontent.XContentType;
 
 public class ElasticConverter implements ElasticConvertingElement<RyftRequestParameters> {
 
@@ -78,9 +79,13 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
                 SearchRequest searchRequest = (SearchRequest) request;
                 ElasticConvertingContext convertingContext = contextFactory.create();
                 convertingContext.setSearchRequest(searchRequest);
-                RyftRequestParameters result = convert(convertingContext);
-                adjustRequest(searchRequest);
-                return result;
+                if (convertingContext.getContentParser().contentType().equals(XContentType.JSON)) {
+                    RyftRequestParameters result = convert(convertingContext);
+                    adjustRequest(searchRequest);
+                    return result;
+                } else {
+                    return null;
+                }
             } else {
                 throw new ElasticConversionException("Request is not SearchRequest");
             }
