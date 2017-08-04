@@ -6,10 +6,12 @@ import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptService.ScriptType;
 import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.ValuesSourceAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.ValuesSourceMetricsAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBoundsBuilder;
 
 public class AggregationFactory {
 
@@ -20,6 +22,7 @@ public class AggregationFactory {
     private static final String SUM_AGGREGATION = "sum";
     private static final String STATS_AGGREGATION = "stats";
     private static final String EXT_STATS_AGGREGATION = "extended_stats";
+    private static final String GEO_BOUNDS_AGGREGATION = "geo_bounds";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -38,6 +41,8 @@ public class AggregationFactory {
                 return getStatsAggregation(aggName, aggregationProperties);
             case EXT_STATS_AGGREGATION:
                 return getExtStatsAggregation(aggName, aggregationProperties);
+            case GEO_BOUNDS_AGGREGATION:
+                return getGeoBoundsAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -69,31 +74,40 @@ public class AggregationFactory {
     }
 
     private AbstractAggregationBuilder getMinAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.min(aggName), aggregationProperties);
+        return initValuesSourceMetricAggregation(AggregationBuilders.min(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getMaxAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.max(aggName), aggregationProperties);
+        return initValuesSourceMetricAggregation(AggregationBuilders.max(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getSumAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.sum(aggName), aggregationProperties);
+        return initValuesSourceMetricAggregation(AggregationBuilders.sum(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getAvgAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.avg(aggName), aggregationProperties);
+        return initValuesSourceMetricAggregation(AggregationBuilders.avg(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getStatsAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.stats(aggName), aggregationProperties);
+        return initValuesSourceMetricAggregation(AggregationBuilders.stats(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getExtStatsAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties)
+        return initValuesSourceMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties)
                 .sigma(aggregationProperties.getDouble("sigma"));
     }
 
-    private <T extends ValuesSourceMetricsAggregationBuilder> T initMetricAggregation(
+    private AbstractAggregationBuilder getGeoBoundsAggregation(String aggName, RyftProperties aggregationProperties) {
+        GeoBoundsBuilder geoBoundsBuilder = initValuesSourceAggregation(
+                AggregationBuilders.geoBounds(aggName), aggregationProperties);
+        if (aggregationProperties.containsKey("wrap_longitude")) {
+            geoBoundsBuilder.wrapLongitude(aggregationProperties.getBool("wrap_longitude"));
+        }
+        return geoBoundsBuilder;
+    }
+
+    private <T extends ValuesSourceMetricsAggregationBuilder> T initValuesSourceMetricAggregation(
             T aggBuilder, RyftProperties aggregationProperties) {
         if (aggregationProperties.containsKey("script")) {
             RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
@@ -101,6 +115,17 @@ public class AggregationFactory {
         }
         aggBuilder.field(aggregationProperties.getStr("field"))
                 .format(aggregationProperties.getStr("format"))
+                .missing(aggregationProperties.getInt("missing"));
+        return aggBuilder;
+    }
+
+    private <T extends ValuesSourceAggregationBuilder> T initValuesSourceAggregation(
+            T aggBuilder, RyftProperties aggregationProperties) {
+        if (aggregationProperties.containsKey("script")) {
+            RyftProperties scriptProperties = aggregationProperties.getRyftProperties("script");
+            aggBuilder.script(getScript(scriptProperties));
+        }
+        aggBuilder.field(aggregationProperties.getStr("field"))
                 .missing(aggregationProperties.getInt("missing"));
         return aggBuilder;
     }

@@ -295,6 +295,37 @@ public class ElasticConverterAggregationsTest {
     }
 
     @Test
+    public void geoBoundsAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"geo_bounds\": {"
+                + "        \"field\": \"location\","
+                + "        \"wrap_longitude\": false"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.geoBounds("agg_name")
+                .field("location").wrapLongitude(false);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
     public void severalAggregationTest() throws Exception {
         String query = "{\n"
                 + "  \"query\": {\n"

@@ -35,6 +35,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
+import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
@@ -87,7 +88,8 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
             client.admin().indices().preparePutMapping(INDEX_NAME).setType("data").setSource("{\n"
                     + "    \"data\" : {\n"
                     + "        \"properties\" : {\n"
-                    + "            \"registered\" : {\"type\" : \"date\", \"format\" : \"yyyy-MM-dd HH:mm:ss\"}\n"
+                    + "            \"registered\" : {\"type\" : \"date\", \"format\" : \"yyyy-MM-dd HH:mm:ss\"},\n"
+                    + "            \"location\": {\"type\" : \"geo_point\"}"
                     + "        }\n"
                     + "    }\n"
                     + "}").get();
@@ -1142,6 +1144,51 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 ryftAggregation.getStdDeviationBound(ExtendedStats.Bounds.UPPER), 1e-10);
         assertEquals("sqsum values should be equal", aggregation.getSumOfSquares(), ryftAggregation.getSumOfSquares(), 1e-10);
         assertEquals("variance values should be equal", aggregation.getVariance(), ryftAggregation.getVariance(), 1e-10);
+    }
+
+    @Test
+    public void testGeoBoundsAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .geoBounds(aggregationName).field("location");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        GeoBounds aggregation = (GeoBounds) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES top left: {}", aggregation.topLeft());
+        LOGGER.info("ES bottom right: {}", aggregation.bottomRight());
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"geo_bounds\": {\n"
+                + "        \"field\": \"location\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        GeoBounds ryftAggregation = (GeoBounds) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT top left: {}", ryftAggregation.topLeft());
+        LOGGER.info("RYFT bottom right: {}", ryftAggregation.bottomRight());
+        assertEquals(aggregation.topLeft().getLat(), ryftAggregation.topLeft().getLat(), 1e-10);
+        assertEquals(aggregation.topLeft().getLon(), ryftAggregation.topLeft().getLon(), 1e-10);
+        assertEquals(aggregation.bottomRight().getLat(), ryftAggregation.bottomRight().getLat(), 1e-10);
+        assertEquals(aggregation.bottomRight().getLon(), ryftAggregation.bottomRight().getLon(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
     @Test

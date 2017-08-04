@@ -30,6 +30,8 @@ public class TestData {
     private Boolean isActive;
     @JsonProperty("index")
     private Integer index;
+    @JsonProperty("location")
+    private String location;
     @JsonProperty("id")
     private String id;
 
@@ -153,6 +155,14 @@ public class TestData {
         this.index = index;
     }
 
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+    
     @JsonProperty("id")
     public String getId() {
         return id;
