@@ -60,12 +60,11 @@ public class ElasticConvertingContext {
 
     public void setSearchRequest(SearchRequest searchRequest) throws ElasticConversionException, IOException {
         BytesReference searchContent = searchRequest.source();
-        if (searchContent == null) {
+        if ((searchContent == null) || !(searchContent.hasArray())) {
             throw new ElasticConversionException("Can not get search query");
         } else {
-            String queryString = searchContent.toUtf8();
-            this.originalQuery = queryString;
-            this.contentParser = XContentFactory.xContent(queryString).createParser(queryString);
+            this.originalQuery = searchContent.toUtf8();
+            this.contentParser = XContentFactory.xContent(searchContent).createParser(searchContent);
         }
         this.indices = searchRequest.indices();
     }

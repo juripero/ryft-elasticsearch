@@ -15,7 +15,6 @@ import java.util.Collection;
 import java.util.Map;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -33,6 +32,8 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
             RyftRequestParametersFactory ryftRequestParametersFactory) {
         this.contextFactory = contextFactory;
         this.ryftRequestParametersFactory = ryftRequestParametersFactory;
+        // TODO API clients can send requests with message represented in yaml, smile or cbor formats. 
+        // Use ObjectMapper with appropriate JsonFactory.
         mapper = new ObjectMapper();
         mapper.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
     }
@@ -91,9 +92,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private void adjustRequest(SearchRequest request) throws IOException {
-        BytesReference searchContent = request.source();
-        String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
-        Map<String, Object> parsedQuery = mapper.readValue(queryString, new TypeReference<Map<String, Object>>() {
+        Map<String, Object> parsedQuery = mapper.readValue(request.source().array(), new TypeReference<Map<String, Object>>() {
         });
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
         parsedQuery.remove(ElasticConverterRyft.NAME);

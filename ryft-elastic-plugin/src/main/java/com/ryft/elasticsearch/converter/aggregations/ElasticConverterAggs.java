@@ -17,6 +17,7 @@ public class ElasticConverterAggs implements ElasticConvertingElement<Void> {
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverterAggs.class);
 
     public static final String NAME = "aggs";
+    public static final String NAME_ALTERNATIVE = "aggregations";
     public static final String DATE_HISTOGRAM = "date_histogram";
 
     private final AggregationFactory aggregationFactory;
