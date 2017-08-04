@@ -1144,6 +1144,58 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertEquals("variance values should be equal", aggregation.getVariance(), ryftAggregation.getVariance(), 1e-10);
     }
 
+    @Test
+    public void testSeveralAggregation() throws Exception {
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder1 = AggregationBuilders
+                .min("1").field("age");
+        AbstractAggregationBuilder aggregationBuilder2 = AggregationBuilders
+                .max("2").field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation1: {}", aggregationBuilder1.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+        LOGGER.info("Testing aggregation2: {}", aggregationBuilder2.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder1).addAggregation(aggregationBuilder2).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Min aggregation1 = (Min) searchResponse.getAggregations().get("1");
+        Max aggregation2 = (Max) searchResponse.getAggregations().get("2");
+        LOGGER.info("ES min value: {}", aggregation1.getValue());
+        LOGGER.info("ES max value: {}", aggregation2.getValue());
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"1\": {\n"
+                + "      \"min\": {\n"
+                + "        \"field\": \"age\""
+                + "      }\n"
+                + "    },\n"
+                + "    \"2\": {\n"
+                + "      \"max\": {\n"
+                + "        \"field\": \"age\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Min ryftAggregation1 = (Min) ryftResponse.getAggregations().asMap().get("1");
+        Max ryftAggregation2 = (Max) ryftResponse.getAggregations().asMap().get("2");
+        LOGGER.info("RYFT min value: {}", ryftAggregation1.getValue());
+        LOGGER.info("RYFT max value: {}", ryftAggregation2.getValue());
+        assertEquals("Min values should be equal", aggregation1.getValue(), ryftAggregation1.getValue(), 1e-10);
+        assertEquals("Max values should be equal", aggregation2.getValue(), ryftAggregation2.getValue(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
     public void ryftQuerySample() throws Exception {
         String elasticQuery = "{\"query\":{" + "\"match_phrase\": { " + "\"doc.text_entry\": {"
                 + "\"query\":\"To be, or not to be\"," + "\"metric\": \"Fhs\"," + "\"fuzziness\": 5" + "}" + "}" + "}}";

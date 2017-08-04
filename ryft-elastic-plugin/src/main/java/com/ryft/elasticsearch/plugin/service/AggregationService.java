@@ -19,6 +19,8 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.inject.Inject;
@@ -47,13 +49,18 @@ public class AggregationService {
             String tempIndexName = getTempIndexName(requestEvent);
             try {
                 prepareTempIndex(internalSearchHits, tempIndexName);
-                AbstractAggregationBuilder aggregationBuilder = aggregationBuilders.get(0);
-                LOGGER.info("Start aggregation {}", aggregationBuilder);
-                SearchResponse searchResponse = client
+                SearchRequestBuilder searchRequestBuilder = client
                         .prepareSearch(tempIndexName)
-                        .setQuery(QueryBuilders.matchAllQuery())
-                        .addAggregation(aggregationBuilder)
-                        .get();
+                        .setQuery(QueryBuilders.matchAllQuery());
+                aggregationBuilders.forEach((aggregationBuilder) -> {
+                    searchRequestBuilder.addAggregation(aggregationBuilder);
+                });
+
+                String aggregationNames = aggregationBuilders.stream()
+                        .map(agg -> agg.getName()).collect(Collectors.joining(", "));
+                LOGGER.info("Start aggregations {}", aggregationNames);
+                SearchResponse searchResponse = searchRequestBuilder.get();
+                LOGGER.info("Aggregations {} finished", aggregationNames);
                 return (InternalAggregations) searchResponse.getAggregations();
             } finally {
                 client.admin().indices().prepareDelete(tempIndexName).get();

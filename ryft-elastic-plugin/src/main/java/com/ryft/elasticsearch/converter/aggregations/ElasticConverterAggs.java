@@ -5,6 +5,8 @@ import com.ryft.elasticsearch.converter.ElasticConversionUtil;
 import com.ryft.elasticsearch.converter.ElasticConvertingContext;
 import com.ryft.elasticsearch.converter.ElasticConvertingElement;
 import com.ryft.elasticsearch.plugin.RyftProperties;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -27,11 +29,18 @@ public class ElasticConverterAggs implements ElasticConvertingElement<Void> {
     @Override
     public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-        String aggName = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
-        String aggType = ElasticConversionUtil.getNextElasticPrimitive(convertingContext);
         RyftProperties aggregationProperties = ElasticConversionUtil.getMap(convertingContext);
-        AbstractAggregationBuilder aggregationBuilder = aggregationFactory.get(aggType, aggName, aggregationProperties);
-        convertingContext.getAggregationBuilders().add(aggregationBuilder);
+        aggregationProperties.entrySet().stream()
+            .map((entry) -> entry.getKey().toString())
+            .map((aggName) -> {
+                RyftProperties innerProperties = aggregationProperties.getRyftProperties(aggName);
+                String aggType = innerProperties.keys().nextElement().toString();
+                innerProperties = innerProperties.getRyftProperties(aggType);
+                AbstractAggregationBuilder aggregationBuilder = aggregationFactory.get(aggType, aggName, innerProperties);
+                return aggregationBuilder;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(() -> convertingContext.getAggregationBuilders()));
         return null;
     }
 

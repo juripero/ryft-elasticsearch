@@ -3,6 +3,8 @@ package com.ryft.elasticsearch.converter;
 import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.utils.JSR250Module;
+import java.util.ArrayList;
+import java.util.List;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
@@ -290,5 +292,47 @@ public class ElasticConverterAggregationsTest {
                 .field("value").missing(1).sigma(3.1415926);
         assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
                 actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
+    public void severalAggregationTest() throws Exception {
+        String query = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"xx\": {\n"
+                + "      \"min\": {\n"
+                + "        \"field\": \"age\"\n"
+                + "      }\n"
+                + "    },\n"
+                + "    \"yy\": {\n"
+                + "      \"max\": {\n"
+                + "        \"field\": \"age\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        List<AbstractAggregationBuilder> actualAggregations = ryftRequestParameters.getAggregations();
+        List<String> actualAggregationStrings = new ArrayList<>();
+        for (AbstractAggregationBuilder actualAggregation : actualAggregations) {
+            actualAggregationStrings.add(actualAggregation.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+        }
+        String expectedAgg1 = AggregationBuilders.min("xx")
+                .field("age").toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string();
+        String expectedAgg2 = AggregationBuilders.max("yy")
+                .field("age").toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string();
+        assertTrue(actualAggregationStrings.contains(expectedAgg1));
+        assertTrue(actualAggregationStrings.contains(expectedAgg2));
     }
 }
