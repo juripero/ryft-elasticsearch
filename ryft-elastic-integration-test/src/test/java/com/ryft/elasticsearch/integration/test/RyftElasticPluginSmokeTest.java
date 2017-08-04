@@ -36,6 +36,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
+import org.elasticsearch.search.aggregations.metrics.geocentroid.GeoCentroid;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
@@ -1188,6 +1189,50 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertEquals(aggregation.topLeft().getLon(), ryftAggregation.topLeft().getLon(), 1e-10);
         assertEquals(aggregation.bottomRight().getLat(), ryftAggregation.bottomRight().getLat(), 1e-10);
         assertEquals(aggregation.bottomRight().getLon(), ryftAggregation.bottomRight().getLon(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testGeoCentroidAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .geoCentroid(aggregationName).field("location");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        GeoCentroid aggregation = (GeoCentroid) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES centroid: {}", aggregation.centroid());
+        LOGGER.info("ES count: {}", aggregation.count());
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"geo_centroid\": {\n"
+                + "        \"field\": \"location\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        GeoCentroid ryftAggregation = (GeoCentroid) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT centroid: {}", ryftAggregation.centroid());
+        LOGGER.info("RYFT count: {}", ryftAggregation.count());
+        assertEquals(aggregation.centroid().getLat(), ryftAggregation.centroid().getLat(), 1e-5);
+        assertEquals(aggregation.centroid().getLon(), ryftAggregation.centroid().getLon(), 1e-5);
+        assertEquals(aggregation.count(), ryftAggregation.count(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 

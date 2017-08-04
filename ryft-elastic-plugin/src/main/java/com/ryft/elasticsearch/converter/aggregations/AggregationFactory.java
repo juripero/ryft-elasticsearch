@@ -23,6 +23,7 @@ public class AggregationFactory {
     private static final String STATS_AGGREGATION = "stats";
     private static final String EXT_STATS_AGGREGATION = "extended_stats";
     private static final String GEO_BOUNDS_AGGREGATION = "geo_bounds";
+    private static final String GEO_CENTROID_AGGREGATION = "geo_centroid";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -43,6 +44,8 @@ public class AggregationFactory {
                 return getExtStatsAggregation(aggName, aggregationProperties);
             case GEO_BOUNDS_AGGREGATION:
                 return getGeoBoundsAggregation(aggName, aggregationProperties);
+            case GEO_CENTROID_AGGREGATION:
+                return getGeoCentroidAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -105,6 +108,11 @@ public class AggregationFactory {
             geoBoundsBuilder.wrapLongitude(aggregationProperties.getBool("wrap_longitude"));
         }
         return geoBoundsBuilder;
+    }
+
+    private AbstractAggregationBuilder getGeoCentroidAggregation(String aggName, RyftProperties aggregationProperties) {
+        return initValuesSourceMetricAggregation(
+                AggregationBuilders.geoCentroid(aggName), aggregationProperties);
     }
 
     private <T extends ValuesSourceMetricsAggregationBuilder> T initValuesSourceMetricAggregation(
