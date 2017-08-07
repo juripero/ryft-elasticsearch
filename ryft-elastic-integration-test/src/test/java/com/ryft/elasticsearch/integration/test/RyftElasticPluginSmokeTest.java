@@ -42,6 +42,7 @@ import org.elasticsearch.search.aggregations.metrics.geocentroid.GeoCentroid;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
 import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
@@ -1260,7 +1261,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
-        List<Percentile> esPercentiles= Lists.newArrayList((Percentiles) searchResponse.getAggregations().get(aggregationName));
+        List<Percentile> esPercentiles = Lists.newArrayList((Percentiles) searchResponse.getAggregations().get(aggregationName));
         esPercentiles.forEach((percentile) -> {
             LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
         });
@@ -1289,6 +1290,57 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         List<Percentile> ryftPercentiles = Lists.newArrayList((Percentiles) ryftResponse.getAggregations().asList().get(0));
+        ryftPercentiles.forEach((percentile) -> {
+            LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
+        });
+        assertEquals(esPercentiles.size(), ryftPercentiles.size());
+        for (int i = 0; i < esPercentiles.size(); i++) {
+            Percentile esPercentile = esPercentiles.get(i);
+            Percentile ryftPercentile = ryftPercentiles.get(i);
+            assertEquals(esPercentile.getPercent(), ryftPercentile.getPercent(), 1e-10);
+            assertEquals(esPercentile.getValue(), ryftPercentile.getValue(), 1e-10);
+        }
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testPercentileRanksAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .percentileRanks(aggregationName).field("age").percentiles(20, 25, 30, 35, 40);
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        List<Percentile> esPercentiles = Lists.newArrayList((PercentileRanks) searchResponse.getAggregations().get(aggregationName));
+        esPercentiles.forEach((percentile) -> {
+            LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
+        });
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"percentile_ranks\": {\n"
+                + "        \"field\": \"age\","
+                + "        \"values\": [20, 25, 30, 35, 40]"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        List<Percentile> ryftPercentiles = Lists.newArrayList((PercentileRanks) ryftResponse.getAggregations().asList().get(0));
         ryftPercentiles.forEach((percentile) -> {
             LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
         });

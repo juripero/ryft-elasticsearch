@@ -425,6 +425,40 @@ public class ElasticConverterAggregationsTest {
     }
 
     @Test
+    public void percentileRanksAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"percentile_ranks\": {"
+                + "        \"field\": \"load\","
+                + "        \"values\" : [20, 40, 60, 80],"
+                + "        \"hdr\": {\n"
+                + "          \"number_of_significant_value_digits\" : 3 \n"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.percentileRanks("agg_name")
+                .field("load").percentiles(20, 40, 60, 80).method(PercentilesMethod.HDR).numberOfSignificantValueDigits(3);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
     public void severalAggregationTest() throws Exception {
         String query = "{\n"
                 + "  \"query\": {\n"
