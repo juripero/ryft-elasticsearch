@@ -1,5 +1,8 @@
 package com.ryft.elasticsearch.plugin;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -33,6 +36,10 @@ public class RyftProperties extends Properties {
         return (containsKey(key)) ? (RyftProperties) get(key) : null;
     }
 
+    public <T> List<T> getList(String key, Class<T> clazz) {
+        return (containsKey(key)) ? new ArrayList<>((Collection) get(key)) : null;
+    }
+    
     public Map<String, Object> toMap() {
         return entrySet().stream().collect(Collectors.toMap(
                 entry -> entry.getKey().toString(),

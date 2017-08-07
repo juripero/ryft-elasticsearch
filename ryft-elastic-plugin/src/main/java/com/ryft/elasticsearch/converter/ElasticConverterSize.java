@@ -12,7 +12,7 @@ public class ElasticConverterSize implements ElasticConvertingElement<Void> {
     @Override
     public Void convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-        Integer limit = ElasticConversionUtil.getInteger(convertingContext);
+        Integer limit = (Integer)ElasticConversionUtil.getNumber(convertingContext);
         convertingContext.getQueryProperties().put(SEARCH_QUERY_LIMIT, limit);
         return null;
     }

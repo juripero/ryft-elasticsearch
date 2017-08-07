@@ -17,6 +17,7 @@ import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -351,6 +352,74 @@ public class ElasticConverterAggregationsTest {
         AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
         AbstractAggregationBuilder expectedAgg = AggregationBuilders.geoCentroid("agg_name")
                 .field("location");
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
+    public void percentileTDigestAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"percentiles\": {"
+                + "        \"field\": \"load\","
+                + "        \"percents\" : [95, 99, 99.9],"
+                + "        \"tdigest\": {\n"
+                + "          \"compression\" : 200 \n"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.percentiles("agg_name")
+                .field("load").percentiles(95, 99, 99.9).method(PercentilesMethod.TDIGEST).compression(200.0);
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
+    @Test
+    public void percentileHDRAggregationTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"percentiles\": {"
+                + "        \"field\": \"load\","
+                + "        \"percents\" : [20, 40, 60, 80],"
+                + "        \"hdr\": {\n"
+                + "          \"number_of_significant_value_digits\" : 3 \n"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.percentiles("agg_name")
+                .field("load").percentiles(20, 40, 60, 80).method(PercentilesMethod.HDR).numberOfSignificantValueDigits(3);
         assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
                 actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
     }

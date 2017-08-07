@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import java.nio.file.Files;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -34,11 +35,15 @@ import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram.Bucket;
 import org.elasticsearch.search.aggregations.metrics.avg.Avg;
 import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
 import org.elasticsearch.search.aggregations.metrics.geocentroid.GeoCentroid;
 import org.elasticsearch.search.aggregations.metrics.max.Max;
 import org.elasticsearch.search.aggregations.metrics.min.Min;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentile;
+import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod;
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
@@ -823,7 +828,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
-        InternalHistogram<InternalHistogram.Bucket> aggregation = (InternalHistogram) searchResponse.getAggregations().get(aggregationName);
+        InternalHistogram<Bucket> aggregation = (InternalHistogram) searchResponse.getAggregations().get(aggregationName);
         aggregation.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
         });
@@ -849,11 +854,17 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
-        InternalHistogram<InternalHistogram.Bucket> ryftHistogram = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
-        ryftHistogram.getBuckets().forEach((bucket) -> {
+        InternalHistogram<Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
+        ryftAggregation.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
         });
-        assertEquals("Histograms should have same buckets", aggregation.getBuckets(), aggregation.getBuckets());
+        assertEquals("Histograms should have same buckets size", aggregation.getBuckets().size(), ryftAggregation.getBuckets().size());
+        for (int i = 0; i < aggregation.getBuckets().size(); i++) {
+            Bucket esBucket = aggregation.getBuckets().get(i);
+            Bucket ryftBucket = ryftAggregation.getBuckets().get(i);
+            assertEquals(esBucket.getKey(), ryftBucket.getKey());
+            assertEquals(esBucket.getDocCount(), ryftBucket.getDocCount());
+        }
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
@@ -1233,6 +1244,61 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertEquals(aggregation.centroid().getLat(), ryftAggregation.centroid().getLat(), 1e-5);
         assertEquals(aggregation.centroid().getLon(), ryftAggregation.centroid().getLon(), 1e-5);
         assertEquals(aggregation.count(), ryftAggregation.count(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testPercentileTDigestAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .percentiles(aggregationName).field("age").percentiles(20, 40, 60, 80, 95)
+                .method(PercentilesMethod.TDIGEST).compression(200.0);
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        List<Percentile> esPercentiles= Lists.newArrayList((Percentiles) searchResponse.getAggregations().get(aggregationName));
+        esPercentiles.forEach((percentile) -> {
+            LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
+        });
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"percentiles\": {\n"
+                + "        \"field\": \"age\","
+                + "        \"percents\": [20, 40, 60, 80, 95],"
+                + "        \"tdigest\": { \n"
+                + "          \"compression\" : 200 \n"
+                + "        }"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        List<Percentile> ryftPercentiles = Lists.newArrayList((Percentiles) ryftResponse.getAggregations().asList().get(0));
+        ryftPercentiles.forEach((percentile) -> {
+            LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
+        });
+        assertEquals(esPercentiles.size(), ryftPercentiles.size());
+        for (int i = 0; i < esPercentiles.size(); i++) {
+            Percentile esPercentile = esPercentiles.get(i);
+            Percentile ryftPercentile = ryftPercentiles.get(i);
+            assertEquals(esPercentile.getPercent(), ryftPercentile.getPercent(), 1e-10);
+            assertEquals(esPercentile.getValue(), ryftPercentile.getValue(), 1e-10);
+        }
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 

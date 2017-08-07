@@ -12,6 +12,8 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.Histogram;
 import org.elasticsearch.search.aggregations.metrics.ValuesSourceMetricsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBoundsBuilder;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesBuilder;
+import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod;
 
 public class AggregationFactory {
 
@@ -24,6 +26,7 @@ public class AggregationFactory {
     private static final String EXT_STATS_AGGREGATION = "extended_stats";
     private static final String GEO_BOUNDS_AGGREGATION = "geo_bounds";
     private static final String GEO_CENTROID_AGGREGATION = "geo_centroid";
+    private static final String PERCENTILES_AGGREGATION = "percentiles";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -46,6 +49,8 @@ public class AggregationFactory {
                 return getGeoBoundsAggregation(aggName, aggregationProperties);
             case GEO_CENTROID_AGGREGATION:
                 return getGeoCentroidAggregation(aggName, aggregationProperties);
+            case PERCENTILES_AGGREGATION:
+                return getPercentilesAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -113,6 +118,25 @@ public class AggregationFactory {
     private AbstractAggregationBuilder getGeoCentroidAggregation(String aggName, RyftProperties aggregationProperties) {
         return initValuesSourceMetricAggregation(
                 AggregationBuilders.geoCentroid(aggName), aggregationProperties);
+    }
+
+    private AbstractAggregationBuilder getPercentilesAggregation(String aggName, RyftProperties aggregationProperties) {
+        PercentilesBuilder percentilesBuilder = initValuesSourceMetricAggregation(
+                AggregationBuilders.percentiles(aggName), aggregationProperties);
+        if (aggregationProperties.containsKey("percents")) {
+            double[] arr = aggregationProperties.getList("percents", Number.class).stream().mapToDouble(Number::doubleValue).toArray();
+            percentilesBuilder.percentiles(arr);
+        }
+        if (aggregationProperties.containsKey(PercentilesMethod.HDR.getName())) {
+            RyftProperties hdrProperties = aggregationProperties.getRyftProperties(PercentilesMethod.HDR.getName());
+            percentilesBuilder.method(PercentilesMethod.HDR);
+            percentilesBuilder.numberOfSignificantValueDigits(hdrProperties.getInt("number_of_significant_value_digits"));
+        } else if (aggregationProperties.containsKey(PercentilesMethod.TDIGEST.getName())) {
+            RyftProperties tdigestProperties = aggregationProperties.getRyftProperties(PercentilesMethod.TDIGEST.getName());
+            percentilesBuilder.method(PercentilesMethod.TDIGEST);
+            percentilesBuilder.compression(tdigestProperties.getDouble("compression"));
+        }
+        return percentilesBuilder;
     }
 
     private <T extends ValuesSourceMetricsAggregationBuilder> T initValuesSourceMetricAggregation(

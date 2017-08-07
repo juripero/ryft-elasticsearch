@@ -57,6 +57,9 @@ public abstract class ElasticConversionUtil {
                         case VALUE_BOOLEAN:
                             value = getBoolean(convertingContext);
                             break;
+                        case START_ARRAY:
+                            value = getArray(convertingContext);
+                            break;
                         default:
                             value = null;
                     }
@@ -130,7 +133,7 @@ public abstract class ElasticConversionUtil {
                 case VALUE_STRING:
                     return (T) getString(convertingContext);
                 case VALUE_NUMBER:
-                    return (T) getInteger(convertingContext);
+                    return (T) getNumber(convertingContext);
                 case VALUE_BOOLEAN:
                     return (T) getBoolean(convertingContext);
             }
@@ -171,18 +174,12 @@ public abstract class ElasticConversionUtil {
         }
     }
 
-    static Integer getInteger(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+    static Number getNumber(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         String value = getString(convertingContext);
         try {
             return Integer.parseInt(value);
-        } catch (RuntimeException ex) {
-            throw new ElasticConversionException(
-                    String.format("Can not parse value \"%s\" as Integer.", value), ex);
+        } catch (NumberFormatException ex) {
         }
-    }
-
-    static Number getNumber(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        String value = getString(convertingContext);
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException ex) {

@@ -148,7 +148,7 @@ public class ElasticConverterBool implements ElasticConvertingElement<RyftQuery>
         @Override
         public Integer convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
             LOGGER.debug(String.format("Start \"%s\" parsing", NAME));
-            Integer minimumShouldMatch = ElasticConversionUtil.getInteger(convertingContext);
+            Integer minimumShouldMatch = (Integer) ElasticConversionUtil.getNumber(convertingContext);
             convertingContext.setMinimumShouldMatch(minimumShouldMatch);
             return minimumShouldMatch;
         }
