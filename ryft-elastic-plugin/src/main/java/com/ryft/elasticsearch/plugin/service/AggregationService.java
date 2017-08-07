@@ -13,7 +13,6 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
@@ -51,7 +50,7 @@ public class AggregationService {
                 prepareTempIndex(internalSearchHits, tempIndexName);
                 SearchRequestBuilder searchRequestBuilder = client
                         .prepareSearch(tempIndexName)
-                        .setQuery(QueryBuilders.matchAllQuery());
+                        .setSize(0);
                 aggregationBuilders.forEach((aggregationBuilder) -> {
                     searchRequestBuilder.addAggregation(aggregationBuilder);
                 });

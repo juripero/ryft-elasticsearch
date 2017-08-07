@@ -529,4 +529,38 @@ public class ElasticConverterAggregationsTest {
         assertTrue(actualAggregationStrings.contains(expectedAgg1));
         assertTrue(actualAggregationStrings.contains(expectedAgg2));
     }
+
+    @Test
+    public void aggregationWithMetadataTest() throws Exception {
+        String query = "{"
+                + "  \"query\": {"
+                + "    \"match\": {"
+                + "      \"_all\": {"
+                + "        \"query\": \"test\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"aggs\": {"
+                + "    \"agg_name\": {"
+                + "      \"value_count\": {"
+                + "        \"field\": \"value\""
+                + "      },"
+                + "      \"meta\": {\n"
+                + "        \"color\": \"blue\"\n"
+                + "      }"
+                + "    }"
+                + "  }"
+                + "}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequestParameters = elasticConverter.convert(request);
+        assertNotNull(ryftRequestParameters);
+        assertNotNull(ryftRequestParameters.getAggregations());
+        assertFalse(ryftRequestParameters.getAggregations().isEmpty());
+        AbstractAggregationBuilder actualAgg = ryftRequestParameters.getAggregations().get(0);
+        AbstractAggregationBuilder expectedAgg = AggregationBuilders.count("agg_name")
+                .field("value").setMetaData(ImmutableMap.of("color", "blue"));
+        assertEquals(expectedAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string(),
+                actualAgg.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+    }
+
 }
