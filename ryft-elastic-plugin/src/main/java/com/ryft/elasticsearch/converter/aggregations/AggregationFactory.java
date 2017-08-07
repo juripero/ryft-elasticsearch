@@ -29,6 +29,7 @@ public class AggregationFactory {
     private static final String GEO_CENTROID_AGGREGATION = "geo_centroid";
     private static final String PERCENTILES_AGGREGATION = "percentiles";
     private static final String PERCENTILE_RANKS_AGGREGATION = "percentile_ranks";
+    private static final String VALUE_COUNT_AGGREGATION = "value_count";
 
     public AbstractAggregationBuilder get(String aggType, String aggName,
             RyftProperties aggregationProperties) {
@@ -55,6 +56,8 @@ public class AggregationFactory {
                 return getPercentilesAggregation(aggName, aggregationProperties);
             case PERCENTILE_RANKS_AGGREGATION:
                 return getPercentileRanksAggregation(aggName, aggregationProperties);
+            case VALUE_COUNT_AGGREGATION:
+                return getValueCountAggregation(aggName, aggregationProperties);
             default:
                 return null;
         }
@@ -108,6 +111,10 @@ public class AggregationFactory {
     private AbstractAggregationBuilder getExtStatsAggregation(String aggName, RyftProperties aggregationProperties) {
         return initValuesSourceMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties)
                 .sigma(aggregationProperties.getDouble("sigma"));
+    }
+
+    private AbstractAggregationBuilder getValueCountAggregation(String aggName, RyftProperties aggregationProperties) {
+        return initValuesSourceMetricAggregation(AggregationBuilders.count(aggName), aggregationProperties);
     }
 
     private AbstractAggregationBuilder getGeoBoundsAggregation(String aggName, RyftProperties aggregationProperties) {

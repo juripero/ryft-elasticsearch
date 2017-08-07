@@ -48,6 +48,7 @@ import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMeth
 import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -1042,6 +1043,48 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
 
         assertEquals("Avg values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
+        elasticSubsetRyft(searchResponse, ryftResponse);
+    }
+
+    @Test
+    public void testCountAggregation() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.count(aggregationName)
+                .field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = client.prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        ValueCount aggregation = (ValueCount) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES count value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {"
+                + "    \"" + aggregationName + "\": {"
+                + "      \"value_count\": {"
+                + "        \"field\": \"age\""
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = client.execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());
+
+        assertEquals("Count values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         elasticSubsetRyft(searchResponse, ryftResponse);
     }
 
