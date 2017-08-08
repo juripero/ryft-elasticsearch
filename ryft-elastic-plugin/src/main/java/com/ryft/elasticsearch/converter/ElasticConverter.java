@@ -97,7 +97,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private void adjustRequest(SearchRequest request) throws IOException {
-        Map<String, Object> parsedQuery = mapper.readValue(request.source().array(), new TypeReference<Map<String, Object>>() {
+        Map<String, Object> parsedQuery = mapper.readValue(request.source().toBytes(), new TypeReference<Map<String, Object>>() {
         });
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
         parsedQuery.remove(ElasticConverterRyft.NAME);

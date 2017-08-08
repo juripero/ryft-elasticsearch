@@ -15,6 +15,7 @@ import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBoundsBuilder;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanksBuilder;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesBuilder;
 import org.elasticsearch.search.aggregations.metrics.percentiles.PercentilesMethod;
+import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStatsBuilder;
 
 public class AggregationFactory {
 
@@ -109,8 +110,12 @@ public class AggregationFactory {
     }
 
     private AbstractAggregationBuilder getExtStatsAggregation(String aggName, RyftProperties aggregationProperties) {
-        return initValuesSourceMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties)
-                .sigma(aggregationProperties.getDouble("sigma"));
+        ExtendedStatsBuilder extendedStatsBuilder = 
+                initValuesSourceMetricAggregation(AggregationBuilders.extendedStats(aggName), aggregationProperties);
+        if (aggregationProperties.containsKey("sigma")) {
+            extendedStatsBuilder.sigma(aggregationProperties.getDouble("sigma"));
+        }
+        return extendedStatsBuilder;
     }
 
     private AbstractAggregationBuilder getValueCountAggregation(String aggName, RyftProperties aggregationProperties) {
