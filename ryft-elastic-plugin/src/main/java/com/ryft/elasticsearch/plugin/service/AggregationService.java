@@ -1,6 +1,9 @@
 package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.io.IOException;
@@ -17,9 +20,9 @@ import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import java.util.concurrent.ExecutionException;
+import org.elasticsearch.action.search.SearchAction;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.inject.Inject;
@@ -30,7 +33,8 @@ public class AggregationService {
     private static final String TEMPINDEX_PREFIX = ".tmpagg";
 
     private final Client client;
-    
+    private final ObjectMapper mapper = new ObjectMapper();
+
     @Inject
     public AggregationService(TransportClient client) {
         this.client = client;
@@ -38,32 +42,27 @@ public class AggregationService {
 
     public InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
             SearchRequestEvent requestEvent) throws RyftSearchException {
-        List<AbstractAggregationBuilder> aggregationBuilders = requestEvent.getAggregationBuilders();
-        if ((internalSearchHits.getTotalHits() == 0)
-                || (aggregationBuilders == null)
-                || (aggregationBuilders.isEmpty())) {
-            LOGGER.debug("No aggregation");
-            return InternalAggregations.EMPTY;
-        } else {
+        RyftProperties query = new RyftProperties();
+        query.putAll(requestEvent.getParsedQuery());
+        if ((internalSearchHits.getTotalHits() > 0)
+                && (query.containsKey("aggs") || query.containsKey("aggregations"))) {
             String tempIndexName = getTempIndexName(requestEvent);
             try {
                 prepareTempIndex(internalSearchHits, tempIndexName);
-                SearchRequestBuilder searchRequestBuilder = client
-                        .prepareSearch(tempIndexName)
-                        .setSize(0);
-                aggregationBuilders.forEach((aggregationBuilder) -> {
-                    searchRequestBuilder.addAggregation(aggregationBuilder);
-                });
-
-                String aggregationNames = aggregationBuilders.stream()
-                        .map(agg -> agg.getName()).collect(Collectors.joining(", "));
-                LOGGER.info("Start aggregations {}", aggregationNames);
-                SearchResponse searchResponse = searchRequestBuilder.get();
-                LOGGER.info("Aggregations {} finished", aggregationNames);
+                query.put("size", 0);
+                query.put("ryft_enabled", false);
+                SearchResponse searchResponse = client.execute(SearchAction.INSTANCE,
+                        new SearchRequest(new String[]{tempIndexName},
+                        mapper.writeValueAsBytes(query.toMap()))).get();
                 return (InternalAggregations) searchResponse.getAggregations();
+            } catch (JsonProcessingException | InterruptedException | ExecutionException ex) {
+                throw new RyftSearchException(ex);
             } finally {
                 client.admin().indices().prepareDelete(tempIndexName).get();
             }
+        } else {
+            LOGGER.debug("No aggregation");
+            return InternalAggregations.EMPTY;
         }
     }
 

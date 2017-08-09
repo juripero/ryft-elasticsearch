@@ -9,11 +9,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class FileSearchRequestEvent extends SearchRequestEvent {
     
@@ -25,8 +25,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws RyftSearchException {
-        super(clusterService, ryftProperties, query, aggregationBuilders);
+            @Assisted RyftQuery query, @Assisted Map<String, Object> parsedQuery) throws RyftSearchException {
+        super(clusterService, ryftProperties, query, parsedQuery);
     }
 
     public URI getRyftSearchURL() throws RyftSearchException {

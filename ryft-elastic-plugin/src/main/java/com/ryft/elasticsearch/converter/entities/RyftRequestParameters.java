@@ -6,25 +6,25 @@ import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class RyftRequestParameters {
 
     private final RyftProperties ryftProperties;
     private final RyftQuery query;
     private final String[] indices;
-    private final List<AbstractAggregationBuilder> aggregationBuilders;
+    private final Map<String, Object> parsedQuery;
 
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
-            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted List<AbstractAggregationBuilder> aggregationBuilders) {
+            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted Map<String, Object> parsedQuery) {
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = ryftQuery;
         this.indices = indices;
-        this.aggregationBuilders = aggregationBuilders;
+        this.parsedQuery = parsedQuery;
     }
 
     public RyftQuery getQuery() {
@@ -48,8 +48,8 @@ public class RyftRequestParameters {
                 || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
     }
 
-    public List<AbstractAggregationBuilder> getAggregations() {
-        return aggregationBuilders;
+    public Map<String, Object> getParsedQuery() {
+        return parsedQuery;
     }
 
     @Override

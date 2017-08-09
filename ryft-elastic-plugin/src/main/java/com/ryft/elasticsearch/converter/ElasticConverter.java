@@ -4,14 +4,12 @@ import com.ryft.elasticsearch.converter.ElasticConverterRyft.ElasticConverterFor
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryComplex;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParametersFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -25,7 +23,6 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConverter.class);
 
     private final ContextFactory contextFactory;
-    private final ObjectMapper mapper;
     private final RyftRequestParametersFactory ryftRequestParametersFactory;
 
     @Inject
@@ -33,15 +30,11 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
             RyftRequestParametersFactory ryftRequestParametersFactory) {
         this.contextFactory = contextFactory;
         this.ryftRequestParametersFactory = ryftRequestParametersFactory;
-        // TODO API clients can send requests with message represented in yaml, smile or cbor formats. 
-        // Use ObjectMapper with appropriate JsonFactory.
-        mapper = new ObjectMapper();
-        mapper.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
     }
 
     @Override
     public RyftRequestParameters convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        LOGGER.debug("Request payload: {}", convertingContext.getOriginalQuery());
+        LOGGER.info("Request payload: {}", convertingContext.getOriginalQuery());
         String currentName;
         try {
             convertingContext.getContentParser().nextToken();
@@ -79,9 +72,11 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
                 SearchRequest searchRequest = (SearchRequest) request;
                 ElasticConvertingContext convertingContext = contextFactory.create();
                 convertingContext.setSearchRequest(searchRequest);
-                if (convertingContext.getContentParser().contentType().equals(XContentType.JSON)) {
+                if (convertingContext.getContentParser().contentType().equals(XContentType.JSON)
+                        && (convertingContext.getIndices().length > 0)
+                        && !convertingContext.getIndices()[0].equals(".kibana")) {
                     RyftRequestParameters result = convert(convertingContext);
-                    adjustRequest(searchRequest);
+                    adjustRequest(searchRequest, convertingContext);
                     return result;
                 } else {
                     return null;
@@ -96,9 +91,8 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
         }
     }
 
-    private void adjustRequest(SearchRequest request) throws IOException {
-        Map<String, Object> parsedQuery = mapper.readValue(request.source().toBytes(), new TypeReference<Map<String, Object>>() {
-        });
+    private void adjustRequest(SearchRequest request, ElasticConvertingContext convertingContext) throws IOException {
+        Map<String, Object> parsedQuery = new HashMap<>(convertingContext.getParsedQuery());
         parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
         parsedQuery.remove(ElasticConverterRyft.NAME);
         if (parsedQuery.containsKey(ElasticConverterQuery.NAME)) {
@@ -118,7 +112,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private RyftRequestParameters getRyftRequestParameters(ElasticConvertingContext convertingContext, RyftQuery ryftQuery) {
-        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getAggregationBuilders());
+        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getParsedQuery());
         result.getRyftProperties().putAll(convertingContext.getQueryProperties());
         return result;
     }

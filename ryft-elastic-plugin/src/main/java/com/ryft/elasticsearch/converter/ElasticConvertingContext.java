@@ -1,10 +1,19 @@
 package com.ryft.elasticsearch.converter;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +24,7 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.common.xcontent.XContentType;
 
 public class ElasticConvertingContext {
 
@@ -47,7 +56,8 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
-    private final List<AbstractAggregationBuilder> aggregationBuilders = new ArrayList<>();
+    private ObjectMapper objectMapper;
+    private Map<String, Object> parsedQuery;
     private Boolean filtered = false;
 
     @Inject
@@ -65,8 +75,37 @@ public class ElasticConvertingContext {
         } else {
             this.originalQuery = searchContent.toUtf8();
             this.contentParser = XContentFactory.xContent(searchContent).createParser(searchContent);
+            this.objectMapper = createObjectMapper(contentParser.contentType());
+            this.parsedQuery = objectMapper.readValue(searchContent.toBytes(), new TypeReference<Map<String, Object>>(){});
         }
         this.indices = searchRequest.indices();
+    }
+
+    private static ObjectMapper createObjectMapper(XContentType xContentType) {
+        JsonFactory jsonFactory = null;
+        switch (xContentType) {
+            case JSON:
+                jsonFactory = new JsonFactory();
+                jsonFactory.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+                jsonFactory.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+                jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+                jsonFactory.configure(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+                break;
+            case CBOR:
+                jsonFactory = new CBORFactory();
+                jsonFactory.configure(CBORFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+                break;
+            case YAML:
+                jsonFactory = new YAMLFactory();
+                break;
+            case SMILE:
+                jsonFactory = new SmileFactory();
+                ((SmileFactory) jsonFactory).configure(SmileGenerator.Feature.ENCODE_BINARY_AS_7BIT, false);
+                jsonFactory.configure(SmileFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+        }
+        ObjectMapper result = new ObjectMapper(jsonFactory);
+        result.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
+        return result;
     }
 
     public XContentParser getContentParser() {
@@ -174,8 +213,11 @@ public class ElasticConvertingContext {
         this.filtered = filtered;
     }
 
-    public List<AbstractAggregationBuilder> getAggregationBuilders() {
-        return aggregationBuilders;
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 
+    public Map<String, Object> getParsedQuery() {
+        return parsedQuery;
+    }
 }

@@ -7,6 +7,7 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.elasticsearch.cluster.ClusterService;
@@ -14,7 +15,6 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public class IndexSearchRequestEvent extends SearchRequestEvent {
 
@@ -31,8 +31,8 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, @Assisted RyftProperties ryftProperties,
             @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, 
-            @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws RyftSearchException {
-        super(clusterService, ryftProperties, query, aggregationBuilders);
+            @Assisted Map<String, Object> parsedQuery) throws RyftSearchException {
+        super(clusterService, ryftProperties, query, parsedQuery);
         this.settings = settings;
         this.shards = shards;
     }

@@ -8,13 +8,12 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.List;
+import java.util.Map;
 
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
-import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
 
 public abstract class SearchRequestEvent extends RequestEvent {
 
@@ -25,19 +24,19 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final String query;
     protected final String encodedQuery;
 
-    protected final List<AbstractAggregationBuilder> aggregationBuilders;
+    protected final Map<String, Object> parsedQuery;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
                                  @Assisted RyftProperties ryftProperties,
                                  @Assisted RyftQuery query,
-                                 @Assisted List<AbstractAggregationBuilder> aggregationBuilders) throws RyftSearchException {
+                                 @Assisted Map<String, Object> parsedQuery) throws RyftSearchException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = query.buildRyftString();
-        this.aggregationBuilders = aggregationBuilders;
+        this.parsedQuery = parsedQuery;
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -64,7 +63,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
-    public List<AbstractAggregationBuilder> getAggregationBuilders() {
-        return aggregationBuilders;
+    public Map<String, Object> getParsedQuery() {
+        return parsedQuery;
     }
 }
