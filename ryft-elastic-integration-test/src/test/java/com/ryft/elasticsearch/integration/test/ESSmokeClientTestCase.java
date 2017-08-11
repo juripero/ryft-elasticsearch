@@ -41,28 +41,34 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLength;
+import java.util.List;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * {@link ESSmokeClientTestCase} is an abstract base class to run integration
  * tests against an external Elasticsearch Cluster.
  * <p>
- * You can define a list of transport addresses from where you can reach your cluster
- * by setting "tests.cluster" system property. It defaults to "localhost:9300".
+ * You can define a list of transport addresses from where you can reach your
+ * cluster by setting "tests.cluster" system property. It defaults to
+ * "localhost:9300".
  * <p>
- * All tests can be run from maven using mvn install as maven will start an external cluster first.
+ * All tests can be run from maven using mvn install as maven will start an
+ * external cluster first.
  * <p>
- * If you want to debug this module from your IDE, then start an external cluster by yourself
- * then run JUnit. If you changed the default port, set "tests.cluster=localhost:PORT" when running
- * your test.
+ * If you want to debug this module from your IDE, then start an external
+ * cluster by yourself then run JUnit. If you changed the default port, set
+ * "tests.cluster=localhost:PORT" when running your test.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "we log a lot on purpose")
 public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
     /**
-     * Key used to eventually switch to using an external cluster and provide its transport addresses
+     * Key used to eventually switch to using an external cluster and provide
+     * its transport addresses
      */
-    public static final String TESTS_CLUSTER = "tests.cluster";
+    public static final String TESTS_CLUSTER_PROPERTY = "tests.cluster";
 
     /**
      * Defaults to localhost:9300
@@ -121,7 +127,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         return startClient(createTempDir(), transportAddresses);
     }
 
-    public static Client getClient() {
+    protected static Client getClient() {
         if (client == null) {
             try {
                 startClient();
@@ -133,12 +139,38 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         return client;
     }
 
+    protected static <T> void createIndex(String index, String type, List<String> objects, String... mapping) {
+        boolean exists = getClient().admin().indices().prepareExists(index).execute().actionGet().isExists();
+        if (exists) {
+            getClient().admin().indices().prepareDelete(index).get();
+        }
+        LOGGER.info("Creating index {}", index);
+        getClient().admin().indices().prepareCreate(index).get();
+
+        getClient().admin().indices().preparePutMapping(index).setType(type)
+                .setSource(mapping).get();
+
+        BulkRequestBuilder bulkRequest = getClient().prepareBulk();
+        int id = 0;
+        for (String data : objects) {
+            bulkRequest.add(getClient().prepareIndex(index, type, String.valueOf(id++))
+                    .setSource(data));
+        }
+        BulkResponse bulkResponse = bulkRequest.get();
+        if (bulkResponse.hasFailures()) {
+            LOGGER.error(bulkResponse.buildFailureMessage());
+        } else {
+            LOGGER.info("Bulk indexing succeeded.");
+        }
+        getClient().admin().indices().prepareRefresh(index).get();
+    }
+
     @BeforeClass
-    public static void initializeSettings() throws UnknownHostException {
-        clusterAddresses = System.getProperty(TESTS_CLUSTER);
+    static void initializeSettings() throws UnknownHostException {
+        clusterAddresses = System.getProperty(TESTS_CLUSTER_PROPERTY);
         if (clusterAddresses == null || clusterAddresses.isEmpty()) {
             clusterAddresses = TESTS_CLUSTER_DEFAULT;
-            LOGGER.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER, TESTS_CLUSTER_DEFAULT);
+            LOGGER.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
         }
     }
 

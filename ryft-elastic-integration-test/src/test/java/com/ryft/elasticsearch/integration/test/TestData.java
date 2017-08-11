@@ -2,10 +2,13 @@ package com.ryft.elasticsearch.integration.test;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TestData {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     @JsonProperty("registered")
     private String registered;
     @JsonProperty("ipv6")
@@ -162,7 +165,7 @@ public class TestData {
     public void setLocation(String location) {
         this.location = location;
     }
-    
+
     @JsonProperty("id")
     public String getId() {
         return id;
@@ -171,6 +174,10 @@ public class TestData {
     @JsonProperty("id")
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String toJson() throws JsonProcessingException {
+        return MAPPER.writeValueAsString(this);
     }
 
 }
