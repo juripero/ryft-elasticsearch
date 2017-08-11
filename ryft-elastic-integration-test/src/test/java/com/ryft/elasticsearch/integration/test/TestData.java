@@ -27,8 +27,10 @@ public class TestData {
     private String eyeColor;
     @JsonProperty("age")
     private Integer age;
+    @JsonProperty("balance_raw")
+    private String balanceRaw;
     @JsonProperty("balance")
-    private String balance;
+    private Double balance;
     @JsonProperty("isActive")
     private Boolean isActive;
     @JsonProperty("index")
@@ -128,13 +130,23 @@ public class TestData {
         this.age = age;
     }
 
+    @JsonProperty("balance_raw")
+    public String getBalanceRaw() {
+        return balanceRaw;
+    }
+
+    @JsonProperty("balance_raw")
+    public void setBalanceRaw(String balanceRaw) {
+        this.balanceRaw = balanceRaw;
+    }
+
     @JsonProperty("balance")
-    public String getBalance() {
+    public Double getBalance() {
         return balance;
     }
 
     @JsonProperty("balance")
-    public void setBalance(String balance) {
+    public void setBalance(Double balance) {
         this.balance = balance;
     }
 

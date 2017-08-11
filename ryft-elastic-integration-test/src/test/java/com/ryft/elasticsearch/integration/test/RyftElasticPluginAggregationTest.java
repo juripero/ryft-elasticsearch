@@ -52,7 +52,6 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
     public static final String DELETE_TEST_INDEX_PARAM = "test.delete_index";
     private static Boolean DELETE_TEST_INDEX;
 
-    //private static ArrayList<TestData> testData;
     @BeforeClass
     static void prepareData() throws IOException {
         applyProperties();

@@ -38,7 +38,9 @@ public class TestDataGenerator extends DataGenerator<TestData> {
         ));
         result.setCompany(DATA_FACTORY.getBusinessName());
         result.setIsActive(DATA_FACTORY.chance(70));
-        result.setBalance(String.format("$%,.2f", RANDOM.nextDouble() * RANDOM.nextInt(10000)));
+        Double balance = RANDOM.nextDouble() * 10000;
+        result.setBalance(balance);
+        result.setBalanceRaw(String.format("$%,.2f", balance));
         result.setLocation(String.format(Locale.ROOT, "%f,%f", 50 + RANDOM.nextDouble(), 30 + RANDOM.nextDouble()));
         return result;
     }

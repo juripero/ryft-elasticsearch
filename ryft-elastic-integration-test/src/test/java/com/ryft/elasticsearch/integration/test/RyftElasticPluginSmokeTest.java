@@ -627,7 +627,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
 
     @Test
     public void testCurrencyTerm() throws Exception {
-        QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance");
+        QueryStringQueryBuilder builder = QueryBuilders.queryStringQuery("$1,158.96").field("balance_raw");
         LOGGER.info("Testing query: {}", builder.toString());
         SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(builder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
@@ -635,7 +635,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         String ryftQuery = "{\n"
                 + "  \"query\": {\n"
                 + "    \"term\": {\n"
-                + "      \"balance\": {\n"
+                + "      \"balance_raw\": {\n"
                 + "        \"value\": \"$1,158.96\",\n"
                 + "        \"type\": \"currency\", \n"
                 + "        \"currency\": \"$\"\n"
