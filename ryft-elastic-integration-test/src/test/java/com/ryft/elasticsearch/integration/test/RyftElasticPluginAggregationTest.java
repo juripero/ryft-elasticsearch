@@ -78,7 +78,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
     static void applyProperties() {
         Properties properties = System.getProperties();
         DELETE_TEST_INDEX = properties.containsKey(DELETE_TEST_INDEX_PARAM);
-        RECORDS_NUM = Integer.valueOf(properties.getOrDefault("test.records", 100).toString());
+        RECORDS_NUM = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
         INDEX_NAME = properties.getProperty(INDEX_NAME_PARAM, "integration-aggtest");
         LOGGER.info("\nIndex name: {}\nRecords: {}\nDelete test index: {}", INDEX_NAME, RECORDS_NUM, DELETE_TEST_INDEX);
     }

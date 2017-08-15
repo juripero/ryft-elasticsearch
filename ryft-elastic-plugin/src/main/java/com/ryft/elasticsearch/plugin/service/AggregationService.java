@@ -76,13 +76,13 @@ public class AggregationService {
         client.admin().indices().prepareCreate(tempIndexName).setSettings(indexSettings).get();
 
         String index = internalSearchHits.getAt(0).getIndex();
-        GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
-
-        LOGGER.debug("Creating mappings in temp index.");
-        ImmutableOpenMap<String, MappingMetaData> mappings = mappingsResponse
-                .getMappings()
-                .get(index);
         try {
+            GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
+
+            LOGGER.debug("Creating mappings in temp index.");
+            ImmutableOpenMap<String, MappingMetaData> mappings = mappingsResponse
+                    .getMappings()
+                    .get(index);
             for (ObjectObjectCursor<String, MappingMetaData> mappingCursor : mappings) {
                 MappingMetaData mappingMetaData = mappingCursor.value;
                 String type = mappingCursor.key;
@@ -93,6 +93,8 @@ public class AggregationService {
             String errorMessage = String.format("Cannot get mappings of index %s.", index);
             LOGGER.error(errorMessage, ex);
             throw new RyftSearchException(errorMessage, ex);
+        } catch (RuntimeException ex) {
+            LOGGER.warn(String.format("Cannot get mappings of index %s.", index));
         }
 
         BulkRequestBuilder bulkRequest = client.prepareBulk();
