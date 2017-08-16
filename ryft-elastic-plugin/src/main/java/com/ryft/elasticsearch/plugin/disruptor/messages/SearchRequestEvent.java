@@ -1,7 +1,7 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -46,7 +46,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected void validateRequest() throws RyftSearchException {
         if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
-                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UNKNOWN_FORMAT)) {
+                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
             throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
         }
     }
@@ -55,8 +55,8 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_LIMIT);
     }
 
-    protected ElasticConverterRyft.ElasticConverterFormat.RyftFormat getFormat() {
-        return (ElasticConverterRyft.ElasticConverterFormat.RyftFormat) ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
+    protected RyftFormat getFormat() {
+        return (RyftFormat) ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
     }
 
     protected Boolean getCaseSensitive() {

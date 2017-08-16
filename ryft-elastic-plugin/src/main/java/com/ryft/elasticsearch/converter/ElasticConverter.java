@@ -1,15 +1,15 @@
 package com.ryft.elasticsearch.converter;
 
-import com.ryft.elasticsearch.converter.ElasticConverterRyft.ElasticConverterFormat.RyftFormat;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryComplex;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParametersFactory;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -56,13 +56,6 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
         if (ryftQuery == null) {
             return null;
         }
-
-        RyftFormat format = (RyftFormat) convertingContext.getQueryProperties().get(PropertiesProvider.RYFT_FORMAT);
-
-        if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
-            ryftQuery = ryftQuery.toRawTextQuery();
-        }
-
         return getRyftRequestParameters(convertingContext, ryftQuery);
     }
 
@@ -86,21 +79,17 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
             }
         } catch (IOException ex) {
             throw new ElasticConversionException("Request parsing error", ex);
-        } catch (UnsupportedOperationException ex) {
+        } catch (RuntimeException ex) {
             throw new ElasticConversionException(ex.getMessage());
         }
     }
 
     private void adjustRequest(SearchRequest request, ElasticConvertingContext convertingContext) throws IOException {
-        Map<String, Object> parsedQuery = new HashMap<>(convertingContext.getParsedQuery());
-        parsedQuery.remove(ElasticConverterRyftEnabled.NAME);
-        parsedQuery.remove(ElasticConverterRyft.NAME);
-        if (parsedQuery.containsKey(ElasticConverterQuery.NAME)) {
-            Map<String, Object> innerQuery = ((Map<String, Object>) parsedQuery.get(ElasticConverterQuery.NAME));
-            innerQuery.remove(ElasticConverterRyftEnabled.NAME);
-            innerQuery.remove(ElasticConverterRyft.NAME);
-        }
-        request.source(parsedQuery);
+        convertingContext.getQueryJsonNode().findParents(QueryConverterHelper.RYFT_PROPERTY)
+                .forEach(parentNode -> ((ObjectNode) parentNode).remove(QueryConverterHelper.RYFT_PROPERTY));
+        convertingContext.getQueryJsonNode().findParents(QueryConverterHelper.RYFT_ENABLED_PROPERTY)
+                .forEach(parentNode -> ((ObjectNode) parentNode).remove(QueryConverterHelper.RYFT_ENABLED_PROPERTY));
+        request.source(convertingContext.getQueryMap());
     }
 
     private RyftQuery applyFilters(ElasticConvertingContext convertingContext, RyftQuery ryftQuery, Object conversionResult) {
@@ -112,8 +101,13 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private RyftRequestParameters getRyftRequestParameters(ElasticConvertingContext convertingContext, RyftQuery ryftQuery) {
-        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getParsedQuery());
-        result.getRyftProperties().putAll(convertingContext.getQueryProperties());
+        Map<String, Object> queryProperties = QueryConverterHelper.getQueryProperties(convertingContext);
+        RyftFormat format = (RyftFormat) queryProperties.get(PropertiesProvider.RYFT_FORMAT);
+        if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
+            ryftQuery = ryftQuery.toRawTextQuery();
+        }
+        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getQueryMap());
+        result.getRyftProperties().putAll(queryProperties);
         return result;
     }
 }

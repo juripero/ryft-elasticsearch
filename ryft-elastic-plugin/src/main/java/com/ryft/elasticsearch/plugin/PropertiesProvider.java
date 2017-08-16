@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.plugin;
 
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,13 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
 import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
 import com.ryft.elasticsearch.utils.PostConstruct;
+import java.io.FileNotFoundException;
 
 @Singleton
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
@@ -38,6 +39,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
     public static final String RYFT_FORMAT = "ryft_format";
     public static final String RYFT_CASE_SENSITIVE = "ryft_case_sensitive";
+    public static final String RYFT_MAPPING = "ryft_mapping";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();
@@ -55,7 +57,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RYFT_REST_AUTH_ENABLED, true);
         defaults.put(RYFT_REST_LOGIN, "admin");
         defaults.put(RYFT_REST_PASSWORD, "admin");
-        defaults.put(RYFT_FORMAT, ElasticConverterRyft.ElasticConverterFormat.RyftFormat.JSON);
+        defaults.put(RYFT_FORMAT, RyftFormat.JSON);
         defaults.put(RYFT_CASE_SENSITIVE, "false");
 
         props = new RyftProperties();
@@ -67,7 +69,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
                 LOGGER.info("propertiesPath: " + propertiesPath);
                 try {
                     return new FileInputStream(propertiesPath + "/ryft.elastic.plugin.properties");
-                } catch (Exception e) {
+                } catch (FileNotFoundException e) {
                     LOGGER.error("Failed to load properties", e);
                     return null;
                 }

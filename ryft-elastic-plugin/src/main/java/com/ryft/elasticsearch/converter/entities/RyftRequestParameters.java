@@ -1,6 +1,6 @@
 package com.ryft.elasticsearch.converter.entities;
 
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -44,8 +44,8 @@ public class RyftRequestParameters {
                 && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List)) {
             return true;
         } else return ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
-                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.RAW)
-                || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
+                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.RAW)
+                || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UTF8));
     }
 
     public Map<String, Object> getParsedQuery() {

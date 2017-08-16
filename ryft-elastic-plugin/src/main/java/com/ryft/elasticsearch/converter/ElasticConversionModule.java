@@ -2,7 +2,6 @@ package com.ryft.elasticsearch.converter;
 
 import com.ryft.elasticsearch.converter.ElasticConverterBool.*;
 import com.ryft.elasticsearch.converter.ElasticConverterField.*;
-import com.ryft.elasticsearch.converter.ElasticConverterRyft.*;
 import com.ryft.elasticsearch.converter.ElasticConverterShared.*;
 import com.ryft.elasticsearch.converter.ElasticConverterRangeField.*;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
@@ -54,14 +53,6 @@ public class ElasticConversionModule extends AbstractModule {
         convertersBinder.addBinding(ElasticConverterSeparator.NAME).to(ElasticConverterShared.ElasticConverterSeparator.class);
         convertersBinder.addBinding(ElasticConverterDecimal.NAME).to(ElasticConverterShared.ElasticConverterDecimal.class);
         convertersBinder.addBinding(ElasticConverterCurrency.NAME).to(ElasticConverterShared.ElasticConverterCurrency.class);
-
-        convertersBinder.addBinding(ElasticConverterRyftEnabled.NAME).to(ElasticConverterRyftEnabled.class);
-        convertersBinder.addBinding(ElasticConverterSize.NAME).to(ElasticConverterSize.class);
-        convertersBinder.addBinding(ElasticConverterRyft.NAME).to(ElasticConverterRyft.class);
-        convertersBinder.addBinding(ElasticConverterEnabled.NAME).to(ElasticConverterEnabled.class);
-        convertersBinder.addBinding(ElasticConverterFiles.NAME).to(ElasticConverterFiles.class);
-        convertersBinder.addBinding(ElasticConverterFormat.NAME).to(ElasticConverterFormat.class);
-        convertersBinder.addBinding(ElasticConverterCaseSensitive.NAME).to(ElasticConverterCaseSensitive.class);
         
         convertersBinder.addBinding(ElasticConverterFiltered.NAME).to(ElasticConverterFiltered.class);
 

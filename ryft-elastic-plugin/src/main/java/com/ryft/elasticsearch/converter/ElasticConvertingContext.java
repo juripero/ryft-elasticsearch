@@ -3,7 +3,7 @@ package com.ryft.elasticsearch.converter;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
@@ -14,7 +14,6 @@ import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.elasticsearch.action.search.SearchRequest;
@@ -48,7 +47,6 @@ public class ElasticConvertingContext {
     private final RyftQueryFactory ryftQueryFactory;
     private ElasticSearchType searchType;
     private RyftOperator ryftOperator = RyftOperator.CONTAINS;
-    private final Map<String, Object> queryProperties;
     private Integer minimumShouldMatch = 1;
     private Boolean minimumShouldMatchDefined = false;
     private Boolean line;
@@ -57,7 +55,7 @@ public class ElasticConvertingContext {
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
     private ObjectMapper objectMapper;
-    private Map<String, Object> parsedQuery;
+    private JsonNode queryJsonNode;
     private Boolean filtered = false;
 
     @Inject
@@ -65,7 +63,6 @@ public class ElasticConvertingContext {
             RyftQueryFactory ryftQueryFactory) {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
         this.ryftQueryFactory = ryftQueryFactory;
-        this.queryProperties = new HashMap<>();
     }
 
     public void setSearchRequest(SearchRequest searchRequest) throws ElasticConversionException, IOException {
@@ -76,7 +73,7 @@ public class ElasticConvertingContext {
             this.originalQuery = searchContent.toUtf8();
             this.contentParser = XContentFactory.xContent(searchContent).createParser(searchContent);
             this.objectMapper = createObjectMapper(contentParser.contentType());
-            this.parsedQuery = objectMapper.readValue(searchContent.toBytes(), new TypeReference<Map<String, Object>>(){});
+            this.queryJsonNode = objectMapper.readTree(searchContent.toBytes());
         }
         this.indices = searchRequest.indices();
     }
@@ -181,10 +178,6 @@ public class ElasticConvertingContext {
         this.dataType = dataType;
     }
 
-    public Map<String, Object> getQueryProperties() {
-        return queryProperties;
-    }
-
     public RyftQueryFactory getQueryFactory() {
         return ryftQueryFactory;
     }
@@ -217,7 +210,11 @@ public class ElasticConvertingContext {
         return objectMapper;
     }
 
-    public Map<String, Object> getParsedQuery() {
-        return parsedQuery;
+    public JsonNode getQueryJsonNode() {
+        return queryJsonNode;
+    }
+
+    public Map<String, Object> getQueryMap() {
+        return objectMapper.convertValue(queryJsonNode, Map.class);
     }
 }
