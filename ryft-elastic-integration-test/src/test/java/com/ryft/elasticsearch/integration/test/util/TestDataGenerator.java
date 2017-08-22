@@ -1,6 +1,6 @@
 package com.ryft.elasticsearch.integration.test.util;
 
-import com.ryft.elasticsearch.integration.test.TestData;
+import com.ryft.elasticsearch.integration.test.entity.TestData;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -22,7 +22,7 @@ public class TestDataGenerator extends DataGenerator<TestData> {
         result.setEyeColor(DATA_FACTORY.getItem(new String[]{"green", "blue", "brown"}));
         result.setFirstName(DATA_FACTORY.getFirstName());
         result.setLastName(DATA_FACTORY.getLastName());
-        result.setAbout(DATA_FACTORY.getRandomText(50, 100));
+        result.setAbout(getSentense(DATA_FACTORY.getNumberBetween(5, 10)));
         result.setRegistered(dateFormat.format(DATA_FACTORY.getDate(new Date(), -1000, 0)));
         result.setIpv4(String.format("192.168.%d.%d",
                 DATA_FACTORY.getNumberUpTo(256), DATA_FACTORY.getNumberUpTo(256)));

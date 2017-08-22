@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.ryft.elasticsearch.integration.test;
 
 import org.apache.lucene.util.LuceneTestCase;
@@ -29,22 +28,21 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLength;
 import java.util.List;
+import java.util.Properties;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * {@link ESSmokeClientTestCase} is an abstract base class to run integration
@@ -75,14 +73,23 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
      */
     public static final String TESTS_CLUSTER_DEFAULT = "localhost:9300";
 
+    public static final String INDEX_NAME_PARAM = "test.index";
+    protected static String indexName;
+
+    public static final String RECORDS_NUM_INDEX_PARAM = "test.records";
+    protected static Integer recordsNum;
+
+    public static final String SAVE_TEST_INDEX_PARAM = "test.delete_index";
+    protected static Boolean saveTestIndex;
+
     protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
 
     private static final AtomicInteger COUNTER = new AtomicInteger();
     private static Client client;
     private static String clusterAddresses;
-    protected String index;
+    protected static TransportAddress[] transportAddresses;
 
-    private static Client startClient(Path tempDir, TransportAddress... transportAddresses) {
+    private static Client startClient(Path tempDir) {
         Settings clientSettings = Settings.settingsBuilder()
                 .put("name", "qa_smoke_client_" + COUNTER.getAndIncrement())
                 .put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true) // prevents any settings to be replaced by system properties.
@@ -109,31 +116,9 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         return client;
     }
 
-    private static Client startClient() throws UnknownHostException {
-        String[] stringAddresses = clusterAddresses.split(",");
-        TransportAddress[] transportAddresses = new TransportAddress[stringAddresses.length];
-        int i = 0;
-        for (String stringAddress : stringAddresses) {
-            String[] split = stringAddress.split(":");
-            if (split.length < 2) {
-                throw new IllegalArgumentException("address [" + clusterAddresses + "] not valid");
-            }
-            try {
-                transportAddresses[i++] = new InetSocketTransportAddress(InetAddress.getByName(split[0]), Integer.valueOf(split[1]));
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("port is not valid, expected number but was [" + split[1] + "]");
-            }
-        }
-        return startClient(createTempDir(), transportAddresses);
-    }
-
     protected static Client getClient() {
         if (client == null) {
-            try {
-                startClient();
-            } catch (UnknownHostException e) {
-                LOGGER.error("can not start the client", e);
-            }
+            startClient(createTempDir());
             assertThat(client, notNullValue());
         }
         return client;
@@ -148,7 +133,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         getClient().admin().indices().prepareCreate(index).get();
 
         getClient().admin().indices().preparePutMapping(index).setType(type)
-                .setSource(mapping).get();
+                .setSource((Object[]) mapping).get();
 
         BulkRequestBuilder bulkRequest = getClient().prepareBulk();
         int id = 0;
@@ -167,10 +152,30 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
     @BeforeClass
     static void initializeSettings() throws UnknownHostException {
-        clusterAddresses = System.getProperty(TESTS_CLUSTER_PROPERTY);
-        if (clusterAddresses == null || clusterAddresses.isEmpty()) {
-            clusterAddresses = TESTS_CLUSTER_DEFAULT;
-            LOGGER.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
+        Properties properties = System.getProperties();
+        saveTestIndex = properties.containsKey(SAVE_TEST_INDEX_PARAM);
+        recordsNum = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
+        indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-aggtest");
+        clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
+        getTransportAddresses();
+        LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
+                clusterAddresses, indexName, recordsNum, saveTestIndex);
+    }
+
+    private static void getTransportAddresses() throws UnknownHostException {
+        String[] stringAddresses = clusterAddresses.split(",");
+        transportAddresses = new TransportAddress[stringAddresses.length];
+        int i = 0;
+        for (String stringAddress : stringAddresses) {
+            String[] split = stringAddress.split(":");
+            if (split.length < 2) {
+                throw new IllegalArgumentException("address [" + clusterAddresses + "] not valid");
+            }
+            try {
+                transportAddresses[i++] = new InetSocketTransportAddress(InetAddress.getByName(split[0]), Integer.valueOf(split[1]));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("port is not valid, expected number but was [" + split[1] + "]");
+            }
         }
     }
 
@@ -182,19 +187,8 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         }
     }
 
-    @Before
-    public void defineIndexName() {
-        doClean();
-        index = "qa-smoke-test-client-" + randomAsciiOfLength(10).toLowerCase(Locale.getDefault());
-    }
-
-    @After
-    public void cleanIndex() {
-        doClean();
-    }
-
-    private void doClean() {
-        if (client != null) {
+    protected static void deleteIndex(String index) {
+        if ((client != null) && (!saveTestIndex)) {
             try {
                 client.admin().indices().prepareDelete(index).get();
             } catch (Exception e) {
@@ -203,4 +197,9 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         }
     }
 
+    protected void assertResponse(SearchResponse searchResponse) {
+        assertNotNull(searchResponse);
+        assertNotNull(searchResponse.getHits());
+        assertNotNull(searchResponse.getHits().getHits());
+    }
 }

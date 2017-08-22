@@ -1,9 +1,11 @@
-package com.ryft.elasticsearch.integration.test;
+package com.ryft.elasticsearch.integration.test.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TestData {
@@ -188,8 +190,90 @@ public class TestData {
         this.id = id;
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 31 * hash + Objects.hashCode(this.registered);
+        hash = 31 * hash + Objects.hashCode(this.ipv6);
+        hash = 31 * hash + Objects.hashCode(this.ipv4);
+        hash = 31 * hash + Objects.hashCode(this.about);
+        hash = 31 * hash + Objects.hashCode(this.company);
+        hash = 31 * hash + Objects.hashCode(this.lastName);
+        hash = 31 * hash + Objects.hashCode(this.firstName);
+        hash = 31 * hash + Objects.hashCode(this.eyeColor);
+        hash = 31 * hash + Objects.hashCode(this.age);
+        hash = 31 * hash + Objects.hashCode(this.balanceRaw);
+        hash = 31 * hash + Objects.hashCode(this.balance);
+        hash = 31 * hash + Objects.hashCode(this.isActive);
+        hash = 31 * hash + Objects.hashCode(this.index);
+        hash = 31 * hash + Objects.hashCode(this.location);
+        hash = 31 * hash + Objects.hashCode(this.id);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final TestData other = (TestData) obj;
+        if (!Objects.equals(this.registered, other.registered)) {
+            return false;
+        }
+        if (!Objects.equals(this.ipv6, other.ipv6)) {
+            return false;
+        }
+        if (!Objects.equals(this.ipv4, other.ipv4)) {
+            return false;
+        }
+        if (!Objects.equals(this.about, other.about)) {
+            return false;
+        }
+        if (!Objects.equals(this.company, other.company)) {
+            return false;
+        }
+        if (!Objects.equals(this.lastName, other.lastName)) {
+            return false;
+        }
+        if (!Objects.equals(this.firstName, other.firstName)) {
+            return false;
+        }
+        if (!Objects.equals(this.eyeColor, other.eyeColor)) {
+            return false;
+        }
+        if (!Objects.equals(this.balanceRaw, other.balanceRaw)) {
+            return false;
+        }
+        if (!Objects.equals(this.location, other.location)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.age, other.age)) {
+            return false;
+        }
+        if (!Objects.equals(this.balance, other.balance)) {
+            return false;
+        }
+        if (!Objects.equals(this.isActive, other.isActive)) {
+            return false;
+        }
+        return Objects.equals(this.index, other.index);
+    }
+
     public String toJson() throws JsonProcessingException {
         return MAPPER.writeValueAsString(this);
+    }
+
+    public static TestData fromJson(byte[] content) throws IOException {
+        return MAPPER.readValue(content, TestData.class);
     }
 
 }

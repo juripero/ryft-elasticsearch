@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.integration.test;
 
+import com.ryft.elasticsearch.integration.test.entity.TestData;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import static com.ryft.elasticsearch.integration.test.ESSmokeClientTestCase.LOGGER;
@@ -8,7 +9,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.elasticsearch.action.search.SearchAction;
@@ -41,46 +41,27 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
+public class AggregationTest extends ESSmokeClientTestCase {
 
-    public static final String INDEX_NAME_PARAM = "test.index";
-    private static String INDEX_NAME;
-
-    public static final String RECORDS_NUM_INDEX_PARAM = "test.records";
-    private static Integer RECORDS_NUM;
-
-    public static final String DELETE_TEST_INDEX_PARAM = "test.delete_index";
-    private static Boolean DELETE_TEST_INDEX;
+    private static List<TestData> testDataList;
 
     @BeforeClass
     static void prepareData() throws IOException {
-        applyProperties();
         TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        ArrayList<TestData> testData = new ArrayList<>();
-        ArrayList<String> testDataStrings = new ArrayList<>();
-        IntStream.range(0, RECORDS_NUM).mapToObj(dataGenerator::getDataSample)
-                .collect(Collectors.toCollection(() -> testData));
-        for (TestData data : testData) {
+        List<String> testDataStrings = new ArrayList<>();
+        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
+                .collect(Collectors.toList());
+        for (TestData data : testDataList) {
             testDataStrings.add(data.toJson());
         }
-        createIndex(INDEX_NAME, "test", testDataStrings,
+        createIndex(indexName, "test", testDataStrings,
                 "registered", "type=date,format=yyyy-MM-dd HH:mm:ss",
                 "location", "type=geo_point");
     }
 
     @AfterClass
     static void cleanUp() {
-        if (DELETE_TEST_INDEX) {
-            getClient().admin().indices().prepareDelete(INDEX_NAME).get();
-        }
-    }
-
-    static void applyProperties() {
-        Properties properties = System.getProperties();
-        DELETE_TEST_INDEX = properties.containsKey(DELETE_TEST_INDEX_PARAM);
-        RECORDS_NUM = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
-        INDEX_NAME = properties.getProperty(INDEX_NAME_PARAM, "integration-aggtest");
-        LOGGER.info("\nIndex name: {}\nRecords: {}\nDelete test index: {}", INDEX_NAME, RECORDS_NUM, DELETE_TEST_INDEX);
+        deleteIndex(indexName);
     }
 
     @Test
@@ -92,7 +73,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         InternalHistogram<InternalHistogram.Bucket> aggregation = (InternalHistogram) searchResponse.getAggregations().get(aggregationName);
@@ -119,7 +100,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         InternalHistogram<InternalHistogram.Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
         ryftAggregation.getBuckets().forEach((bucket) -> {
@@ -143,7 +124,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Min aggregation = (Min) searchResponse.getAggregations().get(aggregationName);
@@ -167,7 +148,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Min ryftAggregation = (Min) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT min value: {}", ryftAggregation.getValue());
@@ -184,7 +165,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Max aggregation = (Max) searchResponse.getAggregations().get(aggregationName);
@@ -208,7 +189,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Max ryftAggregation = (Max) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT max value: {}", ryftAggregation.getValue());
@@ -225,7 +206,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Sum aggregation = (Sum) searchResponse.getAggregations().get(aggregationName);
@@ -249,7 +230,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT sum value: {}", ryftAggregation.getValue());
@@ -267,7 +248,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Avg aggregation = (Avg) searchResponse.getAggregations().get(aggregationName);
@@ -298,7 +279,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
@@ -315,7 +296,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ValueCount aggregation = (ValueCount) searchResponse.getAggregations().get(aggregationName);
@@ -339,7 +320,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());
@@ -356,7 +337,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Stats aggregation = (Stats) searchResponse.getAggregations().get(aggregationName);
@@ -382,7 +363,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Stats ryftAggregation = (Stats) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT stats: avg={}, count={}, max={}, min={}, sum={}",
@@ -405,7 +386,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ExtendedStats aggregation = (ExtendedStats) searchResponse.getAggregations().get(aggregationName);
@@ -436,7 +417,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         ExtendedStats ryftAggregation = (ExtendedStats) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("ES extended stats: avg={}, count={}, max={}, min={}, sum={},\n"
@@ -470,7 +451,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         GeoBounds aggregation = (GeoBounds) searchResponse.getAggregations().get(aggregationName);
@@ -494,7 +475,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         GeoBounds ryftAggregation = (GeoBounds) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT top left: {}", ryftAggregation.topLeft());
@@ -514,7 +495,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         GeoCentroid aggregation = (GeoCentroid) searchResponse.getAggregations().get(aggregationName);
@@ -538,7 +519,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         GeoCentroid ryftAggregation = (GeoCentroid) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT centroid: {}", ryftAggregation.centroid());
@@ -558,7 +539,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         List<Percentile> esPercentiles = Lists.newArrayList((Percentiles) searchResponse.getAggregations().get(aggregationName));
@@ -587,7 +568,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         List<Percentile> ryftPercentiles = Lists.newArrayList((Percentiles) ryftResponse.getAggregations().asList().get(0));
         ryftPercentiles.forEach((percentile) -> {
@@ -611,7 +592,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         List<Percentile> esPercentiles = Lists.newArrayList((PercentileRanks) searchResponse.getAggregations().get(aggregationName));
@@ -637,7 +618,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         List<Percentile> ryftPercentiles = Lists.newArrayList((PercentileRanks) ryftResponse.getAggregations().asList().get(0));
         ryftPercentiles.forEach((percentile) -> {
@@ -663,7 +644,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing aggregation1: {}", aggregationBuilder1.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
         LOGGER.info("Testing aggregation2: {}", aggregationBuilder2.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder1).addAggregation(aggregationBuilder2).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Min aggregation1 = (Min) searchResponse.getAggregations().get("1");
@@ -693,7 +674,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         Min ryftAggregation1 = (Min) ryftResponse.getAggregations().asMap().get("1");
         Max ryftAggregation2 = (Max) ryftResponse.getAggregations().asMap().get("2");
@@ -712,7 +693,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(INDEX_NAME).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ValueCount aggregation = (ValueCount) searchResponse.getAggregations().get(aggregationName);
@@ -739,7 +720,7 @@ public class RyftElasticPluginAggregationTest extends ESSmokeClientTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());

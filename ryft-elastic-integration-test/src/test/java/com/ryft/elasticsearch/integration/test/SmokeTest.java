@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.integration.test;
 
+import com.ryft.elasticsearch.integration.test.entity.TestData;
 import static org.hamcrest.Matchers.greaterThan;
 
 import java.io.File;
@@ -25,7 +26,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
+public class SmokeTest extends ESSmokeClientTestCase {
 
     // index field from super will be deleted after test
     private static final String INDEX_NAME = "integration";
@@ -40,7 +41,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertThat("cluster [" + clusterName + "] should have at least 1 node", numberOfNodes, greaterThan(0));
 
         ObjectMapper mapper = new ObjectMapper();
-        ClassLoader classLoader = RyftElasticPluginSmokeTest.class.getClassLoader();
+        ClassLoader classLoader = SmokeTest.class.getClassLoader();
         File file = new File(classLoader.getResource("dataset.json").getFile());
         testDataContent = new String(Files.readAllBytes(file.toPath()));
         ArrayList<TestData> testData = mapper.readValue(testDataContent, new TypeReference<List<TestData>>() {
@@ -57,7 +58,7 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
     @AfterClass
     public static void afterClass() {
         LOGGER.info("Deleting created indices");
-        getClient().admin().indices().prepareDelete(INDEX_NAME).get();
+        deleteIndex(INDEX_NAME);
     }
 
     /**
@@ -790,9 +791,4 @@ public class RyftElasticPluginSmokeTest extends ESSmokeClientTestCase {
         assertTrue(true);
     }
 
-    private void assertResponse(SearchResponse searchResponse) {
-        assertNotNull(searchResponse);
-        assertNotNull(searchResponse.getHits());
-        assertNotNull(searchResponse.getHits().getHits());
-    }
 }
