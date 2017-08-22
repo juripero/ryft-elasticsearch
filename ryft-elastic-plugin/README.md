@@ -28,7 +28,7 @@ Simplified form:
 }
 ```
 | Property  | RYFT possible values | Elasticsearch possible values | Notes                                    |
-|-----------|----------------------|-------------------------------|------------------------------------------|
+| --------- | -------------------- | ----------------------------- | ---------------------------------------- |
 | query     | string               | string                        | Search query.                            |
 | operator  | <"and", "or">        | <"and", "or">                 | Default "or".                            |
 | fuzziness | <"auto", Integer>    | <"AUTO", 0, 1, 2>             | Default 0.                               |
@@ -127,7 +127,7 @@ Phrase matching is different from simple match because it will try to find the w
 }
 ```
 As the result we will get only one result.
-User can rewrite ```match_phrase``` query as ```match``` query like:
+User can rewrite `match_phrase` query as `match` query like:
 ```json
 {
     "query": {
@@ -179,8 +179,8 @@ Resulting RYFT query:
 ```
 ### Boolean query syntax:
 
-```must``` and ```must_not``` queries would be combined with ```AND``` operator ```should``` queries would be combined with operator ```OR``` 
-```
+`must` and `must_not` queries would be combined with `AND` operator `should` queries would be combined with operator `OR` 
+`
 {
   "query": {
     "bool" : {
@@ -222,8 +222,8 @@ Resulting RYFT query:
 ((RECORD.text_entry CONTAINS FEDS("To be or not to be", DIST=2)) AND 
  (RECORD.speaker CONTAINS "HAMLET"))
 ```
-Sections ```must```, ```must_not```, ```should``` can contain only one sub-query.
-Queries in section ```should``` are taken into account if no queries in other sections exists or defined ```minimum_should_match``` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
+Sections `must`, `must_not`, `should` can contain only one sub-query.
+Queries in section `should` are taken into account if no queries in other sections exists or defined `minimum_should_match` value (details see [here](https://www.elastic.co/guide/en/elasticsearch/guide/current/bool-query.html)).
 ```json
 {
     "query": {
@@ -277,7 +277,7 @@ Resulting RYFT query:
 ```
 ((RECORD.title CONTAINS "quick") AND (RECORD.title NOT_CONTAINS "lazy") AND ((RECORD.title CONTAINS "brown") OR (RECORD.title CONTAINS "dog")))
 ```
-We can control how many should clauses need to match by using the ```minimum_should_match```
+We can control how many should clauses need to match by using the `minimum_should_match`
 ```json
 {
     "query": {
@@ -437,7 +437,6 @@ Query:
 Resulting RYFT query:
 ```
 ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS = 07:00:00)))
-
 ```
 
 Query: 
@@ -506,12 +505,11 @@ Range query:
       "age" : {
         "gte" : -1.01e2,
         "lte" : "2000.12",
-        "type":"number"
+        "type": "number"
       }
     }
   }
 }
-
 ```
 
 Resulting RYFT query:
@@ -555,7 +553,6 @@ Query:
 Resulting RYFT query:
 ```
 (RECORD.price CONTAINS CURRENCY(CUR = "$10000", "$", ",", "."))
-
 ```
 
 Query:
@@ -575,7 +572,6 @@ Query:
 Resulting RYFT query:
 ```
 (RECORD.price CONTAINS CURRENCY(CUR = "$100", "$", ",", "."))
-
 ```
 
 Range query: 
@@ -773,19 +769,19 @@ Resulting RYFT query:
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
 
-| Property                            | Meaning                               |
-|-------------------------------------|---------------------------------------|
-| ryft_rest_client_host               | RYFT service host                     |
-| ryft_rest_client_port               | RYFT service port                     |
-| ryft_rest_auth_login                | RYFT service login                    |
-| ryft_rest_auth_password             | RYFT service password                 |
-| ryft_request_processing_thread_num  | Thread number for request processing  |
-| ryft_response_processing_thread_num | Thread number for response processing |
-| ryft_query_limit                    | Results limit                         |
-| ryft_integration_enabled            | Integration with RYFT                 |
-| ryft_plugin_settings_index          | Settings index name                   |
-| ryft_disruptor_capacity             | Capacity of internal queue            |
-| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST|
+| Property                            | Meaning                                              |
+| ----------------------------------- | ---------------------------------------------------- |
+| ryft_rest_client_host               | RYFT service host                                    |
+| ryft_rest_client_port               | RYFT service port                                    |
+| ryft_rest_auth_login                | RYFT service login                                   |
+| ryft_rest_auth_password             | RYFT service password                                |
+| ryft_request_processing_thread_num  | Thread number for request processing                 |
+| ryft_response_processing_thread_num | Thread number for response processing                |
+| ryft_query_limit                    | Results limit                                        |
+| ryft_integration_enabled            | Integration with RYFT                                |
+| ryft_plugin_settings_index          | Settings index name                                  |
+| ryft_disruptor_capacity             | Capacity of internal queue                           |
+| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST |
 
 
 To change property value using settings index you have to execute next call:
@@ -802,7 +798,7 @@ curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
 ```
 Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
 
-```ryft_integration_enabled``` and ```ryft_query_limit``` properties are overridden by ```ryft_enabled``` and ```size``` query properties.
+`ryft_integration_enabled` and `ryft_query_limit` properties are overridden by `ryft_enabled` and `size` query properties.
 ```json
 {
     "query": {
@@ -816,23 +812,25 @@ Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK fol
 ```
 
 ##### Case sensitivity
-By default, search is not case-sensitive. To configure this setting, the ```ryft``` property should be used. 
+By default, search is not case-sensitive. To configure this setting, the `ryft` property should be used. 
 The following configuration parameters should be present:
 
-| Parameter                           | Meaning                                      |
-|-------------------------------------|----------------------------------------------|
-| enabled                             | The same as ```ryft_enabled```               |
-| case_sensitive                      | Should search be case-sensitive?(true/false) |
+| Parameter      | Meaning                                      |
+| -------------- | -------------------------------------------- |
+| enabled        | The same as `ryft_enabled`                   |
+| case_sensitive | Should search be case-sensitive?(true/false) |
 
-### Search on non-indexed files
-RYFT plugin is able to perform record search on non-indexed files. To do this ```ryft``` property should be used. 
+## Search on non-indexed files
+### Record search
+RYFT plugin is able to perform record search on non-indexed files. To do this `ryft` property should be used. 
 The following configuration parameters should be present:
 
-| Parameter                           | Meaning                               |
-|-------------------------------------|---------------------------------------|
-| enabled                             | The same as ```ryft_enabled```        |
-| files                               | List of files to search               |
-| format                              | Input data format                     |
+| Parameter | Meaning                       |
+| --------- | ----------------------------- |
+| enabled   | The same as `ryft_enabled`    |
+| files     | List of files to search       |
+| format    | Input data format             |
+| mapping   | Data fields mapping properies |
 ```json
 {
     "query": {
@@ -849,9 +847,9 @@ The following configuration parameters should be present:
 
 
 Such search query produce following request to RYFT: 
-```
+`
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
-```
+`
 Example to do fuzzy search on non indexed files:
 
 ```json
@@ -875,9 +873,56 @@ Example to do fuzzy search on non indexed files:
 ```
 Such search query produce following request to RYFT: 
 
-```
+`
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
+`
+
+Mapping property contains information of result records datatypes and can be useful for some data aggregations. It supports same syntax as [Elasticsearch do](https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html).
+
+```json
+{
+  "ryft": {
+    "mapping": {
+      "registered": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss"
+      },
+      "location": {
+        "type": "geo_point"
+      }
+    }
+  }
+}
 ```
+```json
+{
+  "ryft": {
+    "mapping": {
+      "properties": {
+        "registered": {
+          "type": "date",
+          "format": "yyyy-MM-dd HH:mm:ss"
+        },
+        "location": {
+          "type": "geo_point"
+        }
+      }
+    }
+  }
+}
+```
+Also plugin supports simplified syntax for mapping:
+```json
+{
+  "ryft": {
+    "mapping": {
+      "registered": "type=date,format=yyyy-MM-dd HH:mm:ss",
+      "location": "type=geo_point"
+    }
+  }
+}
+```
+
 ### Raw text search
 RAW_TEXT search allows searching in unstructured and unindexed text data. 
 
@@ -912,3 +957,8 @@ Parameter “width” contains number of surrounding symbols or value “line”
 
 In order for RAW_TEXT search to properly work with the `AND` operator, the "width" has to be "line". If the "width" is
 different, it will be automatically converted to "line".
+
+## Aggregations
+Plugin supports all types of aggregations which are supported by Elasticsearch. In order to calculate aggregation over search result returned from RYFT service, plugin creates two requests. First request gets results from RYFT service. Received from RYFT data is saved into tempropary index. Second request executes all necessary aggregations over data from tempropary index in elasticsearch. Finally tempropary index is deleted.
+
+Tempropary index fields mapping is the same as in original index where data is searched. For non-indexed search tempropary index mapping is created automatically using Elasticsearch dynamic mapping. It guesses types of fields and in most cases it creates index with correct datatypes. But for some specific cases you have to define datatype of certain fields implicitly; e.g. date or geo-point datatypes.
