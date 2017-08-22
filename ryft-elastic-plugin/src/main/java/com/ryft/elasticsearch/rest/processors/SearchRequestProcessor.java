@@ -275,7 +275,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         InternalSearchHit searchHit;
         try {
             String uid = hit.has("_uid") ? hit.get("_uid").asText() : String.valueOf(hit.hashCode());
-            String type = hit.has("type") ? hit.get("type").asText() : "nonindexed";
+            String type = hit.has("type") ? hit.get("type").asText() : FileSearchRequestEvent.NON_INDEXED_TYPE;
 
             searchHit = new InternalSearchHit(0, uid, new Text(type),
                     ImmutableMap.of());

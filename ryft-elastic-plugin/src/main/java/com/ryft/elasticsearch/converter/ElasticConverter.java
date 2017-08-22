@@ -85,9 +85,9 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
     }
 
     private void adjustRequest(SearchRequest request, ElasticConvertingContext convertingContext) throws IOException {
-        convertingContext.getQueryJsonNode().findParents(QueryConverterHelper.RYFT_PROPERTY)
+        convertingContext.getQueryObjectNode().findParents(QueryConverterHelper.RYFT_PROPERTY)
                 .forEach(parentNode -> ((ObjectNode) parentNode).remove(QueryConverterHelper.RYFT_PROPERTY));
-        convertingContext.getQueryJsonNode().findParents(QueryConverterHelper.RYFT_ENABLED_PROPERTY)
+        convertingContext.getQueryObjectNode().findParents(QueryConverterHelper.RYFT_ENABLED_PROPERTY)
                 .forEach(parentNode -> ((ObjectNode) parentNode).remove(QueryConverterHelper.RYFT_ENABLED_PROPERTY));
         request.source(convertingContext.getQueryMap());
     }
@@ -106,7 +106,8 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
         if (format != null && (format.equals(RyftFormat.UTF8) || format.equals(RyftFormat.RAW))) {
             ryftQuery = ryftQuery.toRawTextQuery();
         }
-        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery, convertingContext.getIndices(), convertingContext.getQueryMap());
+        RyftRequestParameters result = ryftRequestParametersFactory.create(ryftQuery,
+                convertingContext.getIndices(), convertingContext.getQueryObjectNode().deepCopy());
         result.getRyftProperties().putAll(queryProperties);
         return result;
     }

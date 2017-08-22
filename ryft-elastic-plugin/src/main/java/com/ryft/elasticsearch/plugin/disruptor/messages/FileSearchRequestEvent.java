@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import static com.ryft.elasticsearch.plugin.disruptor.messages.EventType.FILE_SEARCH_REQUEST;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
@@ -9,13 +10,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 
 public class FileSearchRequestEvent extends SearchRequestEvent {
+    
+    public static final String NON_INDEXED_TYPE = "nonindexed";
     
     @Override
     public EventType getEventType() {
@@ -25,7 +27,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted Map<String, Object> parsedQuery) throws RyftSearchException {
+            @Assisted RyftQuery query, @Assisted ObjectNode parsedQuery) throws RyftSearchException {
         super(clusterService, ryftProperties, query, parsedQuery);
     }
 

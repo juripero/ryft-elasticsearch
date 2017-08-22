@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
@@ -8,7 +9,6 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Map;
 
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -24,13 +24,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final String query;
     protected final String encodedQuery;
 
-    protected final Map<String, Object> parsedQuery;
+    protected final ObjectNode parsedQuery;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
                                  @Assisted RyftProperties ryftProperties,
                                  @Assisted RyftQuery query,
-                                 @Assisted Map<String, Object> parsedQuery) throws RyftSearchException {
+                                 @Assisted ObjectNode parsedQuery) throws RyftSearchException {
         super();
         this.clusterState = clusterService.state();
         this.ryftProperties = new RyftProperties();
@@ -63,7 +63,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
-    public Map<String, Object> getParsedQuery() {
+    public ObjectNode getParsedQuery() {
         return parsedQuery;
     }
 }

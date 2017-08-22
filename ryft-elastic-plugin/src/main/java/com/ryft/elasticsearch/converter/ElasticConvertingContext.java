@@ -1,18 +1,12 @@
 package com.ryft.elasticsearch.converter;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +17,6 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.XContentType;
 
 public class ElasticConvertingContext {
 
@@ -54,15 +47,17 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
+    private final ObjectMapperFactory objectMapperFactory;
     private ObjectMapper objectMapper;
     private JsonNode queryJsonNode;
     private Boolean filtered = false;
 
     @Inject
     public ElasticConvertingContext(Map<String, ElasticConvertingElement> injectedConverters,
-            RyftQueryFactory ryftQueryFactory) {
+            RyftQueryFactory ryftQueryFactory, ObjectMapperFactory objectMapperFactory) {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
         this.ryftQueryFactory = ryftQueryFactory;
+        this.objectMapperFactory = objectMapperFactory;
     }
 
     public void setSearchRequest(SearchRequest searchRequest) throws ElasticConversionException, IOException {
@@ -72,38 +67,38 @@ public class ElasticConvertingContext {
         } else {
             this.originalQuery = searchContent.toUtf8();
             this.contentParser = XContentFactory.xContent(searchContent).createParser(searchContent);
-            this.objectMapper = createObjectMapper(contentParser.contentType());
+            this.objectMapper = objectMapperFactory.get(contentParser.contentType());
             this.queryJsonNode = objectMapper.readTree(searchContent.toBytes());
         }
         this.indices = searchRequest.indices();
     }
 
-    private static ObjectMapper createObjectMapper(XContentType xContentType) {
-        JsonFactory jsonFactory = null;
-        switch (xContentType) {
-            case JSON:
-                jsonFactory = new JsonFactory();
-                jsonFactory.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-                jsonFactory.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
-                jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-                jsonFactory.configure(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
-                break;
-            case CBOR:
-                jsonFactory = new CBORFactory();
-                jsonFactory.configure(CBORFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
-                break;
-            case YAML:
-                jsonFactory = new YAMLFactory();
-                break;
-            case SMILE:
-                jsonFactory = new SmileFactory();
-                ((SmileFactory) jsonFactory).configure(SmileGenerator.Feature.ENCODE_BINARY_AS_7BIT, false);
-                jsonFactory.configure(SmileFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
-        }
-        ObjectMapper result = new ObjectMapper(jsonFactory);
-        result.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
-        return result;
-    }
+//    private static ObjectMapper createObjectMapper(XContentType xContentType) {
+//        JsonFactory jsonFactory = null;
+//        switch (xContentType) {
+//            case JSON:
+//                jsonFactory = new JsonFactory();
+//                jsonFactory.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+//                jsonFactory.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+//                jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+//                jsonFactory.configure(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//                break;
+//            case CBOR:
+//                jsonFactory = new CBORFactory();
+//                jsonFactory.configure(CBORFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//                break;
+//            case YAML:
+//                jsonFactory = new YAMLFactory();
+//                break;
+//            case SMILE:
+//                jsonFactory = new SmileFactory();
+//                ((SmileFactory) jsonFactory).configure(SmileGenerator.Feature.ENCODE_BINARY_AS_7BIT, false);
+//                jsonFactory.configure(SmileFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//        }
+//        ObjectMapper result = new ObjectMapper(jsonFactory);
+//        result.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
+//        return result;
+//    }
 
     public XContentParser getContentParser() {
         return contentParser;
@@ -210,8 +205,8 @@ public class ElasticConvertingContext {
         return objectMapper;
     }
 
-    public JsonNode getQueryJsonNode() {
-        return queryJsonNode;
+    public ObjectNode getQueryObjectNode() {
+        return (ObjectNode) queryJsonNode;
     }
 
     public Map<String, Object> getQueryMap() {

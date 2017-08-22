@@ -2,11 +2,18 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
+import com.ryft.elasticsearch.converter.QueryConverterHelper;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.RyftProperties;
+import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.io.IOException;
+import java.util.Map;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -21,6 +28,7 @@ import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 
 import java.util.concurrent.ExecutionException;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.transport.TransportClient;
@@ -33,24 +41,26 @@ public class AggregationService {
     private static final String TEMPINDEX_PREFIX = ".tmpagg";
 
     private final Client client;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
     @Inject
-    public AggregationService(TransportClient client) {
+    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory) {
         this.client = client;
+        this.mapper = objectMapperFactory.get();
     }
 
     public InternalAggregations applyAggregation(InternalSearchHits internalSearchHits,
             SearchRequestEvent requestEvent) throws RyftSearchException {
         RyftProperties query = new RyftProperties();
-        query.putAll(requestEvent.getParsedQuery());
+        query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
         if ((internalSearchHits.getTotalHits() > 0)
                 && (query.containsKey("aggs") || query.containsKey("aggregations"))) {
             String tempIndexName = getTempIndexName(requestEvent);
             try {
-                prepareTempIndex(internalSearchHits, tempIndexName);
-                query.put("size", 0);
-                query.put("ryft_enabled", false);
+                prepareTempIndex(requestEvent, internalSearchHits, tempIndexName);
+                query.put(QueryConverterHelper.SIZE_PROPERTY, 0);
+                query.remove(QueryConverterHelper.RYFT_PROPERTY);
+                query.put(QueryConverterHelper.RYFT_ENABLED_PROPERTY, false);
                 SearchResponse searchResponse = client.execute(SearchAction.INSTANCE,
                         new SearchRequest(new String[]{tempIndexName},
                         mapper.writeValueAsBytes(query.toMap()))).get();
@@ -66,7 +76,7 @@ public class AggregationService {
         }
     }
 
-    private void prepareTempIndex(InternalSearchHits internalSearchHits, String tempIndexName)
+    private void prepareTempIndex(SearchRequestEvent requestEvent, InternalSearchHits internalSearchHits, String tempIndexName)
             throws RyftSearchException {
         LOGGER.debug("Creating temp index {}.", tempIndexName);
 
@@ -74,28 +84,7 @@ public class AggregationService {
                 .put("number_of_replicas", 0)
                 .build();
         client.admin().indices().prepareCreate(tempIndexName).setSettings(indexSettings).get();
-
-        String index = internalSearchHits.getAt(0).getIndex();
-        try {
-            GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
-
-            LOGGER.debug("Creating mappings in temp index.");
-            ImmutableOpenMap<String, MappingMetaData> mappings = mappingsResponse
-                    .getMappings()
-                    .get(index);
-            for (ObjectObjectCursor<String, MappingMetaData> mappingCursor : mappings) {
-                MappingMetaData mappingMetaData = mappingCursor.value;
-                String type = mappingCursor.key;
-                client.admin().indices().preparePutMapping(tempIndexName)
-                        .setType(type).setSource(mappingMetaData.sourceAsMap()).get();
-            }
-        } catch (IOException ex) {
-            String errorMessage = String.format("Cannot get mappings of index %s.", index);
-            LOGGER.error(errorMessage, ex);
-            throw new RyftSearchException(errorMessage, ex);
-        } catch (RuntimeException ex) {
-            LOGGER.warn(String.format("Cannot get mappings of index %s.", index));
-        }
+        createMapping(requestEvent, tempIndexName);
 
         BulkRequestBuilder bulkRequest = client.prepareBulk();
         InternalSearchHit[] hits = internalSearchHits.internalHits();
@@ -116,6 +105,66 @@ public class AggregationService {
         client.admin().cluster().prepareHealth(tempIndexName)
                 .setWaitForYellowStatus()
                 .get();
+    }
+
+    private void createMapping(FileSearchRequestEvent requestEvent, String tempIndexName) {
+        JsonNode ryftNode = requestEvent.getParsedQuery().findValue(QueryConverterHelper.RYFT_PROPERTY);
+        if ((ryftNode != null) && ryftNode.has(QueryConverterHelper.MAPPING_PROPERTY)) {
+            PutMappingRequestBuilder putMappingRequestBuilder = client.admin()
+                    .indices().preparePutMapping(tempIndexName)
+                    .setType(FileSearchRequestEvent.NON_INDEXED_TYPE);
+            RyftProperties mapping = new RyftProperties();
+            mapping.putAll(mapper.convertValue(ryftNode.get(QueryConverterHelper.MAPPING_PROPERTY), Map.class));
+            if (mapping.values().stream().allMatch(o -> (o instanceof String))) {
+                Object[] mappingObjects = new Object[mapping.size() * 2];
+                Integer index = 0;
+                for (Map.Entry<Object, Object> entry : mapping.entrySet()) {
+                    mappingObjects[index++] = entry.getKey();
+                    mappingObjects[index++] = entry.getValue();
+                }
+                putMappingRequestBuilder.setSource(mappingObjects).get();
+            } else {
+                if (mapping.containsKey("properties")) {
+                    putMappingRequestBuilder.setSource(mapping).get();
+                } else {
+                    putMappingRequestBuilder.setSource(ImmutableMap.of("properties", mapping)).get();
+                }
+            }
+        }
+
+    }
+
+    private void createMapping(IndexSearchRequestEvent requestEvent, String tempIndexName) throws RyftSearchException {
+        if (requestEvent.getShards().size() > 0) {
+            String index = requestEvent.getShards().get(0).getIndex();
+            try {
+                GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
+                LOGGER.debug("Creating mappings in temp index.");
+                ImmutableOpenMap<String, MappingMetaData> mappings = mappingsResponse
+                        .getMappings()
+                        .get(index);
+                for (ObjectObjectCursor<String, MappingMetaData> mappingCursor : mappings) {
+                    MappingMetaData mappingMetaData = mappingCursor.value;
+                    String type = mappingCursor.key;
+                    client.admin().indices().preparePutMapping(tempIndexName)
+                            .setType(type).setSource(mappingMetaData.sourceAsMap()).get();
+                }
+            } catch (IOException ex) {
+                String errorMessage = String.format("Cannot get mappings of index %s.", index);
+                LOGGER.error(errorMessage, ex);
+                throw new RyftSearchException(errorMessage, ex);
+            }
+        }
+    }
+
+    private void createMapping(SearchRequestEvent requestEvent, String tempIndexName) throws RyftSearchException {
+        if (requestEvent instanceof FileSearchRequestEvent) {
+            createMapping((FileSearchRequestEvent) requestEvent, tempIndexName);
+            return;
+        }
+        if (requestEvent instanceof IndexSearchRequestEvent) {
+            createMapping((IndexSearchRequestEvent) requestEvent, tempIndexName);
+        }
     }
 
     private String getTempIndexName(SearchRequestEvent requestEvent) {

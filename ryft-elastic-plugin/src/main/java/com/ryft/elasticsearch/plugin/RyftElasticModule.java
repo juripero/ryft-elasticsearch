@@ -43,9 +43,10 @@ public class RyftElasticModule extends AbstractModule {
 
         bind(RyftRestClient.class).in(Singleton.class);
         bind(RyftPluginGlobalSettingsProvider.class).in(Singleton.class);
-        
+
         bind(TransportClient.class).toProvider(ElasticClientProvider.class).in(Singleton.class);
         bind(AggregationService.class);
         bind(RyftSearchService.class);
+        bind(ObjectMapperFactory.class).in(Singleton.class);
     }
 }

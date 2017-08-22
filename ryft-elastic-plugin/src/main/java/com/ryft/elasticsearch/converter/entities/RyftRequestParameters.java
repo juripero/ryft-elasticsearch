@@ -1,12 +1,12 @@
 package com.ryft.elasticsearch.converter.entities;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 
@@ -15,11 +15,11 @@ public class RyftRequestParameters {
     private final RyftProperties ryftProperties;
     private final RyftQuery query;
     private final String[] indices;
-    private final Map<String, Object> parsedQuery;
+    private final ObjectNode parsedQuery;
 
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
-            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted Map<String, Object> parsedQuery) {
+            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted ObjectNode parsedQuery) {
         this.ryftProperties = new RyftProperties();
         this.ryftProperties.putAll(ryftProperties);
         this.query = ryftQuery;
@@ -48,7 +48,7 @@ public class RyftRequestParameters {
                 || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UTF8));
     }
 
-    public Map<String, Object> getParsedQuery() {
+    public ObjectNode getParsedQuery() {
         return parsedQuery;
     }
 

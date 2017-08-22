@@ -1,12 +1,12 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.RyftProperties;
-import java.util.Map;
 
 public interface FileSearchRequestEventFactory {
 
     public FileSearchRequestEvent create(RyftProperties ryftProperties, 
-            RyftQuery ryftQuery, Map<String, Object> parsedQuery);
+            RyftQuery ryftQuery, ObjectNode parsedQuery);
 
 }
