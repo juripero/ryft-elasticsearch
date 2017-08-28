@@ -79,8 +79,8 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     public static final String RECORDS_NUM_INDEX_PARAM = "test.records";
     protected static Integer recordsNum;
 
-    public static final String SAVE_TEST_INDEX_PARAM = "test.delete_index";
-    protected static Boolean saveTestIndex;
+    public static final String DELETE_INDEX_PARAM = "test.delete-index";
+    protected static Boolean deleteIndex;
 
     protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
 
@@ -153,13 +153,13 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     @BeforeClass
     static void initializeSettings() throws UnknownHostException {
         Properties properties = System.getProperties();
-        saveTestIndex = properties.containsKey(SAVE_TEST_INDEX_PARAM);
+        deleteIndex = Boolean.parseBoolean(properties.getOrDefault(DELETE_INDEX_PARAM, true).toString());
         recordsNum = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
         indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-aggtest");
         clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
-                clusterAddresses, indexName, recordsNum, saveTestIndex);
+                clusterAddresses, indexName, recordsNum, deleteIndex);
     }
 
     private static void getTransportAddresses() throws UnknownHostException {
@@ -188,7 +188,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     }
 
     protected static void deleteIndex(String index) {
-        if ((client != null) && (!saveTestIndex)) {
+        if ((client != null) && (!deleteIndex)) {
             try {
                 client.admin().indices().prepareDelete(index).get();
             } catch (Exception e) {

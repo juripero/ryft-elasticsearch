@@ -61,7 +61,9 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
 
     @AfterClass
     static void cleanUp() throws ApiException {
-        filesApi.deleteFiles(null, Lists.newArrayList(TEST_FILENAME), null, true);
+        if (deleteIndex) {
+            filesApi.deleteFiles(null, Lists.newArrayList(TEST_FILENAME), null, true);
+        }
     }
 
     private static void createFilesApi() {
@@ -78,6 +80,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
         for (Map.Entry<String, String> entry : fileContentsMap.entrySet()) {
             filesApi.postRawFile(entry.getValue().getBytes(), entry.getKey(), null, null, null, Long.valueOf(entry.getValue().length()), null, "wait-10s", true);
         }
+        Thread.sleep(100L);
         try {
             testFunction.accept(fileContentsMap);
         } finally {

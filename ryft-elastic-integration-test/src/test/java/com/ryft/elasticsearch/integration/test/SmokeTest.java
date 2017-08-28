@@ -500,33 +500,6 @@ public class SmokeTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testRawTextSearch() throws Exception {
-        ClusterState clusterState = getClient().admin().cluster().prepareState().setIndices(INDEX_NAME).get().getState();
-        String file = String.format("/%1$s/nodes/0/indices/%2$s/*/index/_*.%2$sjsonfld",
-                clusterState.getClusterName().value(), INDEX_NAME);
-        String query = "green";
-        String ryftQuery = "{\n"
-                + "  \"query\": {\n"
-                + "    \"match_phrase\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"query\": \"" + query + "\"\n"
-                + "      }\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"" + file + "\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}\n";
-        SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{INDEX_NAME}, ryftQuery.getBytes())).get();
-        assertResponse(ryftResponse);
-        int expected = testDataContent.split(query, -1).length - 1;
-        assertEquals(expected, ryftResponse.getHits().getHits().length);
-    }
-
-    @Test
     public void testDatetimeTerm() throws Exception {
         TermQueryBuilder builder = QueryBuilders.termQuery("registered", "2014-01-01 07:00:00");
         LOGGER.info("Testing query: {}", builder.toString());
