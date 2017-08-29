@@ -876,7 +876,7 @@ Such search query produce following request to RYFT:
 `
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 `
-
+#### Custom mapping
 Mapping property contains information of result records datatypes and can be useful for some data aggregations. It supports same syntax as [Elasticsearch do](https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html).
 
 ```json
