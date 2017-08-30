@@ -4,7 +4,9 @@
 
 * [Plugin and codec installation](ryft-elastic-plugin/INSTALL.md)
 
-* [Supported elasticsearch API requests](ryft-elastic-plugin/README.md)
+* [Supported elasticsearch API search requests](ryft-elastic-plugin/README.md)
+
+* [Supported elasticsearch API aggregations](ryft-elastic-plugin/AGGREGATIONS.md)
 
 * [Cluster mode](ryft-elastic-plugin/CLUSTER.md)
 

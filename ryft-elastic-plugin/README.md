@@ -876,7 +876,7 @@ Such search query produce following request to RYFT:
 `
 http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
 `
-#### Custom mapping
+##### Custom mapping
 Mapping property contains information of result records datatypes and can be useful for some data aggregations. It supports same syntax as [Elasticsearch do](https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html).
 
 ```json
@@ -957,8 +957,3 @@ Parameter “width” contains number of surrounding symbols or value “line”
 
 In order for RAW_TEXT search to properly work with the `AND` operator, the "width" has to be "line". If the "width" is
 different, it will be automatically converted to "line".
-
-## Aggregations
-Plugin supports all types of aggregations which are supported by Elasticsearch. In order to calculate aggregation over search result returned from RYFT service, plugin creates two requests. First request gets results from RYFT service. Received from RYFT data is saved into tempropary index. Second request executes all necessary aggregations over data from tempropary index in elasticsearch. Finally tempropary index is deleted.
-
-Tempropary index fields mapping is the same as in original index where data is searched. For non-indexed search tempropary index mapping is created automatically using Elasticsearch dynamic mapping. It guesses types of fields and in most cases it creates index with correct datatypes. But for some specific cases you have to define datatype of certain fields implicitly; e.g. date or geo-point datatypes.
