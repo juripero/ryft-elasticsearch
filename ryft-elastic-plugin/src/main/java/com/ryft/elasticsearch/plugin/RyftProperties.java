@@ -12,6 +12,10 @@ public class RyftProperties extends Properties {
     public RyftProperties() {
     }
 
+    public RyftProperties(Map defaults) {
+        this.putAll(defaults);
+    }
+    
     public Integer getInt(String key) {
         return (containsKey(key)) ? Integer.parseInt(getStr(key)) : null;
     }

@@ -1,9 +1,9 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 
@@ -28,15 +28,12 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
-                                 @Assisted RyftProperties ryftProperties,
-                                 @Assisted RyftQuery query,
-                                 @Assisted ObjectNode parsedQuery) throws RyftSearchException {
+            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super();
         this.clusterState = clusterService.state();
-        this.ryftProperties = new RyftProperties();
-        this.ryftProperties.putAll(ryftProperties);
-        this.query = query.buildRyftString();
-        this.parsedQuery = parsedQuery;
+        this.ryftProperties = requestParameters.getRyftProperties();
+        this.query = requestParameters.getQuery().buildRyftString();
+        this.parsedQuery = requestParameters.getParsedQuery();
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -52,7 +49,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     protected Integer getLimit() {
-        return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_LIMIT);
+        return ryftProperties.getInt(PropertiesProvider.RYFT_QUERY_LIMIT);
+    }
+
+    public Integer getSize() {
+        return ryftProperties.getInt(PropertiesProvider.ES_RESULT_SIZE);
+    }
+
+    public RyftProperties getMapping() {
+        return ryftProperties.getRyftProperties(PropertiesProvider.RYFT_MAPPING);
     }
 
     protected RyftFormat getFormat() {

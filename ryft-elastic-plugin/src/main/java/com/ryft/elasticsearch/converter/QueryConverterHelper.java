@@ -3,12 +3,8 @@ package com.ryft.elasticsearch.converter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.RYFT_CASE_SENSITIVE;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.RYFT_FILES_TO_SEARCH;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.RYFT_FORMAT;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.RYFT_INTEGRATION_ENABLED;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.RYFT_MAPPING;
-import static com.ryft.elasticsearch.plugin.PropertiesProvider.SEARCH_QUERY_LIMIT;
+import static com.ryft.elasticsearch.plugin.PropertiesProvider.*;
+import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +18,7 @@ public class QueryConverterHelper {
     public static final String ENABLED_PROPERTY = "enabled";
     public static final String FILES_PROPERTY = "files";
     public static final String FORMAT_PROPERTY = "format";
+    public static final String LIMIT_PROPERTY = "limit";
     public static final String CASE_SENSITIVE_PROPERTY = "case_sensitive";
     public static final String MAPPING_PROPERTY = "mapping";
 
@@ -29,7 +26,7 @@ public class QueryConverterHelper {
         Map<String, Object> result = new HashMap<>();
         ObjectNode objectNode = convertingContext.getQueryObjectNode();
         if (objectNode.has(SIZE_PROPERTY)) {
-            result.put(SEARCH_QUERY_LIMIT, objectNode.get(SIZE_PROPERTY).asInt(0));
+            result.put(ES_RESULT_SIZE, objectNode.get(SIZE_PROPERTY).asInt());
         }
         JsonNode ryftJsonNode = objectNode.findValue(RYFT_PROPERTY);
         if (ryftJsonNode != null) {
@@ -49,7 +46,10 @@ public class QueryConverterHelper {
             }
             if (ryftJsonNode.has(MAPPING_PROPERTY)) {
                 Map<String, Object> mapping = convertingContext.getObjectMapper().convertValue(ryftJsonNode.get(MAPPING_PROPERTY), Map.class);
-                result.put(RYFT_MAPPING, mapping);
+                result.put(RYFT_MAPPING, new RyftProperties(mapping));
+            }
+            if (ryftJsonNode.has(LIMIT_PROPERTY)) {
+                result.put(RYFT_QUERY_LIMIT, ryftJsonNode.get(LIMIT_PROPERTY).asInt(-1));
             }
         }
         JsonNode ryftEnabledJsonNode = objectNode.findValue(RYFT_ENABLED_PROPERTY);

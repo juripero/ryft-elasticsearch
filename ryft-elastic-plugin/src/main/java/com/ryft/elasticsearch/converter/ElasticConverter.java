@@ -34,7 +34,10 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
 
     @Override
     public RyftRequestParameters convert(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        LOGGER.info("Request payload: {}", convertingContext.getOriginalQuery());
+        if (convertingContext.getIndices().length > 0
+                && !convertingContext.getIndices()[0].equals(".kibana")) {
+            LOGGER.info("Request payload: {}", convertingContext.getOriginalQuery());
+        }
         String currentName;
         try {
             convertingContext.getContentParser().nextToken();
@@ -65,9 +68,7 @@ public class ElasticConverter implements ElasticConvertingElement<RyftRequestPar
                 SearchRequest searchRequest = (SearchRequest) request;
                 ElasticConvertingContext convertingContext = contextFactory.create();
                 convertingContext.setSearchRequest(searchRequest);
-                if (convertingContext.getContentParser().contentType().equals(XContentType.JSON)
-                        && (convertingContext.getIndices().length > 0)
-                        && !convertingContext.getIndices()[0].equals(".kibana")) {
+                if (convertingContext.getContentParser().contentType().equals(XContentType.JSON)) {
                     RyftRequestParameters result = convert(convertingContext);
                     adjustRequest(searchRequest, convertingContext);
                     return result;

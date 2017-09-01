@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RyftSpecificTests {
+public class RyftSpecificTest {
 
     @Inject
     public ElasticConverter elasticConverter;
@@ -247,12 +247,24 @@ public class RyftSpecificTests {
     }
 
     @Test
-    public void LimitedSearchTest() throws Exception {
+    public void SizeSearchTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": \"good mother\"}}, \"size\": 5,"
                 + "\"aggs\": {\"1\":{\"terms\": {\"field\": \"xx\", \"size\": 20}}}}";
         SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertEquals(new Integer(5), ryftRequest.getRyftProperties().getInt(SEARCH_QUERY_LIMIT));
+        assertEquals(new Integer(5), ryftRequest.getRyftProperties().getInt(ES_RESULT_SIZE));
+        assertNotNull(ryftRequest);
+        assertEquals("((RECORD.text_entry CONTAINS \"good\") OR (RECORD.text_entry CONTAINS \"mother\"))",
+                ryftRequest.getQuery().buildRyftString());
+    }
+
+    @Test
+    public void RyftLimitSearchTest() throws Exception {
+        String query = "{\"query\": {\"match\": {\"text_entry\": \"good mother\"}}, \"size\": 5, "
+                + "\"ryft\": {\"limit\": 100}}";
+        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
+        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
+        assertEquals(new Integer(100), ryftRequest.getRyftProperties().getInt(RYFT_QUERY_LIMIT));
         assertNotNull(ryftRequest);
         assertEquals("((RECORD.text_entry CONTAINS \"good\") OR (RECORD.text_entry CONTAINS \"mother\"))",
                 ryftRequest.getQuery().buildRyftString());

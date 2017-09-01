@@ -1,11 +1,9 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import static com.ryft.elasticsearch.plugin.disruptor.messages.EventType.FILE_SEARCH_REQUEST;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -26,9 +24,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
-            @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted ObjectNode parsedQuery) throws RyftSearchException {
-        super(clusterService, ryftProperties, query, parsedQuery);
+            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
+        super(clusterService, requestParameters);
     }
 
     public URI getRyftSearchURL() throws RyftSearchException {

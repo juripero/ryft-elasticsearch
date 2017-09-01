@@ -1,10 +1,8 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -29,10 +27,9 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
-            Settings settings, @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, 
-            @Assisted ObjectNode parsedQuery) throws RyftSearchException {
-        super(clusterService, ryftProperties, query, parsedQuery);
+            Settings settings, @Assisted RyftRequestParameters requestParameters,
+            @Assisted List<ShardRouting> shards) throws RyftSearchException {
+        super(clusterService, requestParameters);
         this.settings = settings;
         this.shards = shards;
     }

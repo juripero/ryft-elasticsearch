@@ -20,8 +20,7 @@ public class RyftRequestParameters {
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
             @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted ObjectNode parsedQuery) {
-        this.ryftProperties = new RyftProperties();
-        this.ryftProperties.putAll(ryftProperties);
+        this.ryftProperties = new RyftProperties(ryftProperties);
         this.query = ryftQuery;
         this.indices = indices;
         this.parsedQuery = parsedQuery;

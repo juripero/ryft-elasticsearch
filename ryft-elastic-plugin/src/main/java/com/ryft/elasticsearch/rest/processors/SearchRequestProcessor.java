@@ -228,7 +228,7 @@ public class SearchRequestProcessor extends RyftProcessor {
     }
 
     private SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws RyftSearchException {
-        List<InternalSearchHit> searchHits = new ArrayList<>();
+        List<InternalSearchHit> searchHitList = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
@@ -250,17 +250,21 @@ public class SearchRequestProcessor extends RyftProcessor {
                 }
             }
             if (ryftResponse.hasResults()) {
-                ryftResponse.getResults().stream().map(result
-                        -> processSearchResult(result, searchShardTarget)
-                ).collect(Collectors.toCollection(() -> searchHits));
+                ryftResponse.getResults().stream().map(
+                        result -> processSearchResult(result, searchShardTarget)
+                ).collect(Collectors.toCollection(() -> searchHitList));
             }
         }
-        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHits.size(), failures.size());
-        InternalSearchHits hits = new InternalSearchHits(
-                searchHits.toArray(new InternalSearchHit[searchHits.size()]),
-                searchHits.size(), Float.NEGATIVE_INFINITY);
-        InternalAggregations aggregations = aggregationService.applyAggregation(hits, requestEvent);
-        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(hits, aggregations,
+        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHitList.size(), failures.size());
+        InternalAggregations aggregations = aggregationService.applyAggregation(searchHitList, requestEvent);
+        InternalSearchHit[] hits;
+        if (requestEvent.getSize() != null) {
+            hits = searchHitList.stream().limit(requestEvent.getSize()).toArray(InternalSearchHit[]::new);
+        } else {
+            hits = searchHitList.toArray(new InternalSearchHit[searchHitList.size()]);
+        }
+        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, searchHitList.size(), Float.NEGATIVE_INFINITY);
+        InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
         return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                 failures.toArray(new ShardSearchFailure[failures.size()]));

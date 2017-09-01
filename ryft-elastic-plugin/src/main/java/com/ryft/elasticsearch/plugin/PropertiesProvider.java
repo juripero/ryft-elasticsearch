@@ -24,7 +24,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     private static final ESLogger LOGGER = Loggers.getLogger(PropertiesProvider.class);
     // Global properties
     public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
-    public static final String SEARCH_QUERY_LIMIT = "ryft_query_limit";
+    public static final String RYFT_QUERY_LIMIT = "ryft_query_limit";
     // Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
     public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
@@ -40,6 +40,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_FORMAT = "ryft_format";
     public static final String RYFT_CASE_SENSITIVE = "ryft_case_sensitive";
     public static final String RYFT_MAPPING = "ryft_mapping";
+    public static final String ES_RESULT_SIZE = "es_result_size";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();
@@ -47,7 +48,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     @Override
     public void onPostConstruct() {
         defaults.put(RYFT_INTEGRATION_ENABLED, "false");
-        defaults.put(SEARCH_QUERY_LIMIT, "1000");
+        defaults.put(RYFT_QUERY_LIMIT, "1000");
         defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
         defaults.put(WORKER_THREAD_COUNT, "2");
