@@ -1,16 +1,10 @@
 package com.ryft.elasticsearch.integration.test;
 
-import com.ryft.elasticsearch.integration.test.entity.TestData;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import static com.ryft.elasticsearch.integration.test.ESSmokeClientTestCase.LOGGER;
-import com.ryft.elasticsearch.integration.test.util.TestDataGenerator;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -43,25 +37,16 @@ import org.junit.Test;
 
 public class AggregationTest extends ESSmokeClientTestCase {
 
-    private static List<TestData> testDataList;
-
     @BeforeClass
     static void prepareData() throws IOException {
-        TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        List<String> testDataStrings = new ArrayList<>();
-        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
-                .collect(Collectors.toList());
-        for (TestData data : testDataList) {
-            testDataStrings.add(data.toJson());
-        }
-        createIndex(indexName, "test", testDataStrings,
+        createIndex(indexName, "test", testDataStringsList,
                 "registered", "type=date,format=yyyy-MM-dd HH:mm:ss",
                 "location", "type=geo_point");
     }
 
     @AfterClass
     static void cleanUp() {
-        deleteIndex(indexName);
+        cleanUp(indexName);
     }
 
     @Test
@@ -242,9 +227,8 @@ public class AggregationTest extends ESSmokeClientTestCase {
     public void testAvgAggregation() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
-        Script script = new Script("_value * correction", ScriptService.ScriptType.INLINE, "groovy", ImmutableMap.of("correction", 1.2));
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
-                .field("age").script(script);
+                .field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
@@ -262,20 +246,13 @@ public class AggregationTest extends ESSmokeClientTestCase {
                 + "      }\n"
                 + "    }\n"
                 + "  },\n"
-                + "  \"aggs\": {"
-                + "    \"" + aggregationName + "\": {"
-                + "      \"avg\": {"
-                + "        \"field\": \"age\","
-                + "        \"script\" : {\n"
-                + "          \"lang\": \"groovy\",\n"
-                + "          \"inline\": \"_value * correction\",\n"
-                + "          \"params\" : {\n"
-                + "            \"correction\" : 1.2\n"
-                + "          }\n"
-                + "        }"
-                + "      }"
-                + "    }"
-                + "  },"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"avg\": {\n"
+                + "        \"field\": \"age\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
@@ -685,7 +662,7 @@ public class AggregationTest extends ESSmokeClientTestCase {
     }
 
     @Test
-    public void testCountAggregationWithMetadata() throws Exception {
+    public void testAggregationWithMetadata() throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.count(aggregationName)
@@ -726,6 +703,99 @@ public class AggregationTest extends ESSmokeClientTestCase {
         LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());
         assertEquals("Count values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
         assertEquals(aggregation.getMetaData().get("color"), ryftAggregation.getMetaData().get("color"));
+    }
+
+    @Test
+    public void testAggregationWithScript() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        Script script = new Script("_value * correction", ScriptService.ScriptType.INLINE, "groovy", ImmutableMap.of("correction", 1.2));
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
+                .field("age").script(script);
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Avg aggregation = (Avg) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES avg value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {"
+                + "    \"" + aggregationName + "\": {"
+                + "      \"avg\": {"
+                + "        \"field\": \"age\","
+                + "        \"script\" : {\n"
+                + "          \"lang\": \"groovy\",\n"
+                + "          \"inline\": \"_value * correction\",\n"
+                + "          \"params\" : {\n"
+                + "            \"correction\" : 1.2\n"
+                + "          }\n"
+                + "        }"
+                + "      }"
+                + "    }"
+                + "  },"
+                + "  \"ryft_enabled\": true\n"
+                + "}";
+        SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
+
+        assertEquals("Avg values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
+    }
+
+    @Test
+    public void testAggregationWithSizeZero() throws Exception {
+        String aggregationName = "1";
+        QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
+        AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
+                .sum(aggregationName).field("age");
+        LOGGER.info("Testing query: {}", queryBuilder.toString());
+        LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
+
+        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+                .addAggregation(aggregationBuilder).setSize(0).get();
+        LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
+        Sum aggregation = (Sum) searchResponse.getAggregations().get(aggregationName);
+        LOGGER.info("ES sum value: {}", aggregation.getValue());
+
+        String elasticQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match\": {\n"
+                + "      \"eyeColor\": {\n"
+                + "        \"query\": \"green\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggregationName + "\": {\n"
+                + "      \"sum\": {\n"
+                + "        \"field\": \"age\""
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft_enabled\": true,\n"
+                + "  \"size\": 0"
+                + "}";
+        SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+        LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertEquals(searchResponse.getHits().getTotalHits(), ryftResponse.getHits().getTotalHits());
+        assertEquals(0, ryftResponse.getHits().hits().length);
+        Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);
+        LOGGER.info("RYFT sum value: {}", ryftAggregation.getValue());
+
+        assertEquals("Sum values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
     }
 
 }

@@ -18,6 +18,9 @@
  */
 package com.ryft.elasticsearch.integration.test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ryft.elasticsearch.integration.test.entity.TestData;
+import com.ryft.elasticsearch.integration.test.util.TestDataGenerator;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
@@ -34,10 +37,14 @@ import org.junit.BeforeClass;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -89,6 +96,9 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     private static String clusterAddresses;
     protected static TransportAddress[] transportAddresses;
 
+    protected static List<String> testDataStringsList;
+    protected static List<TestData> testDataList;
+
     private static Client startClient(Path tempDir) {
         Settings clientSettings = Settings.settingsBuilder()
                 .put("name", "qa_smoke_client_" + COUNTER.getAndIncrement())
@@ -127,7 +137,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     protected static <T> void createIndex(String index, String type, List<String> objects, String... mapping) {
         boolean exists = getClient().admin().indices().prepareExists(index).execute().actionGet().isExists();
         if (exists) {
-            getClient().admin().indices().prepareDelete(index).get();
+            deleteIndex(index);
         }
         LOGGER.info("Creating index {}", index);
         getClient().admin().indices().prepareCreate(index).get();
@@ -151,15 +161,26 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     }
 
     @BeforeClass
-    static void initializeSettings() throws UnknownHostException {
+    static void initializeSettings() throws UnknownHostException, JsonProcessingException {
         Properties properties = System.getProperties();
         deleteIndex = Boolean.parseBoolean(properties.getOrDefault(DELETE_INDEX_PARAM, true).toString());
         recordsNum = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
-        indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-aggtest");
+        indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-test");
         clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
                 clusterAddresses, indexName, recordsNum, deleteIndex);
+        prepareData();
+    }
+
+    static private void prepareData() throws JsonProcessingException {
+        TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
+                .collect(Collectors.toList());
+        testDataStringsList = new ArrayList<>();
+        for (TestData data : testDataList) {
+            testDataStringsList.add(data.toJson());
+        }
     }
 
     private static void getTransportAddresses() throws UnknownHostException {
@@ -181,6 +202,8 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
     @AfterClass
     public static void stopTransportClient() {
+        testDataStringsList = null;
+        testDataList = null;
         if (client != null) {
             client.close();
             client = null;
@@ -188,9 +211,13 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     }
 
     protected static void deleteIndex(String index) {
-        if ((client != null) && (!deleteIndex)) {
+        client.admin().indices().prepareDelete(index).get();
+    }
+
+    protected static void cleanUp(String index) {
+        if ((client != null) && (deleteIndex)) {
             try {
-                client.admin().indices().prepareDelete(index).get();
+                deleteIndex(index);
             } catch (Exception e) {
                 // We ignore this cleanup exception
             }

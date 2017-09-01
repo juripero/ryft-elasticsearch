@@ -7,9 +7,7 @@ import com.ryft.elasticsearch.integration.test.client.invoker.ApiClient;
 import com.ryft.elasticsearch.integration.test.client.invoker.ApiException;
 import com.ryft.elasticsearch.integration.test.entity.TestData;
 import com.ryft.elasticsearch.integration.test.util.DataGenerator;
-import com.ryft.elasticsearch.integration.test.util.TestDataGenerator;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +16,6 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
@@ -37,32 +34,26 @@ import org.junit.Test;
 
 public class NonIndexedSearchTest extends ESSmokeClientTestCase {
 
-    private static final String TEST_FILENAME = "integration_test.txt";
-    private static String testDataContent;
-    private static List<String> testDataStrings;
-    private static List<TestData> testDataList;
+    private static String testFilename;
     private static FilesApi filesApi;
-    private static TestDataGenerator dataGenerator;
 
     @BeforeClass
     static void prepareData() throws IOException, ApiException {
-        dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
-                .collect(Collectors.toList());
-        testDataStrings = new ArrayList<>();
-        for (TestData data : testDataList) {
-            testDataStrings.add(data.toJson());
-        }
-        testDataContent = testDataStrings.stream().collect(Collectors.joining("\n"));
-        byte[] testDataBytes = testDataContent.getBytes();
+        testFilename = String.format("%s.json", indexName);
+        byte[] testDataBytes = testDataStringsList.stream()
+                .collect(Collectors.joining("\n")).getBytes();
         createFilesApi();
-        filesApi.postRawFile(testDataBytes, TEST_FILENAME, null, null, null, Long.valueOf(testDataBytes.length), null, "wait-10s", true);
+        try {
+            filesApi.deleteFiles(null, Lists.newArrayList(testFilename), null, true);
+        } catch (ApiException ex) {
+        }
+        filesApi.postRawFile(testDataBytes, testFilename, null, null, null, Long.valueOf(testDataBytes.length), null, "wait-10s", true);
     }
 
     @AfterClass
     static void cleanUp() throws ApiException {
         if (deleteIndex) {
-            filesApi.deleteFiles(null, Lists.newArrayList(TEST_FILENAME), null, true);
+            filesApi.deleteFiles(null, Lists.newArrayList(testFilename), null, true);
         }
     }
 
@@ -74,13 +65,13 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
     }
 
     private void severalFiles(Consumer<Map<String, String>> testFunction) throws Exception {
-        Map<String, String> fileContentsMap = Lists.partition(testDataStrings, 10).stream()
+        Map<String, String> fileContentsMap = Lists.partition(testDataStringsList, recordsNum / 10).stream()
                 .map(list -> list.stream().collect(Collectors.joining("\n")))
                 .collect(Collectors.toMap(d -> DataGenerator.DATA_FACTORY.getNumberText(8) + ".tmp", f -> f));
         for (Map.Entry<String, String> entry : fileContentsMap.entrySet()) {
             filesApi.postRawFile(entry.getValue().getBytes(), entry.getKey(), null, null, null, Long.valueOf(entry.getValue().length()), null, "wait-10s", true);
         }
-        Thread.sleep(100L);
+        Thread.sleep(1000L);
         try {
             testFunction.accept(fileContentsMap);
         } finally {
@@ -108,7 +99,8 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
             SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                     new SearchRequest(files.toArray(new String[files.size()]), ryftQuery.getBytes())).get();
             assertResponse(ryftResponse);
-            int expected = testDataContent.split(query, -1).length - 1;
+            int expected = testDataStringsList.stream()
+                    .collect(Collectors.joining("\n")).split(query, -1).length - 1;
             assertEquals(expected, ryftResponse.getHits().getHits().length);
         } catch (InterruptedException | ExecutionException | RuntimeException e) {
             assumeNoException("", e);
@@ -154,7 +146,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
 
     @Test
     public void testRawTextSearchOneFile() throws Exception {
-        testRawTextSearch(Lists.newArrayList(TEST_FILENAME));
+        testRawTextSearch(Lists.newArrayList(testFilename));
     }
 
     @Test
@@ -164,7 +156,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
 
     @Test
     public void testRecordSearchOneFile() throws Exception {
-        testRecordSearch(Lists.newArrayList(TEST_FILENAME));
+        testRecordSearch(Lists.newArrayList(testFilename));
     }
 
     @Test
@@ -206,7 +198,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                     .filter(testData -> testData.getAbout().contains(query))
                     .mapToDouble(testData -> testData.getBalance())
                     .reduce((b1, b2) -> b1 + b2).getAsDouble();
-            assertEquals(expected, actual, 1e-8);
+            assertEquals(expected, actual, 1e-6);
         } catch (InterruptedException | ExecutionException | RuntimeException e) {
             assumeNoException("", e);
         }
@@ -214,7 +206,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
 
     @Test
     public void testAggregation() throws Exception {
-        testAggregation(Lists.newArrayList(TEST_FILENAME));
+        testAggregation(Lists.newArrayList(testFilename));
     }
 
     @Test
@@ -246,12 +238,12 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                 + "  },\n"
                 + "  \"ryft\": {\n"
                 + "    \"enabled\": true,\n"
-                + "    \"files\": [\"" + TEST_FILENAME + "\"],\n"
+                + "    \"files\": [\"" + testFilename + "\"],\n"
                 + "    \"format\": \"json\"\n"
                 + "  }\n"
                 + "}\n";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{TEST_FILENAME}, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{testFilename}, ryftQuery.getBytes())).get();
         assertResponse(ryftResponse);
         Map<String, Object> metadata = ryftResponse.getAggregations().get(aggName).getMetaData();
         assertTrue(metadata.containsKey("testkey"));
@@ -280,7 +272,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                 + "  },\n"
                 + "  \"ryft\": {\n"
                 + "    \"enabled\": true,\n"
-                + "    \"files\": [\"" + TEST_FILENAME + "\"],\n"
+                + "    \"files\": [\"" + testFilename + "\"],\n"
                 + "    \"format\": \"json\",\n"
                 + "    \"mapping\": {\n"
                 + "      \"registered\": \"type=date,format=yyyy-MM-dd HH:mm:ss\",\n"
@@ -289,13 +281,13 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                 + "  }\n"
                 + "}\n";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{TEST_FILENAME}, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{testFilename}, ryftQuery.getBytes())).get();
         assertResponse(ryftResponse);
         InternalHistogram<InternalHistogram.Bucket> actualAggregation = (InternalHistogram) ryftResponse.getAggregations().get(aggName);
         InternalHistogram<InternalHistogram.Bucket> expectedAggregation;
         String tmpIndexName = "test" + DataGenerator.DATA_FACTORY.getNumberText(8);
         try {
-            createIndex(tmpIndexName, "test", testDataStrings,
+            createIndex(tmpIndexName, "test", testDataStringsList,
                     "registered", "type=date,format=yyyy-MM-dd HH:mm:ss");
             QueryBuilder queryBuilder = QueryBuilders.matchPhraseQuery("about", query);
             AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
@@ -336,7 +328,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                 + "  },\n"
                 + "  \"ryft\": {\n"
                 + "    \"enabled\": true,\n"
-                + "    \"files\": [\"" + TEST_FILENAME + "\"],\n"
+                + "    \"files\": [\"" + testFilename + "\"],\n"
                 + "    \"format\": \"json\",\n"
                 + "    \"mapping\": {\n"
                 + "      \"location\": {\n"
@@ -350,13 +342,13 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
                 + "  }\n"
                 + "}\n";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{TEST_FILENAME}, ryftQuery.getBytes())).get();
+                new SearchRequest(new String[]{testFilename}, ryftQuery.getBytes())).get();
         assertResponse(ryftResponse);
         GeoBounds actualAggregation = (GeoBounds) ryftResponse.getAggregations().get(aggName);
         GeoBounds expectedAggregation;
         String tmpIndexName = "test" + DataGenerator.DATA_FACTORY.getNumberText(8);
         try {
-            createIndex(tmpIndexName, "test", testDataStrings,
+            createIndex(tmpIndexName, "test", testDataStringsList,
                     "location", "type=geo_point");
             QueryBuilder queryBuilder = QueryBuilders.matchPhraseQuery("about", query);
             AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
@@ -367,9 +359,43 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
         } finally {
             deleteIndex(tmpIndexName);
         }
-        assertEquals(expectedAggregation.topLeft().getLat(), actualAggregation.topLeft().getLat(), 1e-10);
-        assertEquals(expectedAggregation.topLeft().getLon(), actualAggregation.topLeft().getLon(), 1e-10);
-        assertEquals(expectedAggregation.bottomRight().getLat(), actualAggregation.bottomRight().getLat(), 1e-10);
-        assertEquals(expectedAggregation.bottomRight().getLon(), actualAggregation.bottomRight().getLon(), 1e-10);
+        assertEquals(expectedAggregation.topLeft().getLat(), actualAggregation.topLeft().getLat(), 1e-6);
+        assertEquals(expectedAggregation.topLeft().getLon(), actualAggregation.topLeft().getLon(), 1e-6);
+        assertEquals(expectedAggregation.bottomRight().getLat(), actualAggregation.bottomRight().getLat(), 1e-6);
+        assertEquals(expectedAggregation.bottomRight().getLon(), actualAggregation.bottomRight().getLon(), 1e-6);
+    }
+
+    @Test
+    public void testAggregationWithSizeZero() throws Exception {
+        String aggName = "1";
+        String query = "perspiciatis";
+        String ryftQuery = "{\n"
+                + "  \"query\": {\n"
+                + "    \"match_phrase\": {\n"
+                + "      \"about\": {\n"
+                + "        \"query\": \"" + query + "\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },"
+                + "  \"aggs\": {\n"
+                + "    \"" + aggName + "\": {\n"
+                + "      \"sum\": {\n"
+                + "        \"field\": \"balance\"\n"
+                + "      }\n"
+                + "    }\n"
+                + "  },\n"
+                + "  \"ryft\": {\n"
+                + "    \"enabled\": true,\n"
+                + "    \"files\": [\"" + testFilename + "\"],\n"
+                + "    \"format\": \"json\"\n"
+                + "  },"
+                + "  \"size\": 0\n"
+                + "}\n";
+        SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
+                new SearchRequest(new String[]{testFilename}, ryftQuery.getBytes())).get();
+        assertResponse(ryftResponse);
+        long actualTotalHits = testDataList.stream().filter(td -> td.getAbout().contains(query)).count();
+        assertEquals(actualTotalHits, ryftResponse.getHits().getTotalHits());
+        assertEquals(0, ryftResponse.getHits().hits().length);
     }
 }
