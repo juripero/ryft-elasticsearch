@@ -73,7 +73,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
      * Key used to eventually switch to using an external cluster and provide
      * its transport addresses
      */
-    public static final String TESTS_CLUSTER_PROPERTY = "tests.cluster";
+    public static final String TESTS_CLUSTER_PROPERTY = "test.cluster";
 
     /**
      * Defaults to localhost:9300

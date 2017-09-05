@@ -8,6 +8,8 @@
 
 * [Supported elasticsearch API aggregations](ryft-elastic-plugin/AGGREGATIONS.md)
 
+* [Integration test](ryft-elastic-integration-test/README.md)
+
 * [Cluster mode](ryft-elastic-plugin/CLUSTER.md)
 
 * [Logstash](doc/logstash.md)
