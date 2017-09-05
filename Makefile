@@ -16,7 +16,6 @@ version:
 	@echo "Version: ${VERSION}"
 	@echo "githash: ${GITHASH}"
 
-RYFT_PLUGIN_FOLDER=../ryft-elastic-plugin/target/releases
 DEBNAME=${PACKAGE_NAME}_${VERSION}_all.deb
 DESTDIR=.build
 
@@ -54,6 +53,8 @@ template: build
 	@unzip $(shell ls ryft-elastic-plugin/target/releases/ryft-elastic-plugin*.zip | head -n 1) -d ${DESTDIR}/usr/share/elasticsearch/plugins/ryft-elastic-plugin/
 	@mv ${DESTDIR}/usr/share/elasticsearch/plugins/ryft-elastic-plugin/lucene-codecs-*.jar ${DESTDIR}/usr/share/elasticsearch/lib/
 	@cp ryft-elastic-codec/target/ryft-elastic-codec*.jar ${DESTDIR}/usr/share/elasticsearch/lib/
+	@printf "#!/bin/bash\nservice elasticsearch restart" > ${DESTDIR}/DEBIAN/postinst
+	@chmod +x ${DESTDIR}/DEBIAN/postinst
 	
 .PHONY: build
 build:
