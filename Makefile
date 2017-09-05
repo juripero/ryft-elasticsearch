@@ -58,5 +58,5 @@ template: build
 	
 .PHONY: build
 build:
-	@echo "[${HINT}]: building plugin..."
-	@mvn clean install -pl '!ryft-elastic-integration-test' -DskipTests
+	@echo "[${HINT}]: building plugin and codec..."
+	@mvn clean install -pl "ryft-elastic-plugin,ryft-elastic-codec" -DskipTests
