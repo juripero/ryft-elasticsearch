@@ -796,9 +796,9 @@ curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
   
 }'
 ```
-Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK folder and restart docker after that.
+Also, it's possible to edit ryft.elastic.plugin.properties file.
 
-`ryft_integration_enabled` and `ryft_query_limit` properties are overridden by `ryft_enabled` and `size` query properties.
+`ryft_integration_enabled` and `ryft_query_limit` properties are overridden by `ryft_enabled` and `limit` query properties.
 ```json
 {
     "query": {
@@ -806,10 +806,14 @@ Also, it's possible to edit ryft.elastic.plugin.properties file inside ~/ELK fol
             "speaker": "MARCELLUS"
         }
     },
-    "ryft_enabled": true,
-    "size": 100
+    "enabled": true,
+    "ryft": {
+      "limit": 100
+    },
+    "size": 10
 }
 ```
+Elasticsearch `size` property sets number of results for return to client and does not influence on RYFT limit parameter. By default plugin has no limit for  results number from RYFT.
 
 ##### Case sensitivity
 By default, search is not case-sensitive. To configure this setting, the `ryft` property should be used. 
@@ -844,7 +848,6 @@ The following configuration parameters should be present:
     "size": 10
 }
 ```
-
 
 Such search query produce following request to RYFT: 
 `
