@@ -60,6 +60,7 @@ public class AggregationService {
                 query.put(QueryConverterHelper.SIZE_PROPERTY, 0);
                 query.remove(QueryConverterHelper.RYFT_PROPERTY);
                 query.put(QueryConverterHelper.RYFT_ENABLED_PROPERTY, false);
+                query.put("query", ImmutableMap.of("match_all", ImmutableMap.of()));
                 SearchResponse searchResponse = client.execute(SearchAction.INSTANCE,
                         new SearchRequest(new String[]{tempIndexName},
                         mapper.writeValueAsBytes(query.toMap()))).get();
