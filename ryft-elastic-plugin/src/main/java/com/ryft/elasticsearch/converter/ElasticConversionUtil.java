@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.converter;
 
+import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +8,7 @@ import org.elasticsearch.common.xcontent.XContentParser;
 
 public abstract class ElasticConversionUtil {
 
-    static String getNextElasticPrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+    public static String getNextElasticPrimitive(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         try {
             XContentParser parser = convertingContext.getContentParser();
             String currentPrimitive = parser.currentName();
@@ -28,6 +29,49 @@ public abstract class ElasticConversionUtil {
         XContentParser parser = convertingContext.getContentParser();
         return (parser.currentToken().equals(XContentParser.Token.END_OBJECT)
                 || parser.currentToken().equals(XContentParser.Token.END_ARRAY));
+    }
+
+    public static RyftProperties getMap(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+        XContentParser parser = convertingContext.getContentParser();
+        try {
+            if (XContentParser.Token.FIELD_NAME.equals(parser.currentToken())) {
+                parser.nextToken();
+            }
+            RyftProperties result = new RyftProperties();
+            if (XContentParser.Token.START_OBJECT.equals(parser.currentToken())) {
+                parser.nextToken();
+                while (!XContentParser.Token.END_OBJECT.equals(parser.currentToken())) {
+                    String key = parser.currentName();
+                    parser.nextToken();
+                    Object value;
+                    switch (parser.currentToken()) {
+                        case START_OBJECT:
+                            value = getMap(convertingContext);
+                            break;
+                        case VALUE_STRING:
+                            value = getString(convertingContext);
+                            break;
+                        case VALUE_NUMBER:
+                            value = getNumber(convertingContext);
+                            break;
+                        case VALUE_BOOLEAN:
+                            value = getBoolean(convertingContext);
+                            break;
+                        case START_ARRAY:
+                            value = getArray(convertingContext);
+                            break;
+                        default:
+                            value = null;
+                    }
+                    result.put(key, value);
+                    parser.nextToken();
+                }
+                return result;
+            }
+        } catch (IOException ex) {
+            throw new ElasticConversionException("Elastic request parsing error.", ex);
+        }
+        throw new ElasticConversionException("Can not extract map.");
     }
 
     static <T> List<T> getArray(ElasticConvertingContext convertingContext) throws ElasticConversionException {
@@ -89,7 +133,7 @@ public abstract class ElasticConversionUtil {
                 case VALUE_STRING:
                     return (T) getString(convertingContext);
                 case VALUE_NUMBER:
-                    return (T) getInteger(convertingContext);
+                    return (T) getNumber(convertingContext);
                 case VALUE_BOOLEAN:
                     return (T) getBoolean(convertingContext);
             }
@@ -130,23 +174,21 @@ public abstract class ElasticConversionUtil {
         }
     }
 
-    static Integer getInteger(ElasticConvertingContext convertingContext) throws ElasticConversionException {
+    static Number getNumber(ElasticConvertingContext convertingContext) throws ElasticConversionException {
         String value = getString(convertingContext);
         try {
             return Integer.parseInt(value);
-        } catch (RuntimeException ex) {
-            throw new ElasticConversionException(
-                    String.format("Can not parse value \"%s\" as Integer.", value), ex);
+        } catch (NumberFormatException ex) {
         }
-    }
-
-    static Long getLong(ElasticConvertingContext convertingContext) throws ElasticConversionException {
-        String value = getString(convertingContext);
         try {
             return Long.parseLong(value);
-        } catch (RuntimeException ex) {
+        } catch (NumberFormatException ex) {
+        }
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException ex) {
             throw new ElasticConversionException(
-                    String.format("Can not parse value \"%s\" as Integer.", value), ex);
+                    String.format("Can not parse value \"%s\" as Number.", value), ex);
         }
     }
 

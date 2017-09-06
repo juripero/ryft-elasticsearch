@@ -1,10 +1,8 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -29,14 +27,14 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
-            Settings settings, @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted List<ShardRouting> shards, @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query, agg);
+            Settings settings, @Assisted RyftRequestParameters requestParameters,
+            @Assisted List<ShardRouting> shards) throws RyftSearchException {
+        super(clusterService, requestParameters);
         this.settings = settings;
         this.shards = shards;
     }
 
-    public URI getRyftSearchURL(ShardRouting shardRouting) throws ElasticConversionCriticalException {
+    public URI getRyftSearchURL(ShardRouting shardRouting) throws RyftSearchException {
         try {
             validateRequest();
             URI result = new URI("http://"
@@ -50,7 +48,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                     + "&limit=" + getLimit());
             return result;
         } catch (URISyntaxException ex) {
-            throw new ElasticConversionCriticalException("Ryft search URL composition exceptoion", ex);
+            throw new RyftSearchException("Ryft search URL composition exceptoion", ex);
         }
     }
 

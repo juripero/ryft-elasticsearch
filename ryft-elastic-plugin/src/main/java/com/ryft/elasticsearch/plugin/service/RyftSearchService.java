@@ -29,11 +29,10 @@ public class RyftSearchService {
 
     public RequestEvent getClusterRequestEvent(RyftRequestParameters requestParameters) {
         if (requestParameters.isFileSearch()) {
-            return fileSearchRequestEventFactory.create(requestParameters.getRyftProperties(),
-                    requestParameters.getQuery(), requestParameters.getAgg());
+            return fileSearchRequestEventFactory.create(requestParameters);
         } else {
-            return indexSearchRequestEventFactory.create(requestParameters.getRyftProperties(),
-                    requestParameters.getQuery(), getShards(requestParameters), requestParameters.getAgg());
+            return indexSearchRequestEventFactory.create(requestParameters,
+                    getShards(requestParameters));
         }
     }
 

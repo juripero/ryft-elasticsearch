@@ -1,9 +1,9 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 
@@ -24,46 +24,51 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final String query;
     protected final String encodedQuery;
 
-    protected final AggregationParameters agg;
+    protected final ObjectNode parsedQuery;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
-                                 @Assisted RyftProperties ryftProperties,
-                                 @Assisted RyftQuery query,
-                                 @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
+            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super();
         this.clusterState = clusterService.state();
-        this.ryftProperties = new RyftProperties();
-        this.ryftProperties.putAll(ryftProperties);
-        this.query = query.buildRyftString();
-        this.agg = agg;
+        this.ryftProperties = requestParameters.getRyftProperties();
+        this.query = requestParameters.getQuery().buildRyftString();
+        this.parsedQuery = requestParameters.getParsedQuery();
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
-            throw new ElasticConversionCriticalException(ex);
+            throw new RyftSearchException(ex);
         }
     }
 
-    protected void validateRequest() throws ElasticConversionCriticalException {
+    protected void validateRequest() throws RyftSearchException {
         if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
-                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UNKNOWN_FORMAT)) {
-            throw new ElasticConversionCriticalException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
+                && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
+            throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
         }
     }
 
     protected Integer getLimit() {
-        return ryftProperties.getInt(PropertiesProvider.SEARCH_QUERY_LIMIT);
+        return ryftProperties.getInt(PropertiesProvider.RYFT_QUERY_LIMIT);
     }
 
-    protected ElasticConverterRyft.ElasticConverterFormat.RyftFormat getFormat() {
-        return (ElasticConverterRyft.ElasticConverterFormat.RyftFormat) ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
+    public Integer getSize() {
+        return ryftProperties.getInt(PropertiesProvider.ES_RESULT_SIZE);
+    }
+
+    public RyftProperties getMapping() {
+        return ryftProperties.getRyftProperties(PropertiesProvider.RYFT_MAPPING);
+    }
+
+    protected RyftFormat getFormat() {
+        return (RyftFormat) ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
     }
 
     protected Boolean getCaseSensitive() {
         return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
-    public AggregationParameters getAgg() {
-        return agg;
+    public ObjectNode getParsedQuery() {
+        return parsedQuery;
     }
 }

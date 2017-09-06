@@ -1,11 +1,9 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
+import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import static com.ryft.elasticsearch.plugin.disruptor.messages.EventType.FILE_SEARCH_REQUEST;
-import com.ryft.elasticsearch.converter.ElasticConversionCriticalException;
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
-import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
+import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -17,6 +15,8 @@ import org.elasticsearch.common.inject.assistedinject.Assisted;
 
 public class FileSearchRequestEvent extends SearchRequestEvent {
     
+    public static final String NON_INDEXED_TYPE = "nonindexed";
+    
     @Override
     public EventType getEventType() {
         return FILE_SEARCH_REQUEST;
@@ -24,12 +24,11 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
-            @Assisted RyftProperties ryftProperties,
-            @Assisted RyftQuery query, @Assisted AggregationParameters agg) throws ElasticConversionCriticalException {
-        super(clusterService, ryftProperties, query, agg);
+            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
+        super(clusterService, requestParameters);
     }
 
-    public URI getRyftSearchURL() throws ElasticConversionCriticalException {
+    public URI getRyftSearchURL() throws RyftSearchException {
         int clusterSize = clusterState.getNodes().dataNodes().size();
 
         String local;
@@ -52,15 +51,15 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
                     + "&limit=" + getLimit());
             return result;
         } catch (URISyntaxException ex) {
-            throw new ElasticConversionCriticalException("Ryft search URL composition exceptoion", ex);
+            throw new RyftSearchException("Ryft search URL composition exceptoion", ex);
         }
     }
 
     @Override
-    protected void validateRequest() throws ElasticConversionCriticalException {
+    protected void validateRequest() throws RyftSearchException {
         super.validateRequest();
         if ((getFilenames() == null) || (getFilenames().isEmpty())) {
-            throw new ElasticConversionCriticalException("File names should be defined for non indexed search.");
+            throw new RyftSearchException("File names should be defined for non indexed search.");
         }
     }
 

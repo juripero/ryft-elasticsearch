@@ -1,17 +1,18 @@
 package com.ryft.elasticsearch.converter;
 
-import com.ryft.elasticsearch.converter.entities.AggregationParameters;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftOperator;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQueryFactory;
 import com.google.common.collect.ImmutableMap;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -33,13 +34,12 @@ public class ElasticConvertingContext {
 
     private final static ESLogger LOGGER = Loggers.getLogger(ElasticConvertingContext.class);
 
-    private final XContentParser contentParser;
+    private XContentParser contentParser;
     private final Map<String, ElasticConvertingElement> elasticConverters;
-    private final String originalQuery;
+    private String originalQuery;
     private final RyftQueryFactory ryftQueryFactory;
     private ElasticSearchType searchType;
     private RyftOperator ryftOperator = RyftOperator.CONTAINS;
-    private final Map<String, Object> queryProperties;
     private Integer minimumShouldMatch = 1;
     private Boolean minimumShouldMatchDefined = false;
     private Boolean line;
@@ -47,22 +47,58 @@ public class ElasticConvertingContext {
     private ElasticDataType dataType = ElasticDataType.STRING;
     private List<String> searchArray; //FIXME - workaround for timeseries
     private String[] indices;
-    private AggregationParameters agg = new AggregationParameters(AggregationParameters.AggregationType.NONE);
+    private final ObjectMapperFactory objectMapperFactory;
+    private ObjectMapper objectMapper;
+    private JsonNode queryJsonNode;
     private Boolean filtered = false;
 
     @Inject
-    public ElasticConvertingContext(@Assisted SearchRequest searchRequest,
-            Map<String, ElasticConvertingElement> injectedConverters,
-            RyftQueryFactory ryftQueryFactory) throws IOException {
+    public ElasticConvertingContext(Map<String, ElasticConvertingElement> injectedConverters,
+            RyftQueryFactory ryftQueryFactory, ObjectMapperFactory objectMapperFactory) {
         this.elasticConverters = ImmutableMap.copyOf(injectedConverters);
-        BytesReference searchContent = searchRequest.source();
-        String queryString = (searchContent == null) ? "" : searchContent.toUtf8();
-        this.originalQuery = queryString;
-        this.contentParser = XContentFactory.xContent(queryString).createParser(queryString);
-        this.indices = searchRequest.indices();
         this.ryftQueryFactory = ryftQueryFactory;
-        this.queryProperties = new HashMap<>();
+        this.objectMapperFactory = objectMapperFactory;
     }
+
+    public void setSearchRequest(SearchRequest searchRequest) throws ElasticConversionException, IOException {
+        BytesReference searchContent = searchRequest.source();
+        if ((searchContent == null) || !(searchContent.hasArray())) {
+            throw new ElasticConversionException("Can not get search query");
+        } else {
+            this.originalQuery = searchContent.toUtf8();
+            this.contentParser = XContentFactory.xContent(searchContent).createParser(searchContent);
+            this.objectMapper = objectMapperFactory.get(contentParser.contentType());
+            this.queryJsonNode = objectMapper.readTree(searchContent.toBytes());
+        }
+        this.indices = searchRequest.indices();
+    }
+
+//    private static ObjectMapper createObjectMapper(XContentType xContentType) {
+//        JsonFactory jsonFactory = null;
+//        switch (xContentType) {
+//            case JSON:
+//                jsonFactory = new JsonFactory();
+//                jsonFactory.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+//                jsonFactory.configure(JsonGenerator.Feature.QUOTE_FIELD_NAMES, true);
+//                jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+//                jsonFactory.configure(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//                break;
+//            case CBOR:
+//                jsonFactory = new CBORFactory();
+//                jsonFactory.configure(CBORFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//                break;
+//            case YAML:
+//                jsonFactory = new YAMLFactory();
+//                break;
+//            case SMILE:
+//                jsonFactory = new SmileFactory();
+//                ((SmileFactory) jsonFactory).configure(SmileGenerator.Feature.ENCODE_BINARY_AS_7BIT, false);
+//                jsonFactory.configure(SmileFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, false);
+//        }
+//        ObjectMapper result = new ObjectMapper(jsonFactory);
+//        result.configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false);
+//        return result;
+//    }
 
     public XContentParser getContentParser() {
         return contentParser;
@@ -137,10 +173,6 @@ public class ElasticConvertingContext {
         this.dataType = dataType;
     }
 
-    public Map<String, Object> getQueryProperties() {
-        return queryProperties;
-    }
-
     public RyftQueryFactory getQueryFactory() {
         return ryftQueryFactory;
     }
@@ -161,19 +193,23 @@ public class ElasticConvertingContext {
         this.indices = indices;
     }
 
-    public AggregationParameters getAgg() {
-        return agg;
-    }
-
-    public void setAgg(AggregationParameters agg) {
-        this.agg = agg;
-    }
-
     public Boolean getFiltered() {
         return filtered;
     }
 
     public void setFiltered(Boolean filtered) {
         this.filtered = filtered;
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    public ObjectNode getQueryObjectNode() {
+        return (ObjectNode) queryJsonNode;
+    }
+
+    public Map<String, Object> getQueryMap() {
+        return objectMapper.convertValue(queryJsonNode, Map.class);
     }
 }

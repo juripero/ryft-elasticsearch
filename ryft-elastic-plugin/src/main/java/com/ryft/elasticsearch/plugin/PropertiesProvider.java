@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.plugin;
 
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,13 +10,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
 import org.elasticsearch.common.inject.Provider;
 import org.elasticsearch.common.inject.Singleton;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
 import com.ryft.elasticsearch.utils.PostConstruct;
+import java.io.FileNotFoundException;
 
 @Singleton
 public class PropertiesProvider implements PostConstruct, Provider<RyftProperties> {
@@ -23,7 +24,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     private static final ESLogger LOGGER = Loggers.getLogger(PropertiesProvider.class);
     // Global properties
     public static final String RYFT_INTEGRATION_ENABLED = "ryft_integration_enabled";
-    public static final String SEARCH_QUERY_LIMIT = "ryft_query_limit";
+    public static final String RYFT_QUERY_LIMIT = "ryft_query_limit";
     // Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
     public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
@@ -38,6 +39,8 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
     public static final String RYFT_FORMAT = "ryft_format";
     public static final String RYFT_CASE_SENSITIVE = "ryft_case_sensitive";
+    public static final String RYFT_MAPPING = "ryft_mapping";
+    public static final String ES_RESULT_SIZE = "es_result_size";
 
     private RyftProperties props;
     private final Map<String, Object> defaults = new HashMap<>();
@@ -45,7 +48,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     @Override
     public void onPostConstruct() {
         defaults.put(RYFT_INTEGRATION_ENABLED, "false");
-        defaults.put(SEARCH_QUERY_LIMIT, "1000");
+        defaults.put(RYFT_QUERY_LIMIT, "1000");
         defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
         defaults.put(WORKER_THREAD_COUNT, "2");
@@ -55,7 +58,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RYFT_REST_AUTH_ENABLED, true);
         defaults.put(RYFT_REST_LOGIN, "admin");
         defaults.put(RYFT_REST_PASSWORD, "admin");
-        defaults.put(RYFT_FORMAT, ElasticConverterRyft.ElasticConverterFormat.RyftFormat.JSON);
+        defaults.put(RYFT_FORMAT, RyftFormat.JSON);
         defaults.put(RYFT_CASE_SENSITIVE, "false");
 
         props = new RyftProperties();
@@ -67,7 +70,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
                 LOGGER.info("propertiesPath: " + propertiesPath);
                 try {
                     return new FileInputStream(propertiesPath + "/ryft.elastic.plugin.properties");
-                } catch (Exception e) {
+                } catch (FileNotFoundException e) {
                     LOGGER.error("Failed to load properties", e);
                     return null;
                 }

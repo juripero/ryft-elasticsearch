@@ -9,9 +9,11 @@
     "firstName": "Petra",
     "eyeColor": "green",
     "age": 22,
-    "balance": "$1,158.96",
+    "balance_raw": "$1,158.96",
+    "balance": 1158.96,
     "isActive": false,
     "index": 0,
+    "location": "48.860000,2.322222",
     "id": "58a71109f7aee9b98762019b"
   },
   {
@@ -24,9 +26,11 @@
     "firstName": "Kay",
     "eyeColor": "green",
     "age": 34,
-    "balance": "$3,855.98",
+    "balance_raw": "$3,855.98",
+    "balance": 3855.98,
     "isActive": true,
     "index": 1,
+    "location": "48.861234,2.333333",
     "id": "58a71109dbc38e2311e565ca"
   },
   {
@@ -39,9 +43,11 @@
     "firstName": "Wanda",
     "eyeColor": "brown",
     "age": 31,
-    "balance": "$1,641.67",
+    "balance_raw": "$1,641.67",
+    "balance": 1641.67,
     "isActive": true,
     "index": 2,
+    "location": "48.812232,2.332333",
     "id": "58a711097b7cfd6ff8f75246"
   },
   {
@@ -54,9 +60,11 @@
     "firstName": "Witt",
     "eyeColor": "green",
     "age": 30,
-    "balance": "$3,263.57",
+    "balance_raw": "$3,263.57",
+    "balance": 3263.57,
     "isActive": true,
     "index": 3,
+    "location": "48.835674,2.335311",
     "id": "58a71109038b09d48bae0b9b"
   },
   {
@@ -69,9 +77,11 @@
     "firstName": "Mia",
     "eyeColor": "green",
     "age": 32,
-    "balance": "$2,999.65",
+    "balance_raw": "$2,999.65",
+    "balance": 2999.65,
     "isActive": false,
     "index": 4,
+    "location": "48.838888,2.337311",
     "id": "58a7110903337ef103527468"
   },
   {
@@ -84,9 +94,11 @@
     "firstName": "Hayden",
     "eyeColor": "green",
     "age": 32,
-    "balance": "$2,234.39",
+    "balance_raw": "$2,234.39",
+    "balance": 2234.39,
     "isActive": false,
     "index": 5,
+    "location": "48.8534421,2.339999",
     "id": "58a7110925a2e66d4b54a2ce"
   },
   {
@@ -99,9 +111,11 @@
     "firstName": "Hurst",
     "eyeColor": "blue",
     "age": 30,
-    "balance": "$3,435.47",
+    "balance_raw": "$3,435.47",
+    "balance": 3435.47,
     "isActive": true,
     "index": 6,
+    "location": "48.888548,2.333333",
     "id": "58a711093c8dbdd3807c76f6"
   },
   {
@@ -114,9 +128,11 @@
     "firstName": "Forbes",
     "eyeColor": "blue",
     "age": 22,
-    "balance": "$1,025.81",
+    "balance_raw": "$1,025.81",
+    "balance": 1025.81,
     "isActive": false,
     "index": 7,
+    "location": "48.88224124,2.34222",
     "id": "58a71109e210b43adb699019"
   },
   {
@@ -129,9 +145,11 @@
     "firstName": "Shirley",
     "eyeColor": "brown",
     "age": 39,
-    "balance": "$1,846.47",
+    "balance_raw": "$1,846.47",
+    "balance": 1846.47,
     "isActive": true,
     "index": 8,
+    "location": "48.8942,2.321",
     "id": "58a7110919690cab349317d2"
   },
   {
@@ -144,9 +162,11 @@
     "firstName": "Abigail",
     "eyeColor": "green",
     "age": 33,
-    "balance": "$1,257.88",
+    "balance_raw": "$1,257.88",
+    "balance": 1257.88,
     "isActive": false,
     "index": 9,
+    "location": "48.844444,2.324444",
     "id": "58a711091e2c1a9b1b42cc5f"
   },
   {
@@ -159,9 +179,11 @@
     "firstName": "Whitehead",
     "eyeColor": "brown",
     "age": 32,
-    "balance": "$1,576.52",
+    "balance_raw": "$1,576.52",
+    "balance": 1576.52,
     "isActive": false,
     "index": 10,
+    "location": "48.8456666,2.326666",
     "id": "58a71109336f755b046e1c8f"
   },
   {
@@ -174,9 +196,11 @@
     "firstName": "Mathews",
     "eyeColor": "green",
     "age": 24,
-    "balance": "$2,712.75",
+    "balance_raw": "$2,712.75",
+    "balance": 2712.75,
     "isActive": false,
     "index": 11,
+    "location": "48.843633,2.328888",
     "id": "58a711099b286594edac0015"
   },
   {
@@ -189,9 +213,11 @@
     "firstName": "Singleton",
     "eyeColor": "green",
     "age": 38,
-    "balance": "$1,162.66",
+    "balance_raw": "$1,162.66",
+    "balance": 1162.66,
     "isActive": true,
     "index": 12,
+    "location": "48.860000,2.327000",
     "id": "58a7110918ec0c1aec0011b4"
   },
   {
@@ -204,9 +230,11 @@
     "firstName": "Maggie",
     "eyeColor": "blue",
     "age": 29,
-    "balance": "$2,633.94",
+    "balance_raw": "$2,633.94",
+    "balance": 2633.94,
     "isActive": false,
     "index": 13,
+    "location": "48.860000,2.327000",
     "id": "58a71109a2c597a8c8523ace"
   },
   {
@@ -219,9 +247,11 @@
     "firstName": "Deena",
     "eyeColor": "brown",
     "age": 36,
-    "balance": "$3,084.66",
+    "balance_raw": "$3,084.66",
+    "balance": 3084.66,
     "isActive": true,
     "index": 14,
+    "location": "48.860000,2.327000",
     "id": "58a71109b736347733395145"
   },
   {
@@ -234,9 +264,11 @@
     "firstName": "Kathy",
     "eyeColor": "brown",
     "age": 22,
-    "balance": "$1,058.12",
+    "balance_raw": "$1,058.12",
+    "balance": 1058.12,
     "isActive": true,
     "index": 15,
+    "location": "48.860000,2.327000",
     "id": "58a711096184682bb2e23b23"
   },
   {
@@ -249,9 +281,11 @@
     "firstName": "Ware",
     "eyeColor": "blue",
     "age": 31,
-    "balance": "$3,755.96",
+    "balance_raw": "$3,755.96",
+    "balance": 3755.96,
     "isActive": true,
     "index": 16,
+    "location": "48.860000,2.327000",
     "id": "58a71109658ce1b987aa8fa7"
   },
   {
@@ -264,9 +298,11 @@
     "firstName": "Harrell",
     "eyeColor": "brown",
     "age": 36,
-    "balance": "$2,416.80",
+    "balance_raw": "$2,416.80",
+    "balance": 2416.80,
     "isActive": true,
     "index": 17,
+    "location": "48.860000,2.327000",
     "id": "58a711099e5911ea4c08c5d6"
   },
   {
@@ -279,9 +315,11 @@
     "firstName": "Twila",
     "eyeColor": "blue",
     "age": 24,
-    "balance": "$1,538.03",
+    "balance_raw": "$1,538.03",
+    "balance": 1538.03,
     "isActive": true,
     "index": 18,
+    "location": "48.860000,2.327000",
     "id": "58a711092b23bb6c44827706"
   },
   {
@@ -294,9 +332,11 @@
     "firstName": "Sandra",
     "eyeColor": "blue",
     "age": 23,
-    "balance": "$1,107.74",
+    "balance_raw": "$1,107.74",
+    "balance": 1107.74,
     "isActive": false,
     "index": 19,
+    "location": "48.860000,2.327000",
     "id": "58a71109fbdaf5edaa577d76"
   },
   {
@@ -309,9 +349,11 @@
     "firstName": "Shelby",
     "eyeColor": "blue",
     "age": 24,
-    "balance": "$1,362.54",
+    "balance_raw": "$1,362.54",
+    "balance": 1362.54,
     "isActive": true,
     "index": 20,
+    "location": "48.860000,2.327000",
     "id": "58a711097397acb099c1ce5b"
   },
   {
@@ -324,9 +366,11 @@
     "firstName": "Millicent",
     "eyeColor": "green",
     "age": 21,
-    "balance": "$1,882.96",
+    "balance_raw": "$1,882.96",
+    "balance": 1882.96,
     "isActive": false,
     "index": 21,
+    "location": "48.860000,2.327000",
     "id": "58a71109b8383a7057ebddcb"
   },
   {
@@ -339,9 +383,11 @@
     "firstName": "Vicky",
     "eyeColor": "brown",
     "age": 37,
-    "balance": "$3,901.63",
+    "balance_raw": "$3,901.63",
+    "balance": 3901.63,
     "isActive": false,
     "index": 22,
+    "location": "48.860000,2.327000",
     "id": "58a711092c15188d1aeb9d42"
   },
   {
@@ -354,9 +400,11 @@
     "firstName": "Ramona",
     "eyeColor": "blue",
     "age": 24,
-    "balance": "$3,054.87",
+    "balance_raw": "$3,054.87",
+    "balance": 3054.87,
     "isActive": false,
     "index": 23,
+    "location": "48.860000,2.327000",
     "id": "58a71109bd95ce10e919b211"
   },
   {
@@ -369,9 +417,11 @@
     "firstName": "Dollie",
     "eyeColor": "brown",
     "age": 37,
-    "balance": "$1,341.45",
+    "balance_raw": "$1,341.45",
+    "balance": 1341.45,
     "isActive": false,
     "index": 24,
+    "location": "48.860000,2.327000",
     "id": "58a71109e7a9bf3c30f240fb"
   },
   {
@@ -384,9 +434,11 @@
     "firstName": "Myrtle",
     "eyeColor": "blue",
     "age": 22,
-    "balance": "$1,227.89",
+    "balance_raw": "$1,227.89",
+    "balance": 1227.89,
     "isActive": false,
     "index": 25,
+    "location": "48.860000,2.327000",
     "id": "58a711094d4e6e37c020d569"
   },
   {
@@ -399,9 +451,11 @@
     "firstName": "Robles",
     "eyeColor": "brown",
     "age": 27,
-    "balance": "$2,062.97",
+    "balance_raw": "$2,062.97",
+    "balance": 2062.97,
     "isActive": false,
     "index": 26,
+    "location": "48.860000,2.327000",
     "id": "58a71109eb413b5e045373a4"
   },
   {
@@ -414,9 +468,11 @@
     "firstName": "Staci",
     "eyeColor": "green",
     "age": 33,
-    "balance": "$3,532.20",
+    "balance_raw": "$3,532.20",
+    "balance": 3532.20,
     "isActive": true,
     "index": 27,
+    "location": "48.860000,2.327000",
     "id": "58a71109f39a019a4aa8af8c"
   },
   {
@@ -429,9 +485,11 @@
     "firstName": "Garza",
     "eyeColor": "brown",
     "age": 36,
-    "balance": "$1,152.81",
+    "balance_raw": "$1,152.81",
+    "balance": 1152.81,
     "isActive": false,
     "index": 28,
+    "location": "48.860000,2.327000",
     "id": "58a711094a98c1b1e80b9a68"
   },
   {
@@ -444,9 +502,11 @@
     "firstName": "Kidd",
     "eyeColor": "blue",
     "age": 25,
-    "balance": "$1,497.00",
+    "balance_raw": "$1,497.00",
+    "balance": 1497.00,
     "isActive": false,
     "index": 29,
+    "location": "48.860000,2.327000",
     "id": "58a7110974181cf42a1c8683"
   },
   {
@@ -459,9 +519,11 @@
     "firstName": "Mckee",
     "eyeColor": "green",
     "age": 26,
-    "balance": "$2,405.40",
+    "balance_raw": "$2,405.40",
+    "balance": 2405.40,
     "isActive": false,
     "index": 30,
+    "location": "48.860000,2.327000",
     "id": "58a711094ef6eac1c40a803f"
   },
   {
@@ -474,9 +536,11 @@
     "firstName": "Irene",
     "eyeColor": "green",
     "age": 37,
-    "balance": "$3,028.87",
+    "balance_raw": "$3,028.87",
+    "balance": 3028.87,
     "isActive": false,
     "index": 31,
+    "location": "48.860000,2.327000",
     "id": "58a711099cb737e81c24c61c"
   },
   {
@@ -489,9 +553,11 @@
     "firstName": "Buckner",
     "eyeColor": "green",
     "age": 36,
-    "balance": "$1,478.51",
+    "balance_raw": "$1,478.51",
+    "balance": 1478.51,
     "isActive": true,
     "index": 32,
+    "location": "48.860000,2.327000",
     "id": "58a711095e4d8e95001c15e7"
   },
   {
@@ -504,9 +570,11 @@
     "firstName": "Beard",
     "eyeColor": "blue",
     "age": 39,
-    "balance": "$1,958.62",
+    "balance_raw": "$1,958.62",
+    "balance": 1958.62,
     "isActive": false,
     "index": 33,
+    "location": "48.860000,2.327000",
     "id": "58a71109074d85f0380c8ee3"
   },
   {
@@ -519,9 +587,11 @@
     "firstName": "Lela",
     "eyeColor": "green",
     "age": 29,
-    "balance": "$1,963.92",
+    "balance_raw": "$1,963.92",
+    "balance": 1963.92,
     "isActive": true,
     "index": 34,
+    "location": "48.860000,2.327000",
     "id": "58a71109bd0f42190e9343f2"
   },
   {
@@ -534,9 +604,11 @@
     "firstName": "Short",
     "eyeColor": "blue",
     "age": 33,
-    "balance": "$3,418.12",
+    "balance_raw": "$3,418.12",
+    "balance": 3418.12,
     "isActive": false,
     "index": 35,
+    "location": "48.860000,2.327000",
     "id": "58a711094e3439f11bf3aec8"
   },
   {
@@ -549,9 +621,11 @@
     "firstName": "Tammi",
     "eyeColor": "green",
     "age": 37,
-    "balance": "$2,338.35",
+    "balance_raw": "$2,338.35",
+    "balance": 2338.35,
     "isActive": true,
     "index": 36,
+    "location": "48.860000,2.327000",
     "id": "58a7110910a50d1956532ac7"
   },
   {
@@ -564,9 +638,11 @@
     "firstName": "Roxanne",
     "eyeColor": "green",
     "age": 26,
-    "balance": "$2,010.73",
+    "balance_raw": "$2,010.73",
+    "balance": 2010.73,
     "isActive": false,
     "index": 37,
+    "location": "48.860000,2.327000",
     "id": "58a7110993a1cfd212a3e4c1"
   },
   {
@@ -579,9 +655,11 @@
     "firstName": "Rochelle",
     "eyeColor": "green",
     "age": 30,
-    "balance": "$2,027.50",
+    "balance_raw": "$2,027.50",
+    "balance": 2027.50,
     "isActive": false,
     "index": 38,
+    "location": "48.860000,2.327000",
     "id": "58a71109e5a5eee828b86219"
   },
   {
@@ -594,9 +672,11 @@
     "firstName": "Bond",
     "eyeColor": "green",
     "age": 40,
-    "balance": "$1,441.94",
+    "balance_raw": "$1,441.94",
+    "balance": 1441.94,
     "isActive": true,
     "index": 39,
+    "location": "48.860000,2.327000",
     "id": "58a71109cb4d1a149384a4f8"
   },
   {
@@ -609,9 +689,11 @@
     "firstName": "Colon",
     "eyeColor": "brown",
     "age": 22,
-    "balance": "$3,322.31",
+    "balance_raw": "$3,322.31",
+    "balance": 3322.31,
     "isActive": false,
     "index": 40,
+    "location": "48.860000,2.327000",
     "id": "58a711097740abc03375b293"
   },
   {
@@ -624,9 +706,11 @@
     "firstName": "Bernard",
     "eyeColor": "blue",
     "age": 27,
-    "balance": "$1,152.73",
+    "balance_raw": "$1,152.73",
+    "balance": 1152.73,
     "isActive": true,
     "index": 41,
+    "location": "48.860000,2.327000",
     "id": "58a71109ad440a5ce82e79c9"
   },
   {
@@ -639,9 +723,11 @@
     "firstName": "Dixie",
     "eyeColor": "green",
     "age": 35,
-    "balance": "$2,572.27",
+    "balance_raw": "$2,572.27",
+    "balance": 2572.27,
     "isActive": true,
     "index": 42,
+    "location": "48.860000,2.327000",
     "id": "58a71109a9126d6dda44d07e"
   },
   {
@@ -654,9 +740,11 @@
     "firstName": "Rivers",
     "eyeColor": "brown",
     "age": 28,
-    "balance": "$1,382.12",
+    "balance_raw": "$1,382.12",
+    "balance": 1382.12,
     "isActive": false,
     "index": 43,
+    "location": "48.860000,2.327000",
     "id": "58a71109b599025312f9f848"
   },
   {
@@ -669,9 +757,11 @@
     "firstName": "Jackson",
     "eyeColor": "brown",
     "age": 22,
-    "balance": "$1,119.66",
+    "balance_raw": "$1,119.66",
+    "balance": 1119.66,
     "isActive": true,
     "index": 44,
+    "location": "48.860000,2.327000",
     "id": "58a711093edc9c19998fc707"
   },
   {
@@ -684,9 +774,11 @@
     "firstName": "Margaret",
     "eyeColor": "brown",
     "age": 34,
-    "balance": "$1,321.10",
+    "balance_raw": "$1,321.10",
+    "balance": 1321.10,
     "isActive": false,
     "index": 45,
+    "location": "48.860000,2.327000",
     "id": "58a71109f939d7e966734bf0"
   },
   {
@@ -699,9 +791,11 @@
     "firstName": "Janet",
     "eyeColor": "green",
     "age": 21,
-    "balance": "$1,725.34",
+    "balance_raw": "$1,725.34",
+    "balance": 1725.34,
     "isActive": false,
     "index": 46,
+    "location": "48.860000,2.327000",
     "id": "58a711099768893383eda8fb"
   },
   {
@@ -714,9 +808,11 @@
     "firstName": "Deann",
     "eyeColor": "green",
     "age": 23,
-    "balance": "$3,242.83",
+    "balance_raw": "$3,242.83",
+    "balance": 3242.83,
     "isActive": true,
     "index": 47,
+    "location": "48.860000,2.327000",
     "id": "58a7110929ca23047c4f6e90"
   },
   {
@@ -729,9 +825,11 @@
     "firstName": "Lilia",
     "eyeColor": "green",
     "age": 30,
-    "balance": "$2,203.79",
+    "balance_raw": "$2,203.79",
+    "balance": 2203.79,
     "isActive": true,
     "index": 48,
+    "location": "48.860000,2.327000",
     "id": "58a71109ae0ced28dabcf3d0"
   },
   {
@@ -744,9 +842,11 @@
     "firstName": "Corine",
     "eyeColor": "green",
     "age": 36,
-    "balance": "$3,654.37",
+    "balance_raw": "$3,654.37",
+    "balance": 3654.37,
     "isActive": true,
     "index": 49,
+    "location": "48.860000,2.327000",
     "id": "58a71109646b28b0ca7a890c"
   },
   {
@@ -759,9 +859,11 @@
     "firstName": "Kayla",
     "eyeColor": "brown",
     "age": 33,
-    "balance": "$2,134.42",
+    "balance_raw": "$2,134.42",
+    "balance": 2134.42,
     "isActive": false,
     "index": 50,
+    "location": "48.860000,2.327000",
     "id": "58a711092c9d3dc4aca4c863"
   },
   {
@@ -774,9 +876,11 @@
     "firstName": "Priscilla",
     "eyeColor": "blue",
     "age": 34,
-    "balance": "$1,075.66",
+    "balance_raw": "$1,075.66",
+    "balance": 1075.66,
     "isActive": false,
     "index": 51,
+    "location": "48.860000,2.327000",
     "id": "58a71109cd2410f95cc87aa5"
   },
   {
@@ -789,9 +893,11 @@
     "firstName": "Megan",
     "eyeColor": "brown",
     "age": 29,
-    "balance": "$3,080.69",
+    "balance_raw": "$3,080.69",
+    "balance": 3080.69,
     "isActive": false,
     "index": 52,
+    "location": "48.860000,2.327000",
     "id": "58a71109b3376079be5091c1"
   },
   {
@@ -804,9 +910,11 @@
     "firstName": "Patterson",
     "eyeColor": "blue",
     "age": 34,
-    "balance": "$1,055.92",
+    "balance_raw": "$1,055.92",
+    "balance": 1055.92,
     "isActive": true,
     "index": 53,
+    "location": "48.860000,2.327000",
     "id": "58a711094d00a4cddfd6517e"
   },
   {
@@ -819,9 +927,11 @@
     "firstName": "Maria",
     "eyeColor": "brown",
     "age": 38,
-    "balance": "$2,715.79",
+    "balance_raw": "$2,715.79",
+    "balance": 2715.79,
     "isActive": false,
     "index": 54,
+    "location": "48.860000,2.327000",
     "id": "58a711092935cea7f5da6c0f"
   },
   {
@@ -834,9 +944,11 @@
     "firstName": "Hickman",
     "eyeColor": "green",
     "age": 28,
-    "balance": "$3,055.56",
+    "balance_raw": "$3,055.56",
+    "balance": 3055.56,
     "isActive": false,
     "index": 55,
+    "location": "48.860000,2.327000",
     "id": "58a7110921b4abf2b58cf2a6"
   },
   {
@@ -849,9 +961,11 @@
     "firstName": "Blackburn",
     "eyeColor": "green",
     "age": 21,
-    "balance": "$2,219.35",
+    "balance_raw": "$2,219.35",
+    "balance": 2219.35,
     "isActive": false,
     "index": 56,
+    "location": "48.860000,2.327000",
     "id": "58a711096bb45d56b38207a7"
   },
   {
@@ -864,9 +978,11 @@
     "firstName": "Jayne",
     "eyeColor": "blue",
     "age": 34,
-    "balance": "$2,893.37",
+    "balance_raw": "$2,893.37",
+    "balance": 2893.37,
     "isActive": true,
     "index": 57,
+    "location": "48.860000,2.327000",
     "id": "58a71109702bb0095cbd8c76"
   },
   {
@@ -879,9 +995,11 @@
     "firstName": "Lesley",
     "eyeColor": "blue",
     "age": 37,
-    "balance": "$2,230.95",
+    "balance_raw": "$2,230.95",
+    "balance": 2230.95,
     "isActive": true,
     "index": 58,
+    "location": "48.860000,2.327000",
     "id": "58a7110970c923495b1049f4"
   },
   {
@@ -894,9 +1012,11 @@
     "firstName": "Tracy",
     "eyeColor": "green",
     "age": 22,
-    "balance": "$1,385.17",
+    "balance_raw": "$1,385.17",
+    "balance": 1385.17,
     "isActive": false,
     "index": 59,
+    "location": "48.860000,2.327000",
     "id": "58a71109d6be4828d9c3db7f"
   },
   {
@@ -909,9 +1029,11 @@
     "firstName": "Holmes",
     "eyeColor": "green",
     "age": 23,
-    "balance": "$1,139.42",
+    "balance_raw": "$1,139.42",
+    "balance": 1139.42,
     "isActive": true,
     "index": 60,
+    "location": "48.860000,2.327000",
     "id": "58a71109362914be6e8863fa"
   },
   {
@@ -924,9 +1046,11 @@
     "firstName": "Janette",
     "eyeColor": "brown",
     "age": 25,
-    "balance": "$2,054.72",
+    "balance_raw": "$2,054.72",
+    "balance": 2054.72,
     "isActive": false,
     "index": 61,
+    "location": "48.860000,2.327000",
     "id": "58a711099e42911409d96336"
   },
   {
@@ -939,9 +1063,11 @@
     "firstName": "Haley",
     "eyeColor": "green",
     "age": 38,
-    "balance": "$3,690.15",
+    "balance_raw": "$3,690.15",
+    "balance": 3690.15,
     "isActive": true,
     "index": 62,
+    "location": "48.860000,2.327000",
     "id": "58a711098ef2978bf538bbfe"
   },
   {
@@ -954,9 +1080,11 @@
     "firstName": "Erica",
     "eyeColor": "green",
     "age": 27,
-    "balance": "$1,537.06",
+    "balance_raw": "$1,537.06",
+    "balance": 1537.06,
     "isActive": true,
     "index": 63,
+    "location": "48.860000,2.327000",
     "id": "58a7110962428c3ba571f6f8"
   },
   {
@@ -969,9 +1097,11 @@
     "firstName": "Mclean",
     "eyeColor": "blue",
     "age": 40,
-    "balance": "$3,690.67",
+    "balance_raw": "$3,690.67",
+    "balance": 3690.67,
     "isActive": true,
     "index": 64,
+    "location": "48.860000,2.327000",
     "id": "58a71109267a1033adeb81ff"
   },
   {
@@ -984,9 +1114,11 @@
     "firstName": "Lucia",
     "eyeColor": "blue",
     "age": 27,
-    "balance": "$3,111.39",
+    "balance_raw": "$3,111.39",
+    "balance": 3111.39,
     "isActive": true,
     "index": 65,
+    "location": "48.860000,2.327000",
     "id": "58a711093ebd4d27ab4016b5"
   },
   {
@@ -999,9 +1131,11 @@
     "firstName": "Patsy",
     "eyeColor": "blue",
     "age": 38,
-    "balance": "$3,970.79",
+    "balance_raw": "$3,970.79",
+    "balance": 3970.79,
     "isActive": false,
     "index": 66,
+    "location": "48.860000,2.327000",
     "id": "58a711098943ed5f93126b77"
   },
   {
@@ -1014,9 +1148,11 @@
     "firstName": "Potter",
     "eyeColor": "brown",
     "age": 28,
-    "balance": "$3,585.19",
+    "balance_raw": "$3,585.19",
+    "balance": 3585.19,
     "isActive": false,
     "index": 67,
+    "location": "48.860000,2.327000",
     "id": "58a711097a001082788477c0"
   },
   {
@@ -1029,9 +1165,11 @@
     "firstName": "Cleo",
     "eyeColor": "green",
     "age": 28,
-    "balance": "$1,966.90",
+    "balance_raw": "$1,966.90",
+    "balance": 1966.90,
     "isActive": false,
     "index": 68,
+    "location": "48.860000,2.327000",
     "id": "58a71109d65d2108abb1106e"
   },
   {
@@ -1044,9 +1182,11 @@
     "firstName": "Fran",
     "eyeColor": "brown",
     "age": 37,
-    "balance": "$3,335.20",
+    "balance_raw": "$3,335.20",
+    "balance": 3335.20,
     "isActive": true,
     "index": 69,
+    "location": "48.860000,2.327000",
     "id": "58a71109509942b964574c3f"
   },
   {
@@ -1059,9 +1199,11 @@
     "firstName": "Jennings",
     "eyeColor": "blue",
     "age": 20,
-    "balance": "$2,493.21",
+    "balance_raw": "$2,493.21",
+    "balance": 2493.21,
     "isActive": false,
     "index": 70,
+    "location": "48.860000,2.327000",
     "id": "58a7110968bd54a0a8d047c5"
   },
   {
@@ -1074,9 +1216,11 @@
     "firstName": "Rosalyn",
     "eyeColor": "blue",
     "age": 32,
-    "balance": "$1,036.37",
+    "balance_raw": "$1,036.37",
+    "balance": 1036.37,
     "isActive": true,
     "index": 71,
+    "location": "48.860000,2.327000",
     "id": "58a7110969e54a50aabff924"
   },
   {
@@ -1089,9 +1233,11 @@
     "firstName": "Ramsey",
     "eyeColor": "green",
     "age": 39,
-    "balance": "$2,906.89",
+    "balance_raw": "$2,906.89",
+    "balance": 2906.89,
     "isActive": true,
     "index": 72,
+    "location": "48.860000,2.327000",
     "id": "58a7110927a63730bb4c7302"
   },
   {
@@ -1104,9 +1250,11 @@
     "firstName": "Nancy",
     "eyeColor": "blue",
     "age": 35,
-    "balance": "$3,040.19",
+    "balance_raw": "$3,040.19",
+    "balance": 3040.19,
     "isActive": true,
     "index": 73,
+    "location": "48.860000,2.327000",
     "id": "58a711099fbb8440d78b1b7d"
   },
   {
@@ -1119,9 +1267,11 @@
     "firstName": "Johns",
     "eyeColor": "green",
     "age": 27,
-    "balance": "$1,044.68",
+    "balance_raw": "$1,044.68",
+    "balance": 1044.68,
     "isActive": true,
     "index": 74,
+    "location": "48.860000,2.327000",
     "id": "58a711099eb66e57dafaa366"
   },
   {
@@ -1134,9 +1284,11 @@
     "firstName": "Francine",
     "eyeColor": "brown",
     "age": 33,
-    "balance": "$2,292.68",
+    "balance_raw": "$2,292.68",
+    "balance": 2292.68,
     "isActive": true,
     "index": 75,
+    "location": "48.860000,2.327000",
     "id": "58a71109ddc7a7b7ee9ad56f"
   },
   {
@@ -1149,9 +1301,11 @@
     "firstName": "Johnston",
     "eyeColor": "green",
     "age": 27,
-    "balance": "$1,485.02",
+    "balance_raw": "$1,485.02",
+    "balance": 1485.02,
     "isActive": true,
     "index": 76,
+    "location": "48.860000,2.327000",
     "id": "58a71109f8fa562c7ce026e4"
   },
   {
@@ -1164,9 +1318,11 @@
     "firstName": "Mandy",
     "eyeColor": "green",
     "age": 29,
-    "balance": "$3,121.72",
+    "balance_raw": "$3,121.72",
+    "balance": 3121.72,
     "isActive": true,
     "index": 77,
+    "location": "48.860000,2.327000",
     "id": "58a71109145de5779acb2205"
   },
   {
@@ -1179,9 +1335,11 @@
     "firstName": "Dawson",
     "eyeColor": "blue",
     "age": 29,
-    "balance": "$2,748.10",
+    "balance_raw": "$2,748.10",
+    "balance": 2748.10,
     "isActive": false,
     "index": 78,
+    "location": "48.860000,2.327000",
     "id": "58a7110919f301d9d52d92fe"
   },
   {
@@ -1194,9 +1352,11 @@
     "firstName": "Stacie",
     "eyeColor": "green",
     "age": 34,
-    "balance": "$1,184.50",
+    "balance_raw": "$1,184.50",
+    "balance": 1184.50,
     "isActive": false,
     "index": 79,
+    "location": "48.860000,2.327000",
     "id": "58a71109f47de3d7412c4e16"
   },
   {
@@ -1209,9 +1369,11 @@
     "firstName": "Wells",
     "eyeColor": "brown",
     "age": 24,
-    "balance": "$2,182.76",
+    "balance_raw": "$2,182.76",
+    "balance": 2182.76,
     "isActive": true,
     "index": 80,
+    "location": "48.860000,2.327000",
     "id": "58a711092766f1493356846f"
   },
   {
@@ -1224,9 +1386,11 @@
     "firstName": "Todd",
     "eyeColor": "blue",
     "age": 35,
-    "balance": "$3,846.64",
+    "balance_raw": "$3,846.64",
+    "balance": 3846.64,
     "isActive": false,
     "index": 81,
+    "location": "48.860000,2.327000",
     "id": "58a71109382c100360ac96c1"
   },
   {
@@ -1239,9 +1403,11 @@
     "firstName": "Flossie",
     "eyeColor": "brown",
     "age": 36,
-    "balance": "$1,639.28",
+    "balance_raw": "$1,639.28",
+    "balance": 1639.28,
     "isActive": false,
     "index": 82,
+    "location": "48.860000,2.327000",
     "id": "58a71109ef5341527c3b9285"
   },
   {
@@ -1254,9 +1420,11 @@
     "firstName": "Marva",
     "eyeColor": "green",
     "age": 37,
-    "balance": "$1,168.75",
+    "balance_raw": "$1,168.75",
+    "balance": 1168.75,
     "isActive": false,
     "index": 83,
+    "location": "48.860000,2.327000",
     "id": "58a711099572f01a6a85f9e1"
   },
   {
@@ -1269,9 +1437,11 @@
     "firstName": "Bryan",
     "eyeColor": "green",
     "age": 30,
-    "balance": "$2,952.48",
+    "balance_raw": "$2,952.48",
+    "balance": 2952.48,
     "isActive": false,
     "index": 84,
+    "location": "48.860000,2.327000",
     "id": "58a711095d427c4a2466c84e"
   },
   {
@@ -1284,9 +1454,11 @@
     "firstName": "Janelle",
     "eyeColor": "brown",
     "age": 32,
-    "balance": "$2,128.82",
+    "balance_raw": "$2,128.82",
+    "balance": 2128.82,
     "isActive": false,
     "index": 85,
+    "location": "48.860000,2.327000",
     "id": "58a71109ee3b74b18f056f85"
   },
   {
@@ -1299,9 +1471,11 @@
     "firstName": "Eddie",
     "eyeColor": "blue",
     "age": 39,
-    "balance": "$2,326.84",
+    "balance_raw": "$2,326.84",
+    "balance": 2326.84,
     "isActive": true,
     "index": 86,
+    "location": "48.860000,2.327000",
     "id": "58a7110991f670cf11ad751b"
   },
   {
@@ -1314,9 +1488,11 @@
     "firstName": "Shepard",
     "eyeColor": "blue",
     "age": 22,
-    "balance": "$3,568.72",
+    "balance_raw": "$3,568.72",
+    "balance": 3568.72,
     "isActive": true,
     "index": 87,
+    "location": "48.860000,2.327000",
     "id": "58a7110946ca5c79c8eaa6ca"
   },
   {
@@ -1329,9 +1505,11 @@
     "firstName": "Fischer",
     "eyeColor": "green",
     "age": 32,
-    "balance": "$1,712.45",
+    "balance_raw": "$1,712.45",
+    "balance": 1712.45,
     "isActive": true,
     "index": 88,
+    "location": "48.860000,2.327000",
     "id": "58a711096ab1e82440ea7bc3"
   },
   {
@@ -1344,9 +1522,11 @@
     "firstName": "Carroll",
     "eyeColor": "brown",
     "age": 27,
-    "balance": "$3,533.31",
+    "balance_raw": "$3,533.31",
+    "balance": 3533.31,
     "isActive": true,
     "index": 89,
+    "location": "48.860000,2.327000",
     "id": "58a711095597ba739ec41b50"
   },
   {
@@ -1359,9 +1539,11 @@
     "firstName": "Lottie",
     "eyeColor": "blue",
     "age": 40,
-    "balance": "$1,633.56",
+    "balance_raw": "$1,633.56",
+    "balance": 1633.56,
     "isActive": false,
     "index": 90,
+    "location": "48.860000,2.327000",
     "id": "58a711094227fb9dc3666d8f"
   },
   {
@@ -1374,9 +1556,11 @@
     "firstName": "Watson",
     "eyeColor": "brown",
     "age": 32,
-    "balance": "$1,106.15",
+    "balance_raw": "$1,106.15",
+    "balance": 1106.15,
     "isActive": true,
     "index": 91,
+    "location": "48.860000,2.327000",
     "id": "58a71109722cd949598fa22c"
   },
   {
@@ -1389,9 +1573,11 @@
     "firstName": "Bette",
     "eyeColor": "brown",
     "age": 20,
-    "balance": "$2,385.80",
+    "balance_raw": "$2,385.80",
+    "balance": 2385.80,
     "isActive": true,
     "index": 92,
+    "location": "48.860000,2.327000",
     "id": "58a71109b233231d15e04d48"
   },
   {
@@ -1404,9 +1590,11 @@
     "firstName": "Beryl",
     "eyeColor": "blue",
     "age": 23,
-    "balance": "$2,099.33",
+    "balance_raw": "$2,099.33",
+    "balance": 2099.33,
     "isActive": true,
     "index": 93,
+    "location": "48.860000,2.327000",
     "id": "58a7110957896c0ae6f40c56"
   },
   {
@@ -1419,9 +1607,11 @@
     "firstName": "Chandler",
     "eyeColor": "green",
     "age": 35,
-    "balance": "$1,592.63",
+    "balance_raw": "$1,592.63",
+    "balance": 1592.63,
     "isActive": false,
     "index": 94,
+    "location": "48.860000,2.327000",
     "id": "58a71109375bb38da1c1fe3d"
   },
   {
@@ -1434,9 +1624,11 @@
     "firstName": "Nicholson",
     "eyeColor": "blue",
     "age": 29,
-    "balance": "$1,425.96",
+    "balance_raw": "$1,425.96",
+    "balance": 1425.96,
     "isActive": false,
     "index": 95,
+    "location": "48.860000,2.327000",
     "id": "58a7110928c1e9ed2b52d8ef"
   },
   {
@@ -1449,9 +1641,11 @@
     "firstName": "Madge",
     "eyeColor": "blue",
     "age": 35,
-    "balance": "$2,271.02",
+    "balance_raw": "$2,271.02",
+    "balance": 2271.02,
     "isActive": true,
     "index": 96,
+    "location": "48.860000,2.327000",
     "id": "58a711096bd02417fe00a8d4"
   },
   {
@@ -1464,9 +1658,11 @@
     "firstName": "Schmidt",
     "eyeColor": "brown",
     "age": 29,
-    "balance": "$3,372.76",
+    "balance_raw": "$3,372.76",
+    "balance": 3372.76,
     "isActive": true,
     "index": 97,
+    "location": "48.860000,2.327000",
     "id": "58a711090ab64f9aca148ba5"
   }
 ]
