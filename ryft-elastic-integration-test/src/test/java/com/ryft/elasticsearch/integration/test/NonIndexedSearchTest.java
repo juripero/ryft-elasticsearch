@@ -67,7 +67,7 @@ public class NonIndexedSearchTest extends ESSmokeClientTestCase {
     private void severalFiles(Consumer<Map<String, String>> testFunction) throws Exception {
         Map<String, String> fileContentsMap = Lists.partition(testDataStringsList, recordsNum / 10).stream()
                 .map(list -> list.stream().collect(Collectors.joining("\n")))
-                .collect(Collectors.toMap(d -> DataGenerator.DATA_FACTORY.getNumberText(8) + ".tmp", f -> f));
+                .collect(Collectors.toMap(d -> DataGenerator.DATA_FACTORY.getNumberText(8) + ".json", f -> f));
         for (Map.Entry<String, String> entry : fileContentsMap.entrySet()) {
             filesApi.postRawFile(entry.getValue().getBytes(), entry.getKey(), null, null, null, Long.valueOf(entry.getValue().length()), null, "wait-10s", true);
         }
