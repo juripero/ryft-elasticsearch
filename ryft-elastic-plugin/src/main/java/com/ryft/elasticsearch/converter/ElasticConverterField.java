@@ -44,7 +44,7 @@ public class ElasticConverterField implements ElasticConvertingElement<RyftQuery
             if (fuzziness.toLowerCase().equals(VALUE_FUZZINESS_AUTO)) {
                 return RyftQueryFactory.FUZZYNESS_AUTO_VALUE;
             } else {
-                return ElasticConversionUtil.getInteger(convertingContext);
+                return (Integer) ElasticConversionUtil.getNumber(convertingContext);
             }
         }
     }

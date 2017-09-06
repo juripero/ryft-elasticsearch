@@ -17,7 +17,7 @@ import com.lmax.disruptor.EventHandler;
 public class RyftRequestEventConsumer implements EventHandler<DisruptorEvent<RequestEvent>> {
     private final ESLogger logger = Loggers.getLogger(getClass());
 
-    private Map<EventType, RyftProcessor> processors;
+    private final Map<EventType, RyftProcessor> processors;
 
     @Inject
     public RyftRequestEventConsumer(Map<EventType, RyftProcessor> processors) {

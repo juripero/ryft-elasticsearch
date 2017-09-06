@@ -1,14 +1,14 @@
 package com.ryft.elasticsearch.converter;
 
+import com.google.common.collect.Lists;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
-import com.ryft.elasticsearch.utils.JSR250Module;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
-import com.ryft.elasticsearch.plugin.RyftProperties;
+import com.ryft.elasticsearch.utils.JSR250Module;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.common.inject.AbstractModule;
 import org.elasticsearch.common.inject.Guice;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.Singleton;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,9 +21,6 @@ public class ElasticConverterTest {
     @Inject
     public ElasticConverter elasticConverter;
 
-    @Inject
-    public ContextFactory contextFactory;
-
     @Before
     public void setUp() {
         Guice.createInjector(
@@ -32,7 +29,6 @@ public class ElasticConverterTest {
             protected void configure() {
                 install(new JSR250Module());
                 install(new ElasticConversionModule());
-                bind(RyftProperties.class).toProvider(PropertiesProvider.class).in(Singleton.class);
             }
         }).injectMembers(this);
     }
@@ -410,167 +406,6 @@ public class ElasticConverterTest {
         assertNotNull(ryftRequest);
         assertEquals("(RECORD.text_entry CONTAINS FEDS(\"go\"?\"d m\"?\"ther\", DIST=1))",
                 ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void RawTextMatchSearchTest() throws Exception {
-        String query = "{\n"
-                + "  \"query\": {\n"
-                + "    \"match\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"query\": \"good mother\",\n"
-                + "        \"fuzziness\": 1,\n"
-                + "        \"width\": 30\n"
-                + "      }\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"shakespear.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", WIDTH=30, DIST=1)) OR (RAW_TEXT CONTAINS FEDS(\"mother\", WIDTH=30, DIST=1)))",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void RawTextMatchWithAndOperatorTest() throws Exception {
-        String query = "{\n"
-                + "  \"query\": {\n"
-                + "    \"match\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"query\": \"good mother\",\n"
-                + "        \"fuzziness\": 1,\n"
-                + "        \"operator\": \"AND\",\n"
-                + "        \"width\": 30\n"
-                + "      }\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"shakespear.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("((RAW_TEXT CONTAINS FEDS(\"good\", LINE=true, DIST=1)) AND (RAW_TEXT CONTAINS FEDS(\"mother\", LINE=true, DIST=1)))",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void RawTextMatchPhraseSearchTest() throws Exception {
-        String query = "{\n"
-                + "  \"query\": {\n"
-                + "    \"match_phrase\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"query\": \"good mother\",\n"
-                + "        \"fuzziness\": 1,\n"
-                + "        \"width\": \"line\"\n"
-                + "      }\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"shakespear.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}\n";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("(RAW_TEXT CONTAINS FEDS(\"good mother\", LINE=true, DIST=1))",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void RawTextTermSearchTest() throws Exception {
-        String query = "{\n"
-                + "  \"query\": {\n"
-                + "    \"wildcard\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"value\": \"m?ther\"\n"
-                + "      }\n"
-                + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"shakespear.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}\n";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("(RAW_TEXT CONTAINS \"m\"?\"ther\")",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void RawTextComplexQueryTest() throws Exception {
-        String query = "{\n"
-                + "   \"query\" : {\n"
-                + "      \"filtered\" : {\n"
-                + "         \"query\" : {\n"
-                + "            \"bool\" : {\n"
-                + "               \"must\" : [\n"
-                + "                  {\n"
-                + "                     \"match_phrase\" : {\n"
-                + "                        \"first_name\" : \"mary jane\"\n"
-                + "                     }\n"
-                + "                  },\n"
-                + "                  {\n"
-                + "                     \"match_phrase\" : {\n"
-                + "                        \"last_name\" : \"smith\"\n"
-                + "                     }\n"
-                + "                  }\n"
-                + "               ]\n"
-                + "            }\n"
-                + "         },\n"
-                + "         \"ryft\": {\n"
-                + "           \"enabled\": true,\n"
-                + "           \"files\": [\"passengers.txt\"],\n"
-                + "           \"format\": \"utf8\"\n"
-                + "         }\n"
-                + "      }\n"
-                + "   }\n"
-                + "}\n";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("((RAW_TEXT CONTAINS ES(\"mary jane\", LINE=true)) AND (RAW_TEXT CONTAINS ES(\"smith\", LINE=true)))",
-                ryftRequest.getQuery().buildRyftString());
-
-        String query2 = "{\"query\": "
-                + "   {\"bool\": {"
-                + "       \"should\": ["
-                + "           {\"match_phrase\": {\"text_entry\": {\"query\":\"juliet\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
-                + "           {\"match_phrase\": {\"text_entry\": {\"query\":\"romeo\", \"fuzziness\": 0, \"metric\": \"FEDS\"}}}, "
-                + "           {\"match_phrase\": {\"text_entry\": {\"query\":\"knight\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
-                + "       \"must\": ["
-                + "           {\"fuzzy\": {\"text_entry\" : {\"value\": \"hamlet\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
-                + "       \"must_not\": ["
-                + "           {\"fuzzy\": {\"text_entry\" : {\"value\": \"love\", \"fuzziness\" :0, \"metric\": \"FEDS\"}}}], "
-                + "       \"minimum_should_match\": 2}},\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"passengers.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }}";
-        request = new SearchRequest(new String[]{""}, query2.getBytes());
-        RyftRequestParameters ryftRequest2 = elasticConverter.convert(request);
-        assertNotNull(ryftRequest2);
-        assertEquals("((((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) "
-                + "AND (RAW_TEXT CONTAINS ES(\"romeo\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"juliet\", LINE=true)) "
-                + "AND (RAW_TEXT CONTAINS ES(\"knight\", LINE=true))) OR ((RAW_TEXT CONTAINS ES(\"romeo\", LINE=true)) "
-                + "AND (RAW_TEXT CONTAINS ES(\"knight\", LINE=true)))) "
-                + "AND (RAW_TEXT NOT_CONTAINS \"love\") AND (RAW_TEXT CONTAINS ES(\"hamlet\", LINE=true)))",
-                ryftRequest2.getQuery().buildRyftString());
     }
 
     @Test
@@ -992,74 +827,50 @@ public class ElasticConverterTest {
     }
 
     @Test
-    public void RawTextNumericSearchTest() throws Exception {
-        String query = "{\n"
-                + "  \"query\": {\n"
-                + "    \"term\": {\n"
-                + "      \"_all\": {\n"
-                + "        \"query\": \"64\",\n"
-                + "        \"type\": \"number\"\n"
+    public void FilteredQueryTest() throws Exception {
+        String query = "{"
+                + "\"query\": {\n"
+                + "    \"filtered\": {\n"
+                + "      \"query\": {\n"
+                + "        \"query\": {\n"
+                + "          \"term\": {\n"
+                + "            \"registered\": {\n"
+                + "              \"format\": \"yyyy-MM-dd HH:mm:ss\",\n"
+                + "              \"type\": \"datetime\",\n"
+                + "              \"value\": \"2014-01-01 07:00:00\"\n"
+                + "            }\n"
+                + "          }\n"
+                + "        },\n"
+                + "        \"ryft_enabled\": true\n"
+                + "      },\n"
+                + "      \"filter\": {\n"
+                + "        \"bool\": {\n"
+                + "          \"must\": [\n"
+                + "            {\n"
+                + "              \"range\": {\n"
+                + "                \"registered\": {\n"
+                + "                  \"gte\": 1338646255122,\n"
+                + "                  \"lte\": 1496412655122,\n"
+                + "                  \"format\": \"epoch_millis\"\n"
+                + "                }\n"
+                + "              }\n"
+                + "            }\n"
+                + "          ],\n"
+                + "          \"must_not\": []\n"
+                + "        }\n"
                 + "      }\n"
                 + "    }\n"
-                + "  },\n"
-                + "  \"ryft\": {\n"
-                + "    \"enabled\": true,\n"
-                + "    \"files\": [\"shakespear.txt\"],\n"
-                + "    \"format\": \"utf8\"\n"
-                + "  }\n"
-                + "}\n";
+                + "  }"
+                + "}";
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
-        assertEquals("(RAW_TEXT CONTAINS NUMBER(NUM = \"64\", \",\", \".\"))",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
-    public void FilteredQueryTest() throws Exception {
-        String query = "{" +
-                "\"query\": {\n" +
-                "    \"filtered\": {\n" +
-                "      \"query\": {\n" +
-                "        \"query\": {\n" +
-                "          \"term\": {\n" +
-                "            \"registered\": {\n" +
-                "              \"format\": \"yyyy-MM-dd HH:mm:ss\",\n" +
-                "              \"type\": \"datetime\",\n" +
-                "              \"value\": \"2014-01-01 07:00:00\"\n" +
-                "            }\n" +
-                "          }\n" +
-                "        },\n" +
-                "        \"ryft_enabled\": true\n" +
-                "      },\n" +
-                "      \"filter\": {\n" +
-                "        \"bool\": {\n" +
-                "          \"must\": [\n" +
-                "            {\n" +
-                "              \"range\": {\n" +
-                "                \"registered\": {\n" +
-                "                  \"gte\": 1338646255122,\n" +
-                "                  \"lte\": 1496412655122,\n" +
-                "                  \"format\": \"epoch_millis\"\n" +
-                "                }\n" +
-                "              }\n" +
-                "            }\n" +
-                "          ],\n" +
-                "          \"must_not\": []\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }" +
-                "}";
-        SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertNotNull(ryftRequest);
-        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) " +
-                        "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) " +
-                        "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) " +
-                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) " +
-                        "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) " +
-                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
+        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) "
+                + "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) "
+                + "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) "
+                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) "
+                + "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) "
+                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
@@ -1082,7 +893,12 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
+        assertTrue(ryftRequest.isFileSearch());
+        assertEquals(RyftFormat.UTF8,
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FORMAT));
+        assertEquals(Lists.newArrayList("shakespear.txt"),
+                ryftRequest.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH));
         assertEquals("(RAW_TEXT CONTAINS PCRE2(\"W[0-9].+\"))",
                 ryftRequest.getQuery().buildRyftString());
-    }
+    }    
 }

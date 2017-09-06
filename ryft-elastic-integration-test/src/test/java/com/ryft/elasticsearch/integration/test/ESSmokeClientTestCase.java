@@ -16,9 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.ryft.elasticsearch.integration.test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ryft.elasticsearch.integration.test.entity.TestData;
+import com.ryft.elasticsearch.integration.test.util.TestDataGenerator;
 import org.apache.lucene.util.LuceneTestCase;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.client.Client;
@@ -29,70 +31,91 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.node.internal.InternalSettingsPreparer;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomAsciiOfLength;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * {@link ESSmokeClientTestCase} is an abstract base class to run integration
  * tests against an external Elasticsearch Cluster.
  * <p>
- * You can define a list of transport addresses from where you can reach your cluster
- * by setting "tests.cluster" system property. It defaults to "localhost:9300".
+ * You can define a list of transport addresses from where you can reach your
+ * cluster by setting "tests.cluster" system property. It defaults to
+ * "localhost:9300".
  * <p>
- * All tests can be run from maven using mvn install as maven will start an external cluster first.
+ * All tests can be run from maven using mvn install as maven will start an
+ * external cluster first.
  * <p>
- * If you want to debug this module from your IDE, then start an external cluster by yourself
- * then run JUnit. If you changed the default port, set "tests.cluster=localhost:PORT" when running
- * your test.
+ * If you want to debug this module from your IDE, then start an external
+ * cluster by yourself then run JUnit. If you changed the default port, set
+ * "tests.cluster=localhost:PORT" when running your test.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "we log a lot on purpose")
 public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
     /**
-     * Key used to eventually switch to using an external cluster and provide its transport addresses
+     * Key used to eventually switch to using an external cluster and provide
+     * its transport addresses
      */
-    public static final String TESTS_CLUSTER = "tests.cluster";
+    public static final String TESTS_CLUSTER_PROPERTY = "test.cluster";
 
     /**
      * Defaults to localhost:9300
      */
     public static final String TESTS_CLUSTER_DEFAULT = "localhost:9300";
 
-    protected static final ESLogger logger = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
+    public static final String INDEX_NAME_PARAM = "test.index";
+    protected static String indexName;
 
-    private static final AtomicInteger counter = new AtomicInteger();
+    public static final String RECORDS_NUM_INDEX_PARAM = "test.records";
+    protected static Integer recordsNum;
+
+    public static final String DELETE_INDEX_PARAM = "test.delete-index";
+    protected static Boolean deleteIndex;
+
+    protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
+
+    private static final AtomicInteger COUNTER = new AtomicInteger();
     private static Client client;
     private static String clusterAddresses;
-    protected String index;
+    protected static TransportAddress[] transportAddresses;
 
-    private static Client startClient(Path tempDir, TransportAddress... transportAddresses) {
+    protected static List<String> testDataStringsList;
+    protected static List<TestData> testDataList;
+
+    private static Client startClient(Path tempDir) {
         Settings clientSettings = Settings.settingsBuilder()
-                .put("name", "qa_smoke_client_" + counter.getAndIncrement())
+                .put("name", "qa_smoke_client_" + COUNTER.getAndIncrement())
                 .put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true) // prevents any settings to be replaced by system properties.
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
                 .put("node.mode", "network").build(); // we require network here!
 
         TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
-        TransportClient client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
+        client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
 
-        logger.info("--> Elasticsearch Java TransportClient started");
+        LOGGER.info("--> Elasticsearch Java TransportClient started");
 
         Exception clientException = null;
         try {
             ClusterHealthResponse health = client.admin().cluster().prepareHealth().get();
-            logger.info("--> connected to [{}] cluster which is running [{}] node(s).",
+            LOGGER.info("--> connected to [{}] cluster which is running [{}] node(s).",
                     health.getClusterName(), health.getNumberOfNodes());
         } catch (Exception e) {
             clientException = e;
@@ -103,9 +126,66 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         return client;
     }
 
-    private static Client startClient() throws UnknownHostException {
+    protected static Client getClient() {
+        if (client == null) {
+            startClient(createTempDir());
+            assertThat(client, notNullValue());
+        }
+        return client;
+    }
+
+    protected static <T> void createIndex(String index, String type, List<String> objects, String... mapping) {
+        boolean exists = getClient().admin().indices().prepareExists(index).execute().actionGet().isExists();
+        if (exists) {
+            deleteIndex(index);
+        }
+        LOGGER.info("Creating index {}", index);
+        getClient().admin().indices().prepareCreate(index).get();
+
+        getClient().admin().indices().preparePutMapping(index).setType(type)
+                .setSource((Object[]) mapping).get();
+
+        BulkRequestBuilder bulkRequest = getClient().prepareBulk();
+        int id = 0;
+        for (String data : objects) {
+            bulkRequest.add(getClient().prepareIndex(index, type, String.valueOf(id++))
+                    .setSource(data));
+        }
+        BulkResponse bulkResponse = bulkRequest.get();
+        if (bulkResponse.hasFailures()) {
+            LOGGER.error(bulkResponse.buildFailureMessage());
+        } else {
+            LOGGER.info("Bulk indexing succeeded.");
+        }
+        getClient().admin().indices().prepareRefresh(index).get();
+    }
+
+    @BeforeClass
+    static void initializeSettings() throws UnknownHostException, JsonProcessingException {
+        Properties properties = System.getProperties();
+        deleteIndex = Boolean.parseBoolean(properties.getOrDefault(DELETE_INDEX_PARAM, true).toString());
+        recordsNum = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
+        indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-test");
+        clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
+        getTransportAddresses();
+        LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
+                clusterAddresses, indexName, recordsNum, deleteIndex);
+        prepareData();
+    }
+
+    static private void prepareData() throws JsonProcessingException {
+        TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
+                .collect(Collectors.toList());
+        testDataStringsList = new ArrayList<>();
+        for (TestData data : testDataList) {
+            testDataStringsList.add(data.toJson());
+        }
+    }
+
+    private static void getTransportAddresses() throws UnknownHostException {
         String[] stringAddresses = clusterAddresses.split(",");
-        TransportAddress[] transportAddresses = new TransportAddress[stringAddresses.length];
+        transportAddresses = new TransportAddress[stringAddresses.length];
         int i = 0;
         for (String stringAddress : stringAddresses) {
             String[] split = stringAddress.split(":");
@@ -118,57 +198,35 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
                 throw new IllegalArgumentException("port is not valid, expected number but was [" + split[1] + "]");
             }
         }
-        return startClient(createTempDir(), transportAddresses);
-    }
-
-    public static Client getClient() {
-        if (client == null) {
-            try {
-                client = startClient();
-            } catch (UnknownHostException e) {
-                logger.error("can not start the client", e);
-            }
-            assertThat(client, notNullValue());
-        }
-        return client;
-    }
-
-    @BeforeClass
-    public static void initializeSettings() throws UnknownHostException {
-        clusterAddresses = System.getProperty(TESTS_CLUSTER);
-        if (clusterAddresses == null || clusterAddresses.isEmpty()) {
-            clusterAddresses = TESTS_CLUSTER_DEFAULT;
-            logger.info("[{}] not set. Falling back to [{}]", TESTS_CLUSTER, TESTS_CLUSTER_DEFAULT);
-        }
     }
 
     @AfterClass
     public static void stopTransportClient() {
+        testDataStringsList = null;
+        testDataList = null;
         if (client != null) {
             client.close();
             client = null;
         }
     }
 
-    @Before
-    public void defineIndexName() {
-        doClean();
-        index = "qa-smoke-test-client-" + randomAsciiOfLength(10).toLowerCase(Locale.getDefault());
+    protected static void deleteIndex(String index) {
+        client.admin().indices().prepareDelete(index).get();
     }
 
-    @After
-    public void cleanIndex() {
-        doClean();
-    }
-
-    private void doClean() {
-        if (client != null) {
+    protected static void cleanUp(String index) {
+        if ((client != null) && (deleteIndex)) {
             try {
-                client.admin().indices().prepareDelete(index).get();
+                deleteIndex(index);
             } catch (Exception e) {
                 // We ignore this cleanup exception
             }
         }
     }
 
+    protected void assertResponse(SearchResponse searchResponse) {
+        assertNotNull(searchResponse);
+        assertNotNull(searchResponse.getHits());
+        assertNotNull(searchResponse.getHits().getHits());
+    }
 }

@@ -1,6 +1,7 @@
 package com.ryft.elasticsearch.converter.entities;
 
-import com.ryft.elasticsearch.converter.ElasticConverterRyft;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftQuery;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
@@ -14,16 +15,15 @@ public class RyftRequestParameters {
     private final RyftProperties ryftProperties;
     private final RyftQuery query;
     private final String[] indices;
-    private final AggregationParameters agg;
+    private final ObjectNode parsedQuery;
 
     @Inject
     public RyftRequestParameters(RyftProperties ryftProperties,
-            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted AggregationParameters agg) {
-        this.ryftProperties = new RyftProperties();
-        this.ryftProperties.putAll(ryftProperties);
+            @Assisted RyftQuery ryftQuery, @Assisted String[] indices, @Assisted ObjectNode parsedQuery) {
+        this.ryftProperties = new RyftProperties(ryftProperties);
         this.query = ryftQuery;
         this.indices = indices;
-        this.agg = agg;
+        this.parsedQuery = parsedQuery;
     }
 
     public RyftQuery getQuery() {
@@ -43,12 +43,12 @@ public class RyftRequestParameters {
                 && (ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH) instanceof List)) {
             return true;
         } else return ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
-                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.RAW)
-                || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(ElasticConverterRyft.ElasticConverterFormat.RyftFormat.UTF8));
+                && (ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.RAW)
+                || ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UTF8));
     }
 
-    public AggregationParameters getAgg() {
-        return agg;
+    public ObjectNode getParsedQuery() {
+        return parsedQuery;
     }
 
     @Override
