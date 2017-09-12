@@ -50,10 +50,13 @@ template: build
 	@mkdir -p ${DESTDIR}/DEBIAN
 	@mkdir -p ${DESTDIR}/usr/share/elasticsearch/lib/
 	@mkdir -p ${DESTDIR}/usr/share/elasticsearch/plugins/ryft-elastic-plugin/
+	@mkdir -p ${DESTDIR}/tmp/
 	@unzip $(shell ls ryft-elastic-plugin/target/releases/ryft-elastic-plugin*.zip | head -n 1) -d ${DESTDIR}/usr/share/elasticsearch/plugins/ryft-elastic-plugin/
 	@mv ${DESTDIR}/usr/share/elasticsearch/plugins/ryft-elastic-plugin/lucene-codecs-*.jar ${DESTDIR}/usr/share/elasticsearch/lib/
 	@cp ryft-elastic-codec/target/ryft-elastic-codec*.jar ${DESTDIR}/usr/share/elasticsearch/lib/
-	@printf "#!/bin/bash\nservice elasticsearch restart" > ${DESTDIR}/DEBIAN/postinst
+	@cp debian/elasticsearch.conf ${DESTDIR}/tmp/
+	@cp ryft-elastic-plugin/src/main/resources/elasticsearch.yml ${DESTDIR}/tmp/
+	@cp debian/postinst ${DESTDIR}/DEBIAN/postinst
 	@chmod +x ${DESTDIR}/DEBIAN/postinst
 	
 .PHONY: build

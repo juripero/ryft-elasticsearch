@@ -9,6 +9,7 @@
 *.pyo
 *.deb
 .idea/
+.vscode/
 .idea_modules/
 build/*.jar
 .settings
