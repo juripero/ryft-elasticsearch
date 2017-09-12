@@ -1,17 +1,18 @@
 #!/bin/bash
-#
-# get ryftone?
-#
+cp /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml.bak
+mv /tmp/elasticsearch.yml /etc/elasticsearch/
+mkdir -p /ryftone/elasticsearch/
 test -e /dev/smca
 if [ $? == 0 ]
 then
+    # ryftone
     chown -R ryftuser:ryftuser /usr/share/elasticsearch
     chown -R ryftuser:ryftuser /etc/elasticsearch
     chown -R ryftuser:ryftuser /var/log/elasticsearch
     mv /tmp/elasticsearch.conf /etc/init/
 else
+    # f1 or x86 aws
     rm /tmp/elasticsearch.conf
+    chown elasticsearch:elasticsearch /ryftone/elasticsearch
 fi
-cp /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml.bak
-mv /tmp/elasticsearch.yml /etc/elasticsearch/
 service elasticsearch restart
