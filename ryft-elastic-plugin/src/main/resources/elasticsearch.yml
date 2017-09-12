@@ -11,14 +11,16 @@
 # <http://www.elastic.co/guide/en/elasticsearch/reference/current/setup-configuration.html>
 #
 
-#node:
-#  data: true
-#  master: true
 index:
   codec: RyftCodec
   compound_format: false
   compound_on_flush: false
   shard.check_on_startup: false
+  merge:
+    policy.merge_factor: 2
+    policy.min_merge_size: 10mb
+    policy.max_merge_docs: 100
+    scheduler.max_thread_count: 1
 
 # ---------------------------------- Cluster -----------------------------------
 #
@@ -92,6 +94,8 @@ discovery.zen.ping.unicast.hosts: ["127.0.0.1", "[::1]"]
 #
 # For more information, see the documentation at:
 # <http://www.elastic.co/guide/en/elasticsearch/reference/current/modules-gateway.html>
+gateway.expected_nodes: 1
+gateway.recover_after_time: 5m
 #
 # ---------------------------------- Various -----------------------------------
 #
@@ -102,3 +106,4 @@ discovery.zen.ping.unicast.hosts: ["127.0.0.1", "[::1]"]
 # Require explicit names when deleting indices:
 #
 # action.destructive_requires_name: true
+index.unassigned.node_left.delayed_timeout: 5m

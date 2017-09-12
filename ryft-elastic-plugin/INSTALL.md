@@ -98,6 +98,51 @@ curl -XPUT "http://<ryft-sever>:9200/ryftpluginsettings/def/1" -d'
 }'
 ```
 
+## Installation using the repository
+
+1. Start RYFT repository if necessary. See [repository documentation](https://github.com/getryft/ci-automation-scripts/blob/develop/Repository/README.md) for more information.
+2. Add repository address into package management system
+```bash
+sudo add-apt-repository "deb http://<address>/nexus/content/sites/deb/ stable non-free"
+```
+3. Add RYFT GPG key
+
+Key available from RYFT repository or from ubuntu keyserver. 
+Adding from RYFT repository:
+```bash
+curl -s http://<address>/nexus/content/sites/deb/pubkey.txt | sudo apt-key add -
+```
+Adding from ubuntu keyserver:
+```bash
+sudo apt-key adv --recv-key --keyserver keyserver.ubuntu.com FE8723C6
+```
+Verify that the key fingerprint is 0635 6781 FD21 42D4 7B53
+9756 DF95 778B FE87 23C6.
+```bash
+apt-key fingerprint FE8723C6
+```
+4. Update the apt package index
+```bash
+sudo apt-get update
+```
+5. Install RYFT elasticsearch integration
+```bash
+sudo apt-get install ryft-elastic241-integration
+```
+
+## Installation using deb packages
+1. Download elasticsearch 2.4.1
+```bash
+wget "https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.1/elasticsearch-2.4.1.deb"
+```
+2. Install elasticsearch 2.4.1
+```bash
+sudo dpkg -i elasticsearch-2.4.1.deb
+```
+3. Install RYFT elasticsearch integration
+```bash
+sudo dpkg -i ryft-elastic241-integration_x.y.z_all.deb
+```
 ## RDF 
 
  In order to provide ability to search indexed data Ryft Elasticsearch search integration uses codec that stores data in JSON format. Each file has special extension:
