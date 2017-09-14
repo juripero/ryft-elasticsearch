@@ -83,6 +83,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
      * Defaults to localhost:9300
      */
     public static final String TESTS_CLUSTER_DEFAULT = "localhost:9300";
+    public static final String PASSWORD_DEFAULT = "password";
 
     public static final String INDEX_NAME_PARAM = "test.index";
     protected static String indexName;
@@ -97,12 +98,14 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     protected static Boolean enableSsl;
 
     public static final String TRUSTSTORE_FILEPATH_PARAM = "test.truststore-filepath";
+    public static final String TRUSTSTORE_FILEPATH_DEFAULT = "/etc/elasticsearch/truststore.jks";
     protected static String truststoreFilepath;
 
     public static final String TRUSTSTORE_PASSWORD_PARAM = "test.truststore-password";
     protected static String truststorePassword;
 
     public static final String KEYSTORE_FILEPATH_PARAM = "test.keystore-filepath";
+    public static final String KEYSTORE_FILEPATH_DEFAULT = "/etc/elasticsearch/keystore.jks";
     protected static String keystoreFilepath;
 
     public static final String KEYSTORE_PASSWORD_PARAM = "test.keystore-password";
@@ -203,10 +206,10 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
 
         enableSsl = Boolean.parseBoolean(properties.getOrDefault(ENABLE_SSL_PARAM, false).toString());
-        truststoreFilepath = properties.getProperty(TRUSTSTORE_FILEPATH_PARAM, "/etc/elasticsearch/truststore.jks");
-        truststorePassword = properties.getProperty(TRUSTSTORE_PASSWORD_PARAM, "password");
-        keystoreFilepath = properties.getProperty(KEYSTORE_FILEPATH_PARAM, "/etc/elasticsearch/keystore.jks");
-        keystorePassword = properties.getProperty(KEYSTORE_PASSWORD_PARAM, "password");
+        truststoreFilepath = properties.getProperty(TRUSTSTORE_FILEPATH_PARAM, TRUSTSTORE_FILEPATH_DEFAULT);
+        truststorePassword = properties.getProperty(TRUSTSTORE_PASSWORD_PARAM, PASSWORD_DEFAULT);
+        keystoreFilepath = properties.getProperty(KEYSTORE_FILEPATH_PARAM, KEYSTORE_FILEPATH_DEFAULT);
+        keystorePassword = properties.getProperty(KEYSTORE_PASSWORD_PARAM, PASSWORD_DEFAULT);
 
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
