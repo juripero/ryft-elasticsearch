@@ -28,12 +28,17 @@ All tests create test indices and/or files with test records. Format of test rec
 Integration test depends on RYFT swagger client that is generated from [swagger.json](https://github.com/getryft/ryft-server/blob/development/static/swagger.json) before compilation. In order to build integration tests you have to set proper path to swagger.json in property `ryft-client-swagger-file`. By default it expects swagger.json in `../../ryft-server/static/swagger.json`.
 By default maven only builds integration test and skips test running. It is necessary to set explicitly maven.test.skip=false to run tests. Test accepts several properties that allows to configure it:
 
-| Parameter name    | Description                          | Default value    |
-|-------------------|--------------------------------------|------------------|
-| test.cluster      | comma-separated list of URLs to test | localhost:9300   |
-| test.index        | test index name                      | integration-test |
-| test.records      | number of records to generate        | 100              |
-| test.delete-index | is delete test index after finish    | true             |
+| Parameter name           | Description                          | Default value                     |
+|--------------------------|--------------------------------------|-----------------------------------|
+| test.cluster             | comma-separated list of URLs to test | localhost:9300                    |
+| test.index               | test index name                      | integration-test                  |
+| test.records             | number of records to generate        | 100                               |
+| test.delete-index        | is delete test index after finish    | true                              |
+| test.ssl-enabled         | is security enabled on ES cluster    | false                             |
+| test.truststore-filepath | location of truststore               | /etc/elasticsearch/truststore.jks |
+| test.truststore-password | truststore password                  | password                          |
+| test.keystore-filepath   | location of keystore                 | /etc/elasticsearch/keystore.jks   |
+| test.keystore-password   | keystore password                    | password                          | 
 
 Examples of test running command:
 
@@ -44,3 +49,7 @@ Executes all tests with default settings
 `mvn -Dmaven.test.skip=false -Dtest.index="testdata" -Dtest.delete-index=false -Dtest.records=1000 -Dtest="NonIndexedSearchTest" test`
 
 Executes non-indexed search test on test file named `testdata.json` with 1000 generated records and leaves this file on RYFT after running.
+
+If ssl is enabled on test cluster, additional params are required:
+
+`mvn -Dmaven.test.skip=false -Dtest.index="testdata" -Dtest.delete-index=false -Dtest.records=1000 -Dtest="NonIndexedSearchTest" -Dtest.ssl-enabled=true -Dtest.truststore-filepath="/etc/elasticsearch/truststore.jks" -Dtest.truststore-password="password" -Dtest.keystore-filepath="/etc/elasticsearch/ip-10-0-0-132-keystore.jks" -Dtest.keystore-password="password" test`
