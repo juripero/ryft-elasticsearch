@@ -19,6 +19,8 @@
 package com.ryft.elasticsearch.integration.test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.floragunn.searchguard.ssl.SearchGuardSSLPlugin;
+import com.floragunn.searchguard.ssl.util.SSLConfigConstants;
 import com.ryft.elasticsearch.integration.test.entity.TestData;
 import com.ryft.elasticsearch.integration.test.util.TestDataGenerator;
 import org.apache.lucene.util.LuceneTestCase;
@@ -105,10 +107,18 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
                 .put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true) // prevents any settings to be replaced by system properties.
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
-                .put("node.mode", "network").build(); // we require network here!
+                .put("node.mode", "network")
+                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_ENABLED, true)
+                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_FILEPATH, "/etc/elasticsearch/truststore.jks")
+                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_PASSWORD, "password")
+                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_FILEPATH, "/etc/elasticsearch/ip-10-0-0-132-keystore.jks")
+                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_PASSWORD, "password")
+                .build(); // we require network here!
 
         TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
-        client = transportClientBuilder.build().addTransportAddresses(transportAddresses);
+        client = transportClientBuilder
+                .addPlugin(SearchGuardSSLPlugin.class)
+                .build().addTransportAddresses(transportAddresses);
 
         LOGGER.info("--> Elasticsearch Java TransportClient started");
 
