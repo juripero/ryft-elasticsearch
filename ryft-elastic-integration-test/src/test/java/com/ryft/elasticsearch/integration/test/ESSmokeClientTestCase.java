@@ -83,7 +83,6 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
      * Defaults to localhost:9300
      */
     public static final String TESTS_CLUSTER_DEFAULT = "localhost:9300";
-    public static final String PASSWORD_DEFAULT = "password";
 
     public static final String INDEX_NAME_PARAM = "test.index";
     protected static String indexName;
@@ -102,13 +101,15 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     protected static String truststoreFilepath;
 
     public static final String TRUSTSTORE_PASSWORD_PARAM = "test.truststore-password";
+    public static final String TRUSTSTORE_PASSWORD_DEFAULT = "password";
     protected static String truststorePassword;
 
     public static final String KEYSTORE_FILEPATH_PARAM = "test.keystore-filepath";
-    public static final String KEYSTORE_FILEPATH_DEFAULT = "/etc/elasticsearch/keystore.jks";
+    public static final String KEYSTORE_FILEPATH_DEFAULT = "/etc/elasticsearch/admin-keystore.jks";
     protected static String keystoreFilepath;
 
     public static final String KEYSTORE_PASSWORD_PARAM = "test.keystore-password";
+    public static final String KEYSTORE_PASSWORD_DEFAULT = "admin123";
     protected static String keystorePassword;
 
     protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
@@ -128,6 +129,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
                 .put("node.mode", "network");
+        TransportClient.Builder transportClientBuilder = TransportClient.builder();
 
         if (enableSsl) {
             LOGGER.debug(enableSsl + " " + truststoreFilepath + " " + truststorePassword + " " + keystoreFilepath + " " + keystorePassword);
@@ -137,14 +139,12 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
                     .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_PASSWORD, truststorePassword)
                     .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_FILEPATH, keystoreFilepath)
                     .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_PASSWORD, keystorePassword);
+            transportClientBuilder.addPlugin(SearchGuardSSLPlugin.class);
         }
 
+        Settings clientSettings = settingsBuilder.build();
 
-        Settings clientSettings = settingsBuilder.build(); // we require network here!
-
-        TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
-        client = transportClientBuilder
-                .addPlugin(SearchGuardSSLPlugin.class)
+        client = transportClientBuilder.settings(clientSettings)
                 .build().addTransportAddresses(transportAddresses);
 
         LOGGER.info("--> Elasticsearch Java TransportClient started");
@@ -207,9 +207,9 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
 
         enableSsl = Boolean.parseBoolean(properties.getOrDefault(ENABLE_SSL_PARAM, false).toString());
         truststoreFilepath = properties.getProperty(TRUSTSTORE_FILEPATH_PARAM, TRUSTSTORE_FILEPATH_DEFAULT);
-        truststorePassword = properties.getProperty(TRUSTSTORE_PASSWORD_PARAM, PASSWORD_DEFAULT);
+        truststorePassword = properties.getProperty(TRUSTSTORE_PASSWORD_PARAM, TRUSTSTORE_PASSWORD_DEFAULT);
         keystoreFilepath = properties.getProperty(KEYSTORE_FILEPATH_PARAM, KEYSTORE_FILEPATH_DEFAULT);
-        keystorePassword = properties.getProperty(KEYSTORE_PASSWORD_PARAM, PASSWORD_DEFAULT);
+        keystorePassword = properties.getProperty(KEYSTORE_PASSWORD_PARAM, KEYSTORE_PASSWORD_DEFAULT);
 
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
