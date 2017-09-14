@@ -47,9 +47,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
+
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 
@@ -91,6 +93,21 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     public static final String DELETE_INDEX_PARAM = "test.delete-index";
     protected static Boolean deleteIndex;
 
+    public static final String ENABLE_SSL_PARAM = "test.ssl-enabled";
+    protected static Boolean enableSsl;
+
+    public static final String TRUSTSTORE_FILEPATH_PARAM = "test.truststore-filepath";
+    protected static String truststoreFilepath;
+
+    public static final String TRUSTSTORE_PASSWORD_PARAM = "test.truststore-password";
+    protected static String truststorePassword;
+
+    public static final String KEYSTORE_FILEPATH_PARAM = "test.keystore-filepath";
+    protected static String keystoreFilepath;
+
+    public static final String KEYSTORE_PASSWORD_PARAM = "test.keystore-password";
+    protected static String keystorePassword;
+
     protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
 
     private static final AtomicInteger COUNTER = new AtomicInteger();
@@ -102,18 +119,25 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     protected static List<TestData> testDataList;
 
     private static Client startClient(Path tempDir) {
-        Settings clientSettings = Settings.settingsBuilder()
+        Settings.Builder settingsBuilder = Settings.settingsBuilder()
                 .put("name", "qa_smoke_client_" + COUNTER.getAndIncrement())
                 .put(InternalSettingsPreparer.IGNORE_SYSTEM_PROPERTIES_SETTING, true) // prevents any settings to be replaced by system properties.
                 .put("client.transport.ignore_cluster_name", true)
                 .put("path.home", tempDir)
-                .put("node.mode", "network")
-                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_ENABLED, true)
-                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_FILEPATH, "/etc/elasticsearch/truststore.jks")
-                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_PASSWORD, "password")
-                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_FILEPATH, "/etc/elasticsearch/ip-10-0-0-132-keystore.jks")
-                .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_PASSWORD, "password")
-                .build(); // we require network here!
+                .put("node.mode", "network");
+
+        if (enableSsl) {
+            LOGGER.debug(enableSsl + " " + truststoreFilepath + " " + truststorePassword + " " + keystoreFilepath + " " + keystorePassword);
+            settingsBuilder
+                    .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_ENABLED, enableSsl)
+                    .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_FILEPATH, truststoreFilepath)
+                    .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_TRUSTSTORE_PASSWORD, truststorePassword)
+                    .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_FILEPATH, keystoreFilepath)
+                    .put(SSLConfigConstants.SEARCHGUARD_SSL_TRANSPORT_KEYSTORE_PASSWORD, keystorePassword);
+        }
+
+
+        Settings clientSettings = settingsBuilder.build(); // we require network here!
 
         TransportClient.Builder transportClientBuilder = TransportClient.builder().settings(clientSettings);
         client = transportClientBuilder
@@ -177,6 +201,13 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
         recordsNum = Integer.valueOf(properties.getOrDefault(RECORDS_NUM_INDEX_PARAM, 100).toString());
         indexName = properties.getProperty(INDEX_NAME_PARAM, "integration-test");
         clusterAddresses = properties.getProperty(TESTS_CLUSTER_PROPERTY, TESTS_CLUSTER_DEFAULT);
+
+        enableSsl = Boolean.parseBoolean(properties.getOrDefault(ENABLE_SSL_PARAM, false).toString());
+        truststoreFilepath = properties.getProperty(TRUSTSTORE_FILEPATH_PARAM, "/etc/elasticsearch/truststore.jks");
+        truststorePassword = properties.getProperty(TRUSTSTORE_PASSWORD_PARAM, "password");
+        keystoreFilepath = properties.getProperty(KEYSTORE_FILEPATH_PARAM, "/etc/elasticsearch/keystore.jks");
+        keystorePassword = properties.getProperty(KEYSTORE_PASSWORD_PARAM, "password");
+
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
                 clusterAddresses, indexName, recordsNum, deleteIndex);
