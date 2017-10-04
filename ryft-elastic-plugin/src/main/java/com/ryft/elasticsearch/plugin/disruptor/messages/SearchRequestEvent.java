@@ -26,6 +26,8 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected final ObjectNode parsedQuery;
 
+    protected String aggregationQuery;
+
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
@@ -70,5 +72,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     public ObjectNode getParsedQuery() {
         return parsedQuery;
+    }
+
+    public String getAggregationQuery() {
+        return aggregationQuery;
+    }
+
+    public void setAggregationQuery(String aggregationQuery) {
+        this.aggregationQuery = aggregationQuery;
     }
 }

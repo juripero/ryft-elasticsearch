@@ -61,7 +61,7 @@ public class AggregationTest extends ESSmokeClientTestCase {
         SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
-        InternalHistogram<InternalHistogram.Bucket> aggregation = (InternalHistogram) searchResponse.getAggregations().get(aggregationName);
+        InternalHistogram<InternalHistogram.Bucket> aggregation = searchResponse.getAggregations().get(aggregationName);
         aggregation.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
         });

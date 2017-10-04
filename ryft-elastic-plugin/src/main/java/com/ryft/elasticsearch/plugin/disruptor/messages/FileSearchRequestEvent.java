@@ -32,7 +32,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         int clusterSize = clusterState.getNodes().dataNodes().size();
 
         String local;
-        if (clusterSize > 1) {
+        if (clusterSize > 1 || aggregationQuery != null) {
             local = "false";
         } else {
             local = "true";

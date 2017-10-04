@@ -2,6 +2,9 @@ package com.ryft.elasticsearch.rest.mappings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.util.ArrayList;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftStats {
@@ -20,13 +23,15 @@ public class RyftStats {
     private Double fabricDataRate;
     @JsonProperty("host")
     private String host;
+    @JsonProperty("extra")
+    private RyftExtra extra;
     
     public RyftStats() {
         // TODO Auto-generated constructor stub
     }
 
     public RyftStats(Long matches, Long totalBytes, Long duration, Double dataRate, Long fabricDuration,
-            Double fabricDataRate, String host) {
+                     Double fabricDataRate, String host, RyftExtra extra) {
         super();
         this.matches = matches;
         this.totalBytes = totalBytes;
@@ -35,6 +40,7 @@ public class RyftStats {
         this.fabricDuration = fabricDuration;
         this.fabricDataRate = fabricDataRate;
         this.host = host;
+        this.extra = extra;
     }
 
     public Long getMatches() {
@@ -93,72 +99,57 @@ public class RyftStats {
         this.host = host;
     }
 
+    public RyftExtra getExtra() {
+        return extra;
+    }
+
+    public void setExtra(RyftExtra extra) {
+        this.extra = extra;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RyftStats ryftStats = (RyftStats) o;
+
+        if (matches != null ? !matches.equals(ryftStats.matches) : ryftStats.matches != null) return false;
+        if (totalBytes != null ? !totalBytes.equals(ryftStats.totalBytes) : ryftStats.totalBytes != null) return false;
+        if (duration != null ? !duration.equals(ryftStats.duration) : ryftStats.duration != null) return false;
+        if (dataRate != null ? !dataRate.equals(ryftStats.dataRate) : ryftStats.dataRate != null) return false;
+        if (fabricDuration != null ? !fabricDuration.equals(ryftStats.fabricDuration) : ryftStats.fabricDuration != null)
+            return false;
+        if (fabricDataRate != null ? !fabricDataRate.equals(ryftStats.fabricDataRate) : ryftStats.fabricDataRate != null)
+            return false;
+        if (host != null ? !host.equals(ryftStats.host) : ryftStats.host != null) return false;
+        return extra != null ? extra.equals(ryftStats.extra) : ryftStats.extra == null;
+    }
+
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((dataRate == null) ? 0 : dataRate.hashCode());
-        result = prime * result + ((duration == null) ? 0 : duration.hashCode());
-        result = prime * result + ((fabricDataRate == null) ? 0 : fabricDataRate.hashCode());
-        result = prime * result + ((fabricDuration == null) ? 0 : fabricDuration.hashCode());
-        result = prime * result + ((host == null) ? 0 : host.hashCode());
-        result = prime * result + ((matches == null) ? 0 : matches.hashCode());
-        result = prime * result + ((totalBytes == null) ? 0 : totalBytes.hashCode());
+        int result = matches != null ? matches.hashCode() : 0;
+        result = 31 * result + (totalBytes != null ? totalBytes.hashCode() : 0);
+        result = 31 * result + (duration != null ? duration.hashCode() : 0);
+        result = 31 * result + (dataRate != null ? dataRate.hashCode() : 0);
+        result = 31 * result + (fabricDuration != null ? fabricDuration.hashCode() : 0);
+        result = 31 * result + (fabricDataRate != null ? fabricDataRate.hashCode() : 0);
+        result = 31 * result + (host != null ? host.hashCode() : 0);
+        result = 31 * result + (extra != null ? extra.hashCode() : 0);
         return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        RyftStats other = (RyftStats) obj;
-        if (dataRate == null) {
-            if (other.dataRate != null)
-                return false;
-        } else if (!dataRate.equals(other.dataRate))
-            return false;
-        if (duration == null) {
-            if (other.duration != null)
-                return false;
-        } else if (!duration.equals(other.duration))
-            return false;
-        if (fabricDataRate == null) {
-            if (other.fabricDataRate != null)
-                return false;
-        } else if (!fabricDataRate.equals(other.fabricDataRate))
-            return false;
-        if (fabricDuration == null) {
-            if (other.fabricDuration != null)
-                return false;
-        } else if (!fabricDuration.equals(other.fabricDuration))
-            return false;
-        if (host == null) {
-            if (other.host != null)
-                return false;
-        } else if (!host.equals(other.host))
-            return false;
-        if (matches == null) {
-            if (other.matches != null)
-                return false;
-        } else if (!matches.equals(other.matches))
-            return false;
-        if (totalBytes == null) {
-            if (other.totalBytes != null)
-                return false;
-        } else if (!totalBytes.equals(other.totalBytes))
-            return false;
-        return true;
-    }
-
-    @Override
     public String toString() {
-        return "RyftStats [matches=" + matches + ", totalBytes=" + totalBytes + ", duration=" + duration
-                + ", dataRate=" + dataRate + ", fabricDuration=" + fabricDuration + ", fabricDataRate="
-                + fabricDataRate + ", host=" + host + "]";
+        return "RyftStats{" +
+                "matches=" + matches +
+                ", totalBytes=" + totalBytes +
+                ", duration=" + duration +
+                ", dataRate=" + dataRate +
+                ", fabricDuration=" + fabricDuration +
+                ", fabricDataRate=" + fabricDataRate +
+                ", host='" + host + '\'' +
+                ", aggregations=" + extra +
+                '}';
     }
-
 }

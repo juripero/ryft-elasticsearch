@@ -12,8 +12,8 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -38,6 +38,7 @@ public class AggregationService {
 
     private static final ESLogger LOGGER = Loggers.getLogger(AggregationService.class);
     private static final String TEMPINDEX_PREFIX = "tmpagg";
+    private static final List<String> SUPPORTED_AGGREGATIONS = new ArrayList<>(Arrays.asList("min", "max", "avg"));
 
     private final Client client;
     private final ObjectMapper mapper;
@@ -74,6 +75,43 @@ public class AggregationService {
             LOGGER.debug("No aggregation");
             return InternalAggregations.EMPTY;
         }
+    }
+
+    public boolean allAggregationsSupportedByRyft(SearchRequestEvent requestEvent) {
+        RyftProperties query = new RyftProperties();
+        query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
+
+        if (!query.containsKey("aggs") && !query.containsKey("aggregations")) {
+            return false;
+        }
+
+        Map<String, Map> aggs = getAggregationsFromProperties(query);
+
+        for (Map<String, Map> entry : aggs.values()) {
+            for (String innerKey : entry.keySet()) {
+                if (!SUPPORTED_AGGREGATIONS.contains(innerKey)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public Map<String, Map> getAggregationsFromEvent(SearchRequestEvent requestEvent) {
+        RyftProperties query = new RyftProperties();
+        query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
+
+        return getAggregationsFromProperties(query);
+    }
+
+    public Map<String, Map> getAggregationsFromProperties(RyftProperties query) {
+        Map aggs = (Map) query.get("aggs");
+        if (aggs == null) {
+            aggs = (Map) query.get("aggregations");
+        }
+
+        return aggs;
     }
 
     private void prepareTempIndex(SearchRequestEvent requestEvent, List<InternalSearchHit> searchHitList, String tempIndexName)
