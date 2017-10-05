@@ -457,10 +457,10 @@ public class AggregationTest extends ESSmokeClientTestCase {
         GeoBounds ryftAggregation = (GeoBounds) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT top left: {}", ryftAggregation.topLeft());
         LOGGER.info("RYFT bottom right: {}", ryftAggregation.bottomRight());
-        assertEquals(aggregation.topLeft().getLat(), ryftAggregation.topLeft().getLat(), 1e-10);
-        assertEquals(aggregation.topLeft().getLon(), ryftAggregation.topLeft().getLon(), 1e-10);
-        assertEquals(aggregation.bottomRight().getLat(), ryftAggregation.bottomRight().getLat(), 1e-10);
-        assertEquals(aggregation.bottomRight().getLon(), ryftAggregation.bottomRight().getLon(), 1e-10);
+        assertEquals(aggregation.topLeft().getLat(), ryftAggregation.topLeft().getLat(), 1e-5);
+        assertEquals(aggregation.topLeft().getLon(), ryftAggregation.topLeft().getLon(), 1e-5);
+        assertEquals(aggregation.bottomRight().getLat(), ryftAggregation.bottomRight().getLat(), 1e-5);
+        assertEquals(aggregation.bottomRight().getLon(), ryftAggregation.bottomRight().getLon(), 1e-5);
     }
 
     @Test

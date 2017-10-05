@@ -2,15 +2,19 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.converter.QueryConverterHelper;
+import com.ryft.elasticsearch.converter.aggregation.AggregationConverter;
 import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -27,6 +31,7 @@ import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
 import java.util.concurrent.ExecutionException;
+
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
@@ -38,7 +43,15 @@ public class AggregationService {
 
     private static final ESLogger LOGGER = Loggers.getLogger(AggregationService.class);
     private static final String TEMPINDEX_PREFIX = "tmpagg";
-    private static final List<String> SUPPORTED_AGGREGATIONS = new ArrayList<>(Arrays.asList("min", "max", "avg"));
+    private static final List<String> SUPPORTED_AGGREGATIONS = new ArrayList<>(Arrays.asList("min",
+            "max",
+            "sum",
+            "count",
+            "avg",
+            "stats",
+            "extended_stats",
+            "geo_bounds",
+            "geo_centroid"));
 
     private final Client client;
     private final ObjectMapper mapper;
@@ -50,7 +63,7 @@ public class AggregationService {
     }
 
     public InternalAggregations applyAggregation(List<InternalSearchHit> searchHitList,
-            SearchRequestEvent requestEvent) throws RyftSearchException {
+                                                 SearchRequestEvent requestEvent) throws RyftSearchException {
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
         if (!searchHitList.isEmpty()
@@ -64,7 +77,7 @@ public class AggregationService {
                 query.put("query", ImmutableMap.of("match_all", ImmutableMap.of()));
                 SearchResponse searchResponse = client.execute(SearchAction.INSTANCE,
                         new SearchRequest(new String[]{tempIndexName},
-                        mapper.writeValueAsBytes(query.toMap()))).get();
+                                mapper.writeValueAsBytes(query.toMap()))).get();
                 return (InternalAggregations) searchResponse.getAggregations();
             } catch (JsonProcessingException | InterruptedException | ExecutionException ex) {
                 throw new RyftSearchException(ex);
@@ -102,6 +115,7 @@ public class AggregationService {
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
 
+        //TODO - when optional parameters are not set by user, set them explicitly here
         return getAggregationsFromProperties(query);
     }
 
@@ -112,6 +126,26 @@ public class AggregationService {
         }
 
         return aggs;
+    }
+
+    public InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
+        Map<String, Map> aggregationQuery = getAggregationsFromEvent(requestEvent);
+        List<InternalAggregation> internalAggregationList = new ArrayList<>();
+
+        //Aggregation results return without an aggregation type, so we have to map that back to the original request based on the aggregation name
+        for (Map.Entry<String, Map> entry : aggregationQuery.entrySet()) {
+            Map<String, Map> value = entry.getValue();
+
+            for (Map.Entry<String, Map> innerEntry : value.entrySet()) {
+                InternalAggregation internalAggregation = AggregationConverter.convertJsonToAggregation(innerEntry, entry.getKey(), ryftAggregations);
+
+                if (internalAggregation != null) {
+                    internalAggregationList.add(internalAggregation);
+                }
+            }
+        }
+
+        return new InternalAggregations(internalAggregationList);
     }
 
     private void prepareTempIndex(SearchRequestEvent requestEvent, List<InternalSearchHit> searchHitList, String tempIndexName)

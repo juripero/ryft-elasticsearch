@@ -44,8 +44,6 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.aggregations.*;
-import org.elasticsearch.search.aggregations.metrics.avg.InternalAvg;
-import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import org.elasticsearch.search.internal.InternalSearchHit;
 import org.elasticsearch.search.internal.InternalSearchHits;
 import org.elasticsearch.search.internal.InternalSearchResponse;
@@ -267,12 +265,14 @@ public class SearchRequestProcessor extends RyftProcessor {
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
+        ObjectNode aggregationResults = null;
         for (Entry<SearchShardTarget, RyftResponse> entry : resultResponses.entrySet()) {
             totalShards += 1;
             RyftResponse ryftResponse = entry.getValue();
             SearchShardTarget searchShardTarget = entry.getKey();
             String errorMessage = ryftResponse.getMessage();
             String[] errors = ryftResponse.getErrors();
+            aggregationResults = ryftResponse.getStats().getExtra().getAggregations();
             if (ryftResponse.hasErrors()) {
                 failureShards += 1;
                 if ((errorMessage != null) && (!errorMessage.isEmpty())) {
@@ -295,9 +295,9 @@ public class SearchRequestProcessor extends RyftProcessor {
         if (requestEvent.getAggregationQuery() == null) {
             aggregations = aggregationService.applyAggregation(searchHitList, requestEvent);
         } else {
-            InternalAvg internalAvg = new InternalAvg("test", 1610.0, 39, ValueFormatter.RAW, Collections.EMPTY_LIST, null);
-            aggregations = new InternalAggregations(Collections.singletonList(internalAvg));
+            aggregations = aggregationService.getFromRyftAggregations(requestEvent, aggregationResults);
         }
+
         InternalSearchHit[] hits;
         if (requestEvent.getSize() != null) {
             hits = searchHitList.stream().limit(requestEvent.getSize()).toArray(InternalSearchHit[]::new);
