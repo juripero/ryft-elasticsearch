@@ -2,13 +2,13 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.converter.QueryConverterHelper;
 import com.ryft.elasticsearch.converter.aggregation.AggregationConverter;
 import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
+import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
@@ -43,23 +43,18 @@ public class AggregationService {
 
     private static final ESLogger LOGGER = Loggers.getLogger(AggregationService.class);
     private static final String TEMPINDEX_PREFIX = "tmpagg";
-    private static final List<String> SUPPORTED_AGGREGATIONS = new ArrayList<>(Arrays.asList("min",
-            "max",
-            "sum",
-            "count",
-            "avg",
-            "stats",
-            "extended_stats",
-            "geo_bounds",
-            "geo_centroid"));
+
+    private List<String> supportedAggregations;
 
     private final Client client;
     private final ObjectMapper mapper;
 
     @Inject
-    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory) {
+    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory, PropertiesProvider provider) {
         this.client = client;
         this.mapper = objectMapperFactory.get();
+
+        supportedAggregations = Arrays.asList(provider.get().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
     }
 
     public InternalAggregations applyAggregation(List<InternalSearchHit> searchHitList,
@@ -102,7 +97,7 @@ public class AggregationService {
 
         for (Map<String, Map> entry : aggs.values()) {
             for (String innerKey : entry.keySet()) {
-                if (!SUPPORTED_AGGREGATIONS.contains(innerKey)) {
+                if (!supportedAggregations.contains(innerKey)) {
                     return false;
                 }
             }
