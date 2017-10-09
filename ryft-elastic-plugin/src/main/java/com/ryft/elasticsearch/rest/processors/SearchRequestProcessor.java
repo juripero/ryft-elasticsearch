@@ -107,6 +107,7 @@ public class SearchRequestProcessor extends RyftProcessor {
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
                                              Map<Integer, List<ShardRouting>> groupedShards) throws InterruptedException, RyftSearchException, JsonProcessingException {
         if (aggregationService.allAggregationsSupportedByRyft(requestEvent)) {
+            LOGGER.info("Ryft Server selected as aggregation backend");
             ObjectMapper mapper = new ObjectMapper();
             String jsonString = mapper.writeValueAsString(aggregationService.getAggregationsFromEvent(requestEvent));
             requestEvent.setAggregationQuery(jsonString);

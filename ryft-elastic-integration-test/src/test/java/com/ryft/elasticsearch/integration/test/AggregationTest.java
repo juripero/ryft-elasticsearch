@@ -2,7 +2,7 @@ package com.ryft.elasticsearch.integration.test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import static com.ryft.elasticsearch.integration.test.ESSmokeClientTestCase.LOGGER;
+
 import java.io.IOException;
 import java.util.List;
 import org.elasticsearch.action.search.SearchAction;
@@ -35,7 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AggregationTest extends ESSmokeClientTestCase {
+public class AggregationTest extends RyftElasticTestCase {
 
     @BeforeClass
     static void prepareData() throws IOException {

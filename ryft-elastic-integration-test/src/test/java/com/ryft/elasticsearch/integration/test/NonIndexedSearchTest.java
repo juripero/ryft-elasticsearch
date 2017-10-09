@@ -1,7 +1,6 @@
 package com.ryft.elasticsearch.integration.test;
 
 import com.google.common.collect.Lists;
-import static com.ryft.elasticsearch.integration.test.ESSmokeClientTestCase.getClient;
 import com.ryft.elasticsearch.integration.test.client.handler.FilesApi;
 import com.ryft.elasticsearch.integration.test.client.invoker.ApiClient;
 import com.ryft.elasticsearch.integration.test.client.invoker.ApiException;
@@ -32,7 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class NonIndexedSearchTest extends ESSmokeClientTestCase {
+public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     private static String testFilename;
     private static FilesApi filesApi;
