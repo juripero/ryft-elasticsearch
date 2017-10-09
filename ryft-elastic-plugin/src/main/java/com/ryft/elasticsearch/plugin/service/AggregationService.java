@@ -96,8 +96,13 @@ public class AggregationService {
         Map<String, Map> aggs = getAggregationsFromProperties(query);
 
         for (Map<String, Map> entry : aggs.values()) {
-            for (String innerKey : entry.keySet()) {
-                if (!supportedAggregations.contains(innerKey)) {
+            for (Map.Entry<String, Map> innerEntry : entry.entrySet()) {
+                if (!supportedAggregations.contains(innerEntry.getKey())) {
+                    return false;
+                }
+
+                Map<String, Map> innerValue = innerEntry.getValue();
+                if (innerValue.containsKey("script")) {
                     return false;
                 }
             }
