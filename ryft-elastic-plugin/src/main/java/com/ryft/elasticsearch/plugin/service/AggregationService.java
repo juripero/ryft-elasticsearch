@@ -44,10 +44,10 @@ public class AggregationService {
     private static final ESLogger LOGGER = Loggers.getLogger(AggregationService.class);
     private static final String TEMPINDEX_PREFIX = "tmpagg";
 
-    private List<String> supportedAggregations;
-
     private final Client client;
     private final ObjectMapper mapper;
+
+    private List<String> supportedAggregations;
 
     @Inject
     public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory, PropertiesProvider provider) {

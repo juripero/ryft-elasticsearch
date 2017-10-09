@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.InternalAggregations;
+import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalDateHistogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalHistogram;
+import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalOrder;
 import org.elasticsearch.search.aggregations.metrics.avg.InternalAvg;
 import org.elasticsearch.search.aggregations.metrics.geobounds.RyftInternalGeoBounds;
 import org.elasticsearch.search.aggregations.metrics.geocentroid.InternalGeoCentroid;
@@ -15,7 +20,9 @@ import org.elasticsearch.search.aggregations.metrics.sum.RyftInternalSum;
 import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class AggregationConverter {
@@ -47,6 +54,8 @@ public class AggregationConverter {
                 return convertGeoBounds(aggregationName, resultNode);
             case "geo_centroid":
                 return convertGeoCentroid(aggregationName, resultNode);
+            case "date_histogram":
+                return convertDateHistogram(aggregationName, resultNode);
         }
 
         return null;
@@ -121,5 +130,25 @@ public class AggregationConverter {
 
         GeoPoint geoPoint = new GeoPoint(lat, lon);
         return new InternalGeoCentroid(name, geoPoint, count, Collections.EMPTY_LIST, null);
+    }
+
+    private static RyftInternalHistogram convertDateHistogram(String name, JsonNode ryftAggregation) {
+        RyftInternalHistogram.Factory<RyftInternalDateHistogram.Bucket> histogramFactory = new RyftInternalHistogram.Factory<>();
+        RyftInternalDateHistogram.Factory dateHistogramFactory = new RyftInternalDateHistogram.Factory();
+
+        JsonNode bucketsNode = ryftAggregation.get("buckets");
+        List<RyftInternalDateHistogram.Bucket> buckets = new ArrayList<>();
+
+        if (bucketsNode.isArray()) {
+            while (bucketsNode.elements().hasNext()) {
+                JsonNode element = bucketsNode.elements().next();
+                Long key = element.get("key").asLong();
+                Long docCount = element.get("doc_dount").asLong();
+                buckets.add(dateHistogramFactory.createBucket(key, docCount, InternalAggregations.EMPTY, false, ValueFormatter.RAW));
+            }
+        }
+
+        return histogramFactory.create(name, buckets, (RyftInternalOrder) RyftInternalOrder.KEY_ASC,
+                0, null, ValueFormatter.RAW, false, Collections.EMPTY_LIST, null);
     }
 }
