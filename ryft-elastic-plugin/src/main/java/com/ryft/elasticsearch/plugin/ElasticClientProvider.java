@@ -47,11 +47,7 @@ public class ElasticClientProvider implements Provider<TransportClient> {
         TransportClient client = clientBuilder
                 .settings(clientSettingsBuilder.build())
                 .build();
-        try {
-            client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLocalHost(), 9300));
-        } catch (UnknownHostException ex) {
-            client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300)); 
-        }
+        client.addTransportAddress(new InetSocketTransportAddress(InetAddress.getLoopbackAddress(), 9300));
         return client;
     }
 
