@@ -17,6 +17,11 @@ The following snippet captures the basic structure of aggregations:
 }
 ```
 
+#### Aggregation engine
+Aggregations can be performed either by Elastic or by the Ryft Server. By default, Elasticsearch is used. To configure
+which aggregations should be performed on Ryft Server, use the `ryft_aggregations_on_ryft_server` parameter in the 
+configuration. Aggregation syntax remains the same for both engines. 
+
 ### Sum
 A single-value metrics aggregation that sums up numeric values that are extracted from the aggregated documents. To read more about this aggregation refer to [official documentation](https://www.elastic.co/guide/en/elasticsearch/reference/2.4/search-aggregations-metrics-sum-aggregation.html).
 
