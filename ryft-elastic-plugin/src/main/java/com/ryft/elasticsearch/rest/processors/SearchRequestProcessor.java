@@ -266,14 +266,14 @@ public class SearchRequestProcessor extends RyftProcessor {
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
-        ObjectNode aggregationResults = null;
+        ObjectNode ryftAggregationResults = null;
         for (Entry<SearchShardTarget, RyftResponse> entry : resultResponses.entrySet()) {
             totalShards += 1;
             RyftResponse ryftResponse = entry.getValue();
             SearchShardTarget searchShardTarget = entry.getKey();
             String errorMessage = ryftResponse.getMessage();
             String[] errors = ryftResponse.getErrors();
-            aggregationResults = ryftResponse.getStats().getExtra().getAggregations();
+
             if (ryftResponse.hasErrors()) {
                 failureShards += 1;
                 if ((errorMessage != null) && (!errorMessage.isEmpty())) {
@@ -285,7 +285,9 @@ public class SearchRequestProcessor extends RyftProcessor {
                             .collect(Collectors.toCollection(() -> failures));
                 }
             }
+
             if (ryftResponse.hasResults()) {
+                ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
                 ryftResponse.getResults().stream().map(
                         result -> processSearchResult(result, searchShardTarget)
                 ).collect(Collectors.toCollection(() -> searchHitList));
@@ -296,7 +298,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         if (requestEvent.getAggregationQuery() == null) {
             aggregations = aggregationService.applyAggregation(searchHitList, requestEvent);
         } else {
-            aggregations = aggregationService.getFromRyftAggregations(requestEvent, aggregationResults);
+            aggregations = aggregationService.getFromRyftAggregations(requestEvent, ryftAggregationResults);
         }
 
         InternalSearchHit[] hits;
