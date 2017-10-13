@@ -182,20 +182,12 @@ public class SearchRequestProcessor extends RyftProcessor {
         CountDownLatch countDownLatch;
         Map<Integer, Optional<ChannelFuture>> ryftChannelFutures;
 
-        if (requestEvent.getAggregationQuery() == null) {
-            countDownLatch = new CountDownLatch(groupedShards.size());
+        countDownLatch = new CountDownLatch(groupedShards.size());
 
-            ryftChannelFutures = groupedShards.entrySet().stream().map(entry -> {
-                Optional<ChannelFuture> maybeRyftChannelFuture = sendToRyft(requestEvent, entry.getValue(), countDownLatch);
-                return new AbstractMap.SimpleEntry<>(entry.getKey(), maybeRyftChannelFuture);
-            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-        } else {
-            //if we send aggregation request to Ryft server, we must also allow it to handle clustering. We will send request only to 1 shard
-            countDownLatch = new CountDownLatch(1);
-            ShardRouting chosenShard = groupedShards.entrySet().stream().findFirst().get().getValue().get(0);
-            Optional<ChannelFuture> maybeRyftChannelFuture = sendToRyft(requestEvent, new ArrayList<>(Arrays.asList(chosenShard)), countDownLatch);
-            ryftChannelFutures = Collections.singletonMap(0, maybeRyftChannelFuture);
-        }
+        ryftChannelFutures = groupedShards.entrySet().stream().map(entry -> {
+            Optional<ChannelFuture> maybeRyftChannelFuture = sendToRyft(requestEvent, entry.getValue(), countDownLatch);
+            return new AbstractMap.SimpleEntry<>(entry.getKey(), maybeRyftChannelFuture);
+        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
 
         countDownLatch.await();
 
@@ -266,7 +258,6 @@ public class SearchRequestProcessor extends RyftProcessor {
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
-        ObjectNode ryftAggregationResults = null;
         for (Entry<SearchShardTarget, RyftResponse> entry : resultResponses.entrySet()) {
             totalShards += 1;
             RyftResponse ryftResponse = entry.getValue();
@@ -287,7 +278,6 @@ public class SearchRequestProcessor extends RyftProcessor {
             }
 
             if (ryftResponse.hasResults()) {
-                ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
                 ryftResponse.getResults().stream().map(
                         result -> processSearchResult(result, searchShardTarget)
                 ).collect(Collectors.toCollection(() -> searchHitList));
@@ -296,9 +286,9 @@ public class SearchRequestProcessor extends RyftProcessor {
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHitList.size(), failures.size());
         InternalAggregations aggregations;
         if (requestEvent.getAggregationQuery() == null) {
-            aggregations = aggregationService.applyAggregation(searchHitList, requestEvent);
+            aggregations = aggregationService.applyAggregationElastic(searchHitList, requestEvent);
         } else {
-            aggregations = aggregationService.getFromRyftAggregations(requestEvent, ryftAggregationResults);
+            aggregations = aggregationService.applyAggregationRyft(requestEvent);
         }
 
         InternalSearchHit[] hits;

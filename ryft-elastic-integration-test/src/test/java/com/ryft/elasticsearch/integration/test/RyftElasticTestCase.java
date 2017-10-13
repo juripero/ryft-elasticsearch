@@ -177,7 +177,11 @@ public abstract class RyftElasticTestCase extends LuceneTestCase {
             deleteIndex(index);
         }
         LOGGER.info("Creating index {}", index);
-        getClient().admin().indices().prepareCreate(index).get();
+        Settings settings = Settings.settingsBuilder()
+                .put("number_of_replicas", "1")
+                .put("number_of_shards", "3")
+                .build();
+        getClient().admin().indices().prepareCreate(index).setSettings(settings).get();
 
         getClient().admin().indices().preparePutMapping(index).setType(type)
                 .setSource((Object[]) mapping).get();

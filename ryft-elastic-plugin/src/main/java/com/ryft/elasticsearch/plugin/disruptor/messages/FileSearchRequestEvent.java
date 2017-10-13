@@ -28,11 +28,12 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         super(clusterService, requestParameters);
     }
 
+
     public URI getRyftSearchURL() throws RyftSearchException {
         int clusterSize = clusterState.getNodes().dataNodes().size();
 
         String local;
-        if (clusterSize > 1 || aggregationQuery != null) {
+        if (clusterSize > 1) {
             local = "false";
         } else {
             local = "true";

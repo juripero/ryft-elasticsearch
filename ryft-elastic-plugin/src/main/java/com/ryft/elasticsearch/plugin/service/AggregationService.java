@@ -13,11 +13,25 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
+import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
+import com.ryft.elasticsearch.rest.client.NettyUtils;
+import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpVersion;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -27,10 +41,13 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
@@ -46,19 +63,24 @@ public class AggregationService {
 
     private final Client client;
     private final ObjectMapper mapper;
+    private final RyftRestClient channelProvider;
+    private final PropertiesProvider props;
 
     private List<String> supportedAggregations;
 
     @Inject
-    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory, PropertiesProvider provider) {
+    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory,
+                              RyftRestClient channelProvider, PropertiesProvider props, PropertiesProvider provider) {
         this.client = client;
         this.mapper = objectMapperFactory.get();
+        this.channelProvider = channelProvider;
+        this.props = props;
 
         supportedAggregations = Arrays.asList(provider.get().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
     }
 
-    public InternalAggregations applyAggregation(List<InternalSearchHit> searchHitList,
-                                                 SearchRequestEvent requestEvent) throws RyftSearchException {
+    public InternalAggregations applyAggregationElastic(List<InternalSearchHit> searchHitList,
+                                                        SearchRequestEvent requestEvent) throws RyftSearchException {
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
         if (!searchHitList.isEmpty()
@@ -82,6 +104,53 @@ public class AggregationService {
         } else {
             LOGGER.debug("No aggregation");
             return InternalAggregations.EMPTY;
+        }
+    }
+
+    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
+        URI searchUri;
+        try {
+            searchUri = new URI("placeholder");
+        } catch (URISyntaxException e) {
+            throw new RyftSearchException();
+        }
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        URI finalSearchUri = searchUri;
+
+        Optional<ChannelFuture> maybeChannelFuture = channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
+            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, finalSearchUri.toString());
+
+            if (requestEvent.getAggregationQuery() != null) {
+                String aggregationsBody = "{\"aggs\":" + requestEvent.getAggregationQuery() + "}";
+                ByteBuf bbuf = Unpooled.copiedBuffer(aggregationsBody, StandardCharsets.UTF_8);
+                request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
+                request.content().clear().writeBytes(bbuf);
+            }
+
+            if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
+                String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
+                String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
+                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
+            }
+            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", finalSearchUri.getHost(), finalSearchUri.getPort()));
+            LOGGER.debug("Send request: {}", request);
+            return ryftChannel.writeAndFlush(request);
+        });
+
+        try {
+            countDownLatch.await();
+            if (maybeChannelFuture.isPresent()) {
+                ChannelFuture channelFuture = maybeChannelFuture.get();
+                RyftResponse ryftResponse = NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
+                ObjectNode ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
+                return getFromRyftAggregations(requestEvent, ryftAggregationResults);
+            } else {
+                throw new RyftSearchException("Can not get response from RYFT");
+            }
+        } catch (InterruptedException e) {
+            throw new RyftSearchException();
         }
     }
 

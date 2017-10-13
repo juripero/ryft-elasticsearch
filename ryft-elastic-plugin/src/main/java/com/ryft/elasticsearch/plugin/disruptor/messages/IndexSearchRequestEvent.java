@@ -37,18 +37,11 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     public URI getRyftSearchURL(ShardRouting shardRouting) throws RyftSearchException {
         try {
             validateRequest();
-            String local;
-            if (aggregationQuery != null) {
-                local = "false";
-            } else {
-                local = "true";
-            }
-
             URI result = new URI("http://"
                     + getHost(shardRouting) + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
                     + "/search?query=" + encodedQuery
                     + "&file=" + getFilenames(shardRouting).stream().collect(Collectors.joining("&file="))
-                    + "&local=" + local
+                    + "&local=true"
                     + "&stats=true"
                     + "&cs=" + getCaseSensitive()
                     + "&format=" + getFormat().name().toLowerCase()
@@ -66,10 +59,10 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
             result.append(dataPath.replaceFirst("^\\/ryftone\\/", ""));
         }
         ///{clustername}/nodes/{nodenumber}/indices/{indexname}/{shardid}/index/*.{indexname}jsonfld
-        String s = String.format("/%1$s/nodes/0/indices/%2$s/%3$s/index/*.%2$sjsonfld",
+        String s = String.format("/%1$s/nodes/0/indices/%2$s/%3$d/index/*.%2$sjsonfld",
                 clusterState.getClusterName().value(),
                 shardRouting.getIndex(),
-                aggregationQuery == null ? String.valueOf(shardRouting.getId()) : "*");
+                shardRouting.getId());
         return Stream.of(result.append(s).toString()).collect(Collectors.toList());
     }
 
