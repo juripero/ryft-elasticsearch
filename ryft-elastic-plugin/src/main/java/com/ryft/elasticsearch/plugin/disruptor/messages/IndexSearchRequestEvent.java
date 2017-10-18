@@ -43,6 +43,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                     + "&file=" + getFilenames(shardRouting).stream().collect(Collectors.joining("&file="))
                     + "&local=true"
                     + "&stats=true"
+                    + getRyftIndexParam()
                     + "&cs=" + getCaseSensitive()
                     + "&format=" + getFormat().name().toLowerCase()
                     + "&limit=" + getLimit());
@@ -77,6 +78,14 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     @Override
     public String toString() {
         return "IndexSearchRequestEvent{query=" + query + ", index=" + shards.get(0).getIndex() + ", shards=" + shards.size() + '}';
+    }
+
+    private String getRyftIndexParam() {
+        if (ryftSupportedAggregationQuery == null) {
+            return "";
+        } else {
+            return "&data=agg" + requestId + ".integration-testjsonfld" + "&index=agg" + requestId + ".txt";
+        }
     }
 
 }

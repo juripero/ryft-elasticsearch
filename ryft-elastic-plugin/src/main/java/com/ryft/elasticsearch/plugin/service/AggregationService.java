@@ -41,13 +41,11 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
@@ -110,7 +108,9 @@ public class AggregationService {
     public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI searchUri;
         try {
-            searchUri = new URI("placeholder");
+            searchUri = new URI("http://172.20.0.3:8765/search/aggs?local=false&format=json"
+                    + "&data=agg" + requestEvent.getRequestId() + ".integration-testjsonfld"
+                    + "&index=agg" + requestEvent.getRequestId() + ".txt");
         } catch (URISyntaxException e) {
             throw new RyftSearchException();
         }
@@ -119,10 +119,10 @@ public class AggregationService {
 
         Optional<ChannelFuture> maybeChannelFuture = channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
             ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, finalSearchUri.toString());
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, finalSearchUri.toString());
 
-            if (requestEvent.getAggregationQuery() != null) {
-                String aggregationsBody = "{\"aggs\":" + requestEvent.getAggregationQuery() + "}";
+            if (requestEvent.getRyftSupportedAggregationQuery() != null) {
+                String aggregationsBody = "{\"aggs\":" + requestEvent.getRyftSupportedAggregationQuery() + "}";
                 ByteBuf bbuf = Unpooled.copiedBuffer(aggregationsBody, StandardCharsets.UTF_8);
                 request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
                 request.content().clear().writeBytes(bbuf);

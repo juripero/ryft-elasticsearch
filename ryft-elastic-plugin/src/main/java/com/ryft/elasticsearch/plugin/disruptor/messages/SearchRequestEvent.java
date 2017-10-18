@@ -26,7 +26,8 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected final ObjectNode parsedQuery;
 
-    protected String aggregationQuery;
+    protected String ryftSupportedAggregationQuery;
+    protected long requestId;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
@@ -36,6 +37,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         this.ryftProperties = requestParameters.getRyftProperties();
         this.query = requestParameters.getQuery().buildRyftString();
         this.parsedQuery = requestParameters.getParsedQuery();
+        this.requestId = System.currentTimeMillis();
         try {
             this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -74,11 +76,19 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return parsedQuery;
     }
 
-    public String getAggregationQuery() {
-        return aggregationQuery;
+    public String getRyftSupportedAggregationQuery() {
+        return ryftSupportedAggregationQuery;
     }
 
-    public void setAggregationQuery(String aggregationQuery) {
-        this.aggregationQuery = aggregationQuery;
+    public void setRyftSupportedAggregationQuery(String aggregationQuery) {
+        this.ryftSupportedAggregationQuery = aggregationQuery;
+    }
+
+    public long getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(long requestId) {
+        this.requestId = requestId;
     }
 }

@@ -7,8 +7,6 @@ import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -30,7 +28,6 @@ import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
@@ -110,7 +107,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             LOGGER.info("Ryft Server selected as aggregation backend");
             ObjectMapper mapper = new ObjectMapper();
             String jsonString = mapper.writeValueAsString(aggregationService.getAggregationsFromEvent(requestEvent));
-            requestEvent.setAggregationQuery(jsonString);
+            requestEvent.setRyftSupportedAggregationQuery(jsonString);
         }
 
         Long start = System.currentTimeMillis();
@@ -156,10 +153,9 @@ public class SearchRequestProcessor extends RyftProcessor {
         }
     }
 
-    private Map<SearchShardTarget, RyftResponse> sendToRyft(
-            FileSearchRequestEvent requestEvent) throws InterruptedException, RyftSearchException {
+    private Map<SearchShardTarget, RyftResponse> sendToRyft(FileSearchRequestEvent requestEvent) throws InterruptedException, RyftSearchException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Optional<ChannelFuture> maybeChannelFuture = sendToRyft(requestEvent.getRyftSearchURL(), requestEvent.getAggregationQuery(), null, countDownLatch);
+        Optional<ChannelFuture> maybeChannelFuture = sendToRyft(requestEvent.getRyftSearchURL(), null, countDownLatch);
         countDownLatch.await();
         if (maybeChannelFuture.isPresent()) {
             ChannelFuture channelFuture = maybeChannelFuture.get();
@@ -210,7 +206,7 @@ public class SearchRequestProcessor extends RyftProcessor {
             URI uri;
             try {
                 uri = requestEvent.getRyftSearchURL(shard);
-                Optional<ChannelFuture> maybeRyftResponse = sendToRyft(uri, requestEvent.getAggregationQuery(), shard, countDownLatch);
+                Optional<ChannelFuture> maybeRyftResponse = sendToRyft(uri, shard, countDownLatch);
                 if (maybeRyftResponse.isPresent()) {
                     return maybeRyftResponse;
                 } else {
@@ -227,19 +223,12 @@ public class SearchRequestProcessor extends RyftProcessor {
         }
     }
 
-    private Optional<ChannelFuture> sendToRyft(URI searchUri, String aggregations, ShardRouting shardRouting, CountDownLatch countDownLatch) {
+    private Optional<ChannelFuture> sendToRyft(URI searchUri, ShardRouting shardRouting, CountDownLatch countDownLatch) {
         LOGGER.info("Search in shard: {}", shardRouting);
         return channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
             NettyUtils.setAttribute(ClusterRestClientHandler.INDEX_SHARD_ATTR, shardRouting, ryftChannel);
             ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, searchUri.toString());
-
-            if (aggregations != null) {
-                String aggregationsBody = "{\"aggs\":" + aggregations + "}";
-                ByteBuf bbuf = Unpooled.copiedBuffer(aggregationsBody, StandardCharsets.UTF_8);
-                request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
-                request.content().clear().writeBytes(bbuf);
-            }
 
             if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
                 String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
@@ -285,7 +274,7 @@ public class SearchRequestProcessor extends RyftProcessor {
         }
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHitList.size(), failures.size());
         InternalAggregations aggregations;
-        if (requestEvent.getAggregationQuery() == null) {
+        if (requestEvent.getRyftSupportedAggregationQuery() == null) {
             aggregations = aggregationService.applyAggregationElastic(searchHitList, requestEvent);
         } else {
             aggregations = aggregationService.applyAggregationRyft(requestEvent);
