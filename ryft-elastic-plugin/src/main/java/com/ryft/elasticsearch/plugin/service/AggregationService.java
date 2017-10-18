@@ -108,7 +108,7 @@ public class AggregationService {
     public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI searchUri;
         try {
-            searchUri = new URI("http://172.20.0.3:8765/search/aggs?local=false&format=json"
+            searchUri = new URI("http://localhost:8765/search/aggs?local=false&format=json"
                     + "&data=agg" + requestEvent.getRequestId() + ".integration-testjsonfld"
                     + "&index=agg" + requestEvent.getRequestId() + ".txt");
         } catch (URISyntaxException e) {
