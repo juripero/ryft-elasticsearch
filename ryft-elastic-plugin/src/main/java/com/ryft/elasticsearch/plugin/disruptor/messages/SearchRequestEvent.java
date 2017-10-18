@@ -19,61 +19,65 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected final ClusterState clusterState;
 
-    protected final RyftProperties ryftProperties;
-
-    protected final String query;
-    protected final String encodedQuery;
-
-    protected final ObjectNode parsedQuery;
+    protected final RyftRequestParameters requestParameters;
 
     protected String ryftSupportedAggregationQuery;
+    
     protected long requestId;
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super();
+        this.requestParameters = requestParameters;
         this.clusterState = clusterService.state();
-        this.ryftProperties = requestParameters.getRyftProperties();
-        this.query = requestParameters.getQuery().buildRyftString();
-        this.parsedQuery = requestParameters.getParsedQuery();
         this.requestId = System.currentTimeMillis();
-        try {
-            this.encodedQuery = URLEncoder.encode(this.query, "UTF-8");
-        } catch (UnsupportedEncodingException ex) {
-            throw new RyftSearchException(ex);
-        }
     }
 
     protected void validateRequest() throws RyftSearchException {
+        RyftProperties ryftProperties = requestParameters.getRyftProperties();
         if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
                 && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
             throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
         }
     }
 
+    protected String getEncodedQuery() throws RyftSearchException {
+        try {
+            return URLEncoder.encode(
+                    this.requestParameters.getQuery().buildRyftString(), "UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            throw new RyftSearchException(ex);
+        }
+    }
+
     protected Integer getLimit() {
-        return ryftProperties.getInt(PropertiesProvider.RYFT_QUERY_LIMIT);
+        return requestParameters.getRyftProperties()
+                .getInt(PropertiesProvider.RYFT_QUERY_LIMIT);
     }
 
     public Integer getSize() {
-        return ryftProperties.getInt(PropertiesProvider.ES_RESULT_SIZE);
+        return requestParameters.getRyftProperties()
+                .getInt(PropertiesProvider.ES_RESULT_SIZE);
     }
 
     public RyftProperties getMapping() {
-        return ryftProperties.getRyftProperties(PropertiesProvider.RYFT_MAPPING);
+        return requestParameters.getRyftProperties()
+                .getRyftProperties(PropertiesProvider.RYFT_MAPPING);
     }
 
     protected RyftFormat getFormat() {
-        return (RyftFormat) ryftProperties.get(PropertiesProvider.RYFT_FORMAT);
+        return (RyftFormat) requestParameters.getRyftProperties()
+                .get(PropertiesProvider.RYFT_FORMAT);
     }
 
     protected Boolean getCaseSensitive() {
-        return ryftProperties.getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
+        return requestParameters.getRyftProperties()
+                .getBool(PropertiesProvider.RYFT_CASE_SENSITIVE);
     }
 
     public ObjectNode getParsedQuery() {
-        return parsedQuery;
+        return requestParameters.getParsedQuery();
     }
 
     public String getRyftSupportedAggregationQuery() {
@@ -88,7 +92,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return requestId;
     }
 
-    public void setRequestId(long requestId) {
-        this.requestId = requestId;
+    public String getPort() {
+        return requestParameters.getRyftProperties().getStr(PropertiesProvider.PORT);
     }
 }

@@ -5,11 +5,14 @@ import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.ShardsIterator;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.settings.Settings;
@@ -27,19 +30,20 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
-            Settings settings, @Assisted RyftRequestParameters requestParameters,
-            @Assisted List<ShardRouting> shards) throws RyftSearchException {
+            Settings settings, @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super(clusterService, requestParameters);
         this.settings = settings;
-        this.shards = shards;
+        ShardsIterator shardsIterator = clusterState.getRoutingTable().allShards(requestParameters.getIndices());
+        shards = StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
+                .collect(Collectors.toList());
     }
 
     public URI getRyftSearchURL(ShardRouting shardRouting) throws RyftSearchException {
         try {
             validateRequest();
             URI result = new URI("http://"
-                    + getHost(shardRouting) + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
-                    + "/search?query=" + encodedQuery
+                    + getHost(shardRouting) + ":" + getPort()
+                    + "/search?query=" + getEncodedQuery()
                     + "&file=" + getFilenames(shardRouting).stream().collect(Collectors.joining("&file="))
                     + "&local=true"
                     + "&stats=true"
@@ -77,7 +81,9 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     @Override
     public String toString() {
-        return "IndexSearchRequestEvent{query=" + query + ", index=" + shards.get(0).getIndex() + ", shards=" + shards.size() + '}';
+        return "IndexSearchRequestEvent{query=" + requestParameters.getQuery()
+                + ", indices=" + Arrays.toString(requestParameters.getIndices())
+                + ", shards=" + shards.size() + '}';
     }
 
     private String getRyftIndexParam() {

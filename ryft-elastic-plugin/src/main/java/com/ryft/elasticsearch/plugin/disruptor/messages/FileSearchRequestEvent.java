@@ -42,8 +42,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         validateRequest();
         try {
             URI result = new URI("http://"
-                    + getHost() + ":" + ryftProperties.getStr(PropertiesProvider.PORT)
-                    + "/search?query=" + encodedQuery
+                    + getHost() + ":" + getPort()
+                    + "/search?query=" + getEncodedQuery()
                     + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
                     + "&local=" + local
                     + "&stats=true"
@@ -65,8 +65,8 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     }
 
     public List<String> getFilenames() {
-        if (ryftProperties.containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)) {
-            return (List) ryftProperties.get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
+        if (requestParameters.getRyftProperties().containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)) {
+            return (List) requestParameters.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
         } else {
             return Collections.emptyList();
         }
@@ -78,7 +78,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
 
     @Override
     public String toString() {
-        return "FileSearchRequestEvent{query=" + query + "files=" + getFilenames() +'}';
+        return "FileSearchRequestEvent{query=" + requestParameters.getQuery() + "files=" + getFilenames() +'}';
     }
     
     
