@@ -108,6 +108,7 @@ public class AggregationService {
     public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI searchUri;
         try {
+            //TODO add here parameter that ignors missed files
             searchUri = new URI("http://localhost:8765/search/aggs?local=false&format=json"
                     + "&data=agg" + requestEvent.getRequestId() + ".integration-testjsonfld"
                     + "&index=agg" + requestEvent.getRequestId() + ".txt");

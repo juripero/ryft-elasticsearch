@@ -2,7 +2,6 @@ package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
