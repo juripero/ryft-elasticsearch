@@ -9,10 +9,8 @@ public class RyftExtra {
 
     @JsonProperty("aggregations")
     private ObjectNode aggregations;
-
-    public RyftExtra(ObjectNode aggregations) {
-        this.aggregations = aggregations;
-    }
+    private String session;
+    private String backend;
 
     public RyftExtra() {
     }
@@ -24,4 +22,21 @@ public class RyftExtra {
     public void setAggregations(ObjectNode aggregations) {
         this.aggregations = aggregations;
     }
+
+    public String getSession() {
+        return session;
+    }
+
+    public void setSession(String session) {
+        this.session = session;
+    }
+
+    public String getBackend() {
+        return backend;
+    }
+
+    public void setBackend(String backend) {
+        this.backend = backend;
+    }
+    
 }

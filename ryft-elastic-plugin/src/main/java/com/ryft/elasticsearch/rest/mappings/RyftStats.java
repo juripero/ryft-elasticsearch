@@ -2,9 +2,7 @@ package com.ryft.elasticsearch.rest.mappings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.util.ArrayList;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftStats {
@@ -25,22 +23,11 @@ public class RyftStats {
     private String host;
     @JsonProperty("extra")
     private RyftExtra extra;
-    
+    @JsonProperty("details")
+    private List<RyftStats> details;
+
     public RyftStats() {
         // TODO Auto-generated constructor stub
-    }
-
-    public RyftStats(Long matches, Long totalBytes, Long duration, Double dataRate, Long fabricDuration,
-                     Double fabricDataRate, String host, RyftExtra extra) {
-        super();
-        this.matches = matches;
-        this.totalBytes = totalBytes;
-        this.duration = duration;
-        this.dataRate = dataRate;
-        this.fabricDuration = fabricDuration;
-        this.fabricDataRate = fabricDataRate;
-        this.host = host;
-        this.extra = extra;
     }
 
     public Long getMatches() {
@@ -107,22 +94,46 @@ public class RyftStats {
         this.extra = extra;
     }
 
+    public List<RyftStats> getDetails() {
+        return details;
+    }
+
+    public void setDetails(List<RyftStats> details) {
+        this.details = details;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         RyftStats ryftStats = (RyftStats) o;
 
-        if (matches != null ? !matches.equals(ryftStats.matches) : ryftStats.matches != null) return false;
-        if (totalBytes != null ? !totalBytes.equals(ryftStats.totalBytes) : ryftStats.totalBytes != null) return false;
-        if (duration != null ? !duration.equals(ryftStats.duration) : ryftStats.duration != null) return false;
-        if (dataRate != null ? !dataRate.equals(ryftStats.dataRate) : ryftStats.dataRate != null) return false;
-        if (fabricDuration != null ? !fabricDuration.equals(ryftStats.fabricDuration) : ryftStats.fabricDuration != null)
+        if (matches != null ? !matches.equals(ryftStats.matches) : ryftStats.matches != null) {
             return false;
-        if (fabricDataRate != null ? !fabricDataRate.equals(ryftStats.fabricDataRate) : ryftStats.fabricDataRate != null)
+        }
+        if (totalBytes != null ? !totalBytes.equals(ryftStats.totalBytes) : ryftStats.totalBytes != null) {
             return false;
-        if (host != null ? !host.equals(ryftStats.host) : ryftStats.host != null) return false;
+        }
+        if (duration != null ? !duration.equals(ryftStats.duration) : ryftStats.duration != null) {
+            return false;
+        }
+        if (dataRate != null ? !dataRate.equals(ryftStats.dataRate) : ryftStats.dataRate != null) {
+            return false;
+        }
+        if (fabricDuration != null ? !fabricDuration.equals(ryftStats.fabricDuration) : ryftStats.fabricDuration != null) {
+            return false;
+        }
+        if (fabricDataRate != null ? !fabricDataRate.equals(ryftStats.fabricDataRate) : ryftStats.fabricDataRate != null) {
+            return false;
+        }
+        if (host != null ? !host.equals(ryftStats.host) : ryftStats.host != null) {
+            return false;
+        }
         return extra != null ? extra.equals(ryftStats.extra) : ryftStats.extra == null;
     }
 
@@ -141,15 +152,15 @@ public class RyftStats {
 
     @Override
     public String toString() {
-        return "RyftStats{" +
-                "matches=" + matches +
-                ", totalBytes=" + totalBytes +
-                ", duration=" + duration +
-                ", dataRate=" + dataRate +
-                ", fabricDuration=" + fabricDuration +
-                ", fabricDataRate=" + fabricDataRate +
-                ", host='" + host + '\'' +
-                ", aggregations=" + extra +
-                '}';
+        return "RyftStats{"
+                + "matches=" + matches
+                + ", totalBytes=" + totalBytes
+                + ", duration=" + duration
+                + ", dataRate=" + dataRate
+                + ", fabricDuration=" + fabricDuration
+                + ", fabricDataRate=" + fabricDataRate
+                + ", host='" + host + '\''
+                + ", aggregations=" + extra
+                + '}';
     }
 }
