@@ -22,7 +22,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final RyftRequestParameters requestParameters;
 
     protected String ryftSupportedAggregationQuery;
-    
+
     protected long requestId;
 
     @Inject
@@ -80,12 +80,27 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return requestParameters.getParsedQuery();
     }
 
-    public String getRyftSupportedAggregationQuery() {
-        return ryftSupportedAggregationQuery;
+    public boolean canBeAggregatedByRYFT() {
+        RyftProperties query = new RyftProperties();
+        if (!getParsedQuery().has("aggs") && !getParsedQuery().has("aggregations")) {
+            return false;
+        } else {
+            ObjectNode aggregations = getAggregations();
+            if (aggregations != null) {
+                if (aggregations.findValue("script") != null) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
-    public void setRyftSupportedAggregationQuery(String aggregationQuery) {
-        this.ryftSupportedAggregationQuery = aggregationQuery;
+    protected ObjectNode getAggregations() {
+        if (getParsedQuery().has("aggs")) {
+            return (ObjectNode) getParsedQuery().findValue("aggs");
+        } else {
+            return (ObjectNode) getParsedQuery().findValue("aggregations");
+        }
     }
 
     public long getRequestId() {

@@ -13,25 +13,13 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
-import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
-import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -44,7 +32,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
@@ -53,6 +40,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.inject.Inject;
+import org.elasticsearch.search.SearchShardTarget;
 
 public class AggregationService {
 
@@ -64,21 +52,21 @@ public class AggregationService {
     private final RyftRestClient channelProvider;
     private final PropertiesProvider props;
 
-    private List<String> supportedAggregations;
+    private final List<String> supportedAggregations;
 
     @Inject
     public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory,
-                              RyftRestClient channelProvider, PropertiesProvider props, PropertiesProvider provider) {
+            RyftRestClient channelProvider, PropertiesProvider props) {
         this.client = client;
         this.mapper = objectMapperFactory.get();
         this.channelProvider = channelProvider;
         this.props = props;
 
-        supportedAggregations = Arrays.asList(provider.get().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
+        supportedAggregations = Arrays.asList(props.get().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
     }
 
     public InternalAggregations applyAggregationElastic(List<InternalSearchHit> searchHitList,
-                                                        SearchRequestEvent requestEvent) throws RyftSearchException {
+            SearchRequestEvent requestEvent) throws RyftSearchException {
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
         if (!searchHitList.isEmpty()
@@ -92,7 +80,7 @@ public class AggregationService {
                 query.put("query", ImmutableMap.of("match_all", ImmutableMap.of()));
                 SearchResponse searchResponse = client.execute(SearchAction.INSTANCE,
                         new SearchRequest(new String[]{tempIndexName},
-                                mapper.writeValueAsBytes(query.toMap()))).get();
+                        mapper.writeValueAsBytes(query.toMap()))).get();
                 return (InternalAggregations) searchResponse.getAggregations();
             } catch (JsonProcessingException | InterruptedException | ExecutionException ex) {
                 throw new RyftSearchException(ex);
@@ -105,80 +93,10 @@ public class AggregationService {
         }
     }
 
-    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
-        URI searchUri;
-        try {
-            //TODO add here parameter that ignors missed files
-            searchUri = new URI("http://localhost:8765/search/aggs?local=false&format=json"
-                    + "&data=agg" + requestEvent.getRequestId() + ".integration-testjsonfld"
-                    + "&index=agg" + requestEvent.getRequestId() + ".txt");
-        } catch (URISyntaxException e) {
-            throw new RyftSearchException();
-        }
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        URI finalSearchUri = searchUri;
-
-        Optional<ChannelFuture> maybeChannelFuture = channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
-            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, finalSearchUri.toString());
-
-            if (requestEvent.getRyftSupportedAggregationQuery() != null) {
-                String aggregationsBody = "{\"aggs\":" + requestEvent.getRyftSupportedAggregationQuery() + "}";
-                ByteBuf bbuf = Unpooled.copiedBuffer(aggregationsBody, StandardCharsets.UTF_8);
-                request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
-                request.content().clear().writeBytes(bbuf);
-            }
-
-            if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
-                String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
-                String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
-                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
-            }
-            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", finalSearchUri.getHost(), finalSearchUri.getPort()));
-            LOGGER.debug("Send request: {}", request);
-            return ryftChannel.writeAndFlush(request);
-        });
-
-        try {
-            countDownLatch.await();
-            if (maybeChannelFuture.isPresent()) {
-                ChannelFuture channelFuture = maybeChannelFuture.get();
-                RyftResponse ryftResponse = NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
-                ObjectNode ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
-                return getFromRyftAggregations(requestEvent, ryftAggregationResults);
-            } else {
-                throw new RyftSearchException("Can not get response from RYFT");
-            }
-        } catch (InterruptedException e) {
-            throw new RyftSearchException();
-        }
-    }
-
-    public boolean allAggregationsSupportedByRyft(SearchRequestEvent requestEvent) {
-        RyftProperties query = new RyftProperties();
-        query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
-
-        if (!query.containsKey("aggs") && !query.containsKey("aggregations")) {
-            return false;
-        }
-
-        Map<String, Map> aggs = getAggregationsFromProperties(query);
-
-        for (Map<String, Map> entry : aggs.values()) {
-            for (Map.Entry<String, Map> innerEntry : entry.entrySet()) {
-                if (!supportedAggregations.contains(innerEntry.getKey())) {
-                    return false;
-                }
-
-                Map<String, Map> innerValue = innerEntry.getValue();
-                if (innerValue.containsKey("script")) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses) throws RyftSearchException {
+        RyftResponse ryftResponse = resultResponses.values().stream().findFirst().get();
+        ObjectNode ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
+        return getFromRyftAggregations(requestEvent, ryftAggregationResults);
     }
 
     public Map<String, Map> getAggregationsFromEvent(SearchRequestEvent requestEvent) {
@@ -273,8 +191,8 @@ public class AggregationService {
     }
 
     private void createMapping(IndexSearchRequestEvent requestEvent, String tempIndexName) throws RyftSearchException {
-        if (requestEvent.getShards().size() > 0) {
-            String index = requestEvent.getShards().get(0).getIndex();
+        if (requestEvent.getAllShards().size() > 0) {
+            String index = requestEvent.getAllShards().get(0).getIndex();
             try {
                 GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
                 LOGGER.debug("Creating mappings in temp index.");
@@ -308,4 +226,5 @@ public class AggregationService {
     private String getTempIndexName(SearchRequestEvent requestEvent) {
         return String.format("%s%d", TEMPINDEX_PREFIX, requestEvent.hashCode());
     }
+
 }

@@ -1,6 +1,5 @@
 package com.ryft.elasticsearch.rest.processors;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,7 +15,10 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
+import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import com.ryft.elasticsearch.rest.mappings.RyftResult;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -27,13 +29,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
-import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
@@ -46,7 +46,7 @@ import org.elasticsearch.search.internal.InternalSearchResponse;
 
 public abstract class RyftProcessor<T extends RequestEvent> implements PostConstruct {
 
-    private static final ESLogger LOGGER = Loggers.getLogger(RyftProcessor.class);
+    protected final ESLogger LOGGER = Loggers.getLogger(this.getClass());
 
     protected ExecutorService executor;
     protected final RyftRestClient channelProvider;
@@ -89,23 +89,23 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     public abstract int getPoolSize();
 
-    protected Optional<ChannelFuture> sendToRyft(URI searchUri, ShardRouting shardRouting, CountDownLatch countDownLatch) {
-        LOGGER.info("Search in shard: {}", shardRouting);
-        return channelProvider.get(searchUri.getHost()).map((ryftChannel) -> {
-            NettyUtils.setAttribute(ClusterRestClientHandler.INDEX_SHARD_ATTR, shardRouting, ryftChannel);
-            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, searchUri.toString());
+    protected ChannelFuture sendToRyft(URI searchUri, RyftRequestPayload ryftRequestPayload, CountDownLatch countDownLatch) throws RyftSearchException {
+//        LOGGER.info("Search in routes: {}", ryftRequestPayload.getTweaks().getClusterRoutes());
+        Channel ryftChannel = channelProvider.get(searchUri.getHost());
+        NettyUtils.setAttribute(ClusterRestClientHandler.RYFT_PAYLOAD_ATTR, ryftRequestPayload, ryftChannel);
+        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+        DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, searchUri.toString());
 
-            if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
-                String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
-                String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
-                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
-            }
-            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
-            LOGGER.debug("Send request: {}", request);
-            return ryftChannel.writeAndFlush(request);
-        });
+        if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
+            String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
+            String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
+            String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
+        }
+        request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
+        LOGGER.debug("Send request: {}", request);
+        return ryftChannel.writeAndFlush(request);
+
     }
 
     protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws RyftSearchException {
@@ -140,10 +140,10 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHitList.size(), failures.size());
         InternalAggregations aggregations;
-        if (requestEvent.getRyftSupportedAggregationQuery() == null) {
+        if (!requestEvent.canBeAggregatedByRYFT()) {
             aggregations = aggregationService.applyAggregationElastic(searchHitList, requestEvent);
         } else {
-            aggregations = aggregationService.applyAggregationRyft(requestEvent);
+            aggregations = aggregationService.applyAggregationRyft(requestEvent, resultResponses);
         }
 
         InternalSearchHit[] hits;
@@ -160,25 +160,25 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
                 failures.toArray(new ShardSearchFailure[failures.size()]));
     }
 
-    protected InternalSearchHit processSearchResult(ObjectNode hit, SearchShardTarget searchShardTarget) {
+    protected InternalSearchHit processSearchResult(RyftResult hit, SearchShardTarget searchShardTarget) {
         LOGGER.debug("Processing search result: {}", hit);
         InternalSearchHit searchHit;
         try {
-            String uid = hit.has("_uid") ? hit.get("_uid").asText() : String.valueOf(hit.hashCode());
-            String type = hit.has("type") ? hit.get("type").asText() : FileSearchRequestEvent.NON_INDEXED_TYPE;
+            String uid = hit.record().has("_uid") ? hit.record().get("_uid").asText() : String.valueOf(hit.hashCode());
+            String type = hit.record().has("type") ? hit.record().get("type").asText() : FileSearchRequestEvent.NON_INDEXED_TYPE;
 
             searchHit = new InternalSearchHit(0, uid, new Text(type),
                     ImmutableMap.of());
             searchHit.shardTarget(searchShardTarget);
 
-            String error = hit.has("error") ? hit.get("error").asText() : "";
+            String error = hit.record().has("error") ? hit.record().get("error").asText() : "";
             if (!error.isEmpty()) {
                 searchHit.sourceRef(new BytesArray("{\"error\": \"" + error + "\"}"));
             } else {
-                hit.remove("_index");
-                hit.remove("_uid");
-                hit.remove("type");
-                searchHit.sourceRef(new BytesArray(hit.toString()));
+                hit.record().remove("_index");
+                hit.record().remove("_uid");
+                hit.record().remove("type");
+                searchHit.sourceRef(new BytesArray(hit.record().toString()));
             }
             return searchHit;
         } catch (Exception ex) {
@@ -188,5 +188,12 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         return searchHit;
     }
+    
+//    private SearchShardTarget getSearchShardTarget(SearchRequestEvent requestEvent, RyftIndex ryftIndex) {
+//        //TODO: do not create SearchShardTarget on every hit
+//        ryftIndex.getHost();
+//        ryftIndex.getSourceFile();
+//        SearchShardTarget result = new SearchShardTarget(nodeId, index, 0)
+//    }
 
 }
