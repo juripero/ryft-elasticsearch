@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.search.SearchShardTarget;
 
@@ -36,38 +35,13 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent) throws RyftSearchException {
         Long start = System.currentTimeMillis();
         RyftResponse ryftResponse = sendToRyft(requestEvent);
-        Long searchTime = System.currentTimeMillis() - start;
-        return getSearchResponse(requestEvent, ryftResponse, searchTime);
-    }
-
-    private RyftResponse sendToRyft(IndexSearchRequestEvent requestEvent) throws RyftSearchException {
-        Collection<SearchShardTarget> shardsToSearch = requestEvent.getShardsToSearch();
-        HttpRequest ryftRequest = requestEvent.getRyftRequest(shardsToSearch);
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        Channel ryftChannel = channelProvider.get();
-        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-        LOGGER.debug("Send request: {}", ryftRequest);
-        ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException ex) {
-            throw new RyftSearchException(ex);
+        if (ryftResponse.hasErrors()) {
+            LOGGER.warn("RYFT error: {}", ryftResponse.toString());
         }
-        return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
+        Long searchTime = System.currentTimeMillis() - start;
+        return constructSearchResponse(requestEvent, ryftResponse, searchTime);
     }
 
-    private SearchShardTarget getSearchShardTarget(ShardRouting shardRouting) {
-        return new SearchShardTarget(shardRouting.currentNodeId(), shardRouting.index(), shardRouting.getId());
-    }
-
-    private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
-            RyftResponse ryftResponse, Long searchTime) throws RyftSearchException {
-        LOGGER.info("Search successful. Search time: {}", searchTime);
-        SearchShardTarget searchShardTarget = requestEvent.getShardsToSearch().get(0);
-        Map<SearchShardTarget, RyftResponse> resultResponses = new HashMap();
-        resultResponses.put(searchShardTarget, ryftResponse);
-        return constructSearchResponse(requestEvent, resultResponses, searchTime);
-    }
 
     @Override
     public int getPoolSize() {

@@ -42,7 +42,7 @@ public class AggregationConverter {
                 return convertMax(aggregationName, resultNode);
             case "sum":
                 return convertSum(aggregationName, resultNode);
-            case "count":
+            case "value_count":
                 return convertCount(aggregationName, resultNode);
             case "avg":
                 return convertAvg(aggregationName, resultNode);

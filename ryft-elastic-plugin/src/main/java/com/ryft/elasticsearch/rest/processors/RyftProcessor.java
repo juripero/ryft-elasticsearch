@@ -23,12 +23,12 @@ import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -108,42 +108,53 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     }
 
-    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses, Long searchTime) throws RyftSearchException {
+    protected RyftResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
+        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        Channel ryftChannel = channelProvider.get();
+        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+        LOGGER.debug("Send request: {}", ryftRequest);
+        ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException ex) {
+            throw new RyftSearchException(ex);
+        }
+        return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
+    }
+
+    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, RyftResponse ryftResponse, Long searchTime) throws RyftSearchException {
         List<InternalSearchHit> searchHitList = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
         Integer failureShards = 0;
-        for (Map.Entry<SearchShardTarget, RyftResponse> entry : resultResponses.entrySet()) {
-            totalShards += 1;
-            RyftResponse ryftResponse = entry.getValue();
-            SearchShardTarget searchShardTarget = entry.getKey();
-            String errorMessage = ryftResponse.getMessage();
-            String[] errors = ryftResponse.getErrors();
+        String errorMessage = ryftResponse.getMessage();
+        String[] errors = ryftResponse.getErrors();
 
-            if (ryftResponse.hasErrors()) {
-                failureShards += 1;
-                if ((errorMessage != null) && (!errorMessage.isEmpty())) {
-                    failures.add(new ShardSearchFailure(new Exception(errorMessage), searchShardTarget));
-                }
-                if ((errors != null) && (errors.length > 0)) {
-                    Stream.of(errors)
-                            .map(error -> new ShardSearchFailure(new Exception(error), searchShardTarget))
-                            .collect(Collectors.toCollection(() -> failures));
-                }
+        if (ryftResponse.hasErrors()) {
+            failureShards += 1;
+            if ((errorMessage != null) && (!errorMessage.isEmpty())) {
+                failures.add(new ShardSearchFailure(new Exception(errorMessage)));
             }
-
-            if (ryftResponse.hasResults()) {
-                ryftResponse.getResults().stream().map(
-                        result -> processSearchResult(result, searchShardTarget)
-                ).collect(Collectors.toCollection(() -> searchHitList));
+            if ((errors != null) && (errors.length > 0)) {
+                Stream.of(errors)
+                        .map(error -> new ShardSearchFailure(new Exception(error)))
+                        .collect(Collectors.toCollection(() -> failures));
             }
         }
+
+        if (ryftResponse.hasResults()) {
+            ryftResponse.getResults().stream().map(
+                    result -> processSearchResult(result, null)
+            ).collect(Collectors.toCollection(() -> searchHitList));
+        }
+
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, searchHitList.size(), failures.size());
         InternalAggregations aggregations;
         if (!requestEvent.canBeAggregatedByRYFT()) {
             aggregations = aggregationService.applyAggregationElastic(searchHitList, requestEvent);
         } else {
-            aggregations = aggregationService.applyAggregationRyft(requestEvent, resultResponses);
+            aggregations = aggregationService.applyAggregationRyft(requestEvent, ryftResponse);
         }
 
         InternalSearchHit[] hits;
@@ -188,12 +199,5 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         return searchHit;
     }
-    
-//    private SearchShardTarget getSearchShardTarget(SearchRequestEvent requestEvent, RyftIndex ryftIndex) {
-//        //TODO: do not create SearchShardTarget on every hit
-//        ryftIndex.getHost();
-//        ryftIndex.getSourceFile();
-//        SearchShardTarget result = new SearchShardTarget(nodeId, index, 0)
-//    }
 
 }

@@ -1,14 +1,31 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.converter.ryftdsl.RyftFormat;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
+import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
 
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
@@ -24,14 +41,21 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected String ryftSupportedAggregationQuery;
 
     protected long requestId;
+    
+    private final List<String> supportedAggregations;
+
+    protected final ObjectMapper mapper;
 
     @Inject
-    protected SearchRequestEvent(ClusterService clusterService,
+    protected SearchRequestEvent(ClusterService clusterService, 
+            ObjectMapperFactory objectMapperFactory,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super();
         this.requestParameters = requestParameters;
-        this.clusterState = clusterService.state();
-        this.requestId = System.currentTimeMillis();
+        clusterState = clusterService.state();
+        requestId = System.currentTimeMillis();
+        mapper = objectMapperFactory.get();
+        supportedAggregations = Arrays.asList(requestParameters.getRyftProperties().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
     }
 
     protected void validateRequest() throws RyftSearchException {
@@ -41,6 +65,34 @@ public abstract class SearchRequestEvent extends RequestEvent {
             throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
         }
     }
+
+    public HttpRequest getRyftHttpRequest() throws RyftSearchException {
+        validateRequest();
+        try {
+            URI uri = getRyftSearchURL();
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri.toString());
+            RyftRequestPayload payload = getRyftRequestPayload();
+            String body = mapper.writeValueAsString(payload);
+            ByteBuf bbuf = Unpooled.copiedBuffer(body, StandardCharsets.UTF_8);
+            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", uri.getHost(), uri.getPort()));
+            request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
+            request.headers().set(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+            if (requestParameters.getRyftProperties().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
+                String login = requestParameters.getRyftProperties().getStr(PropertiesProvider.RYFT_REST_LOGIN);
+                String password = requestParameters.getRyftProperties().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
+                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
+            }
+            request.content().clear().writeBytes(bbuf);
+            return request;
+        } catch (JsonProcessingException ex) {
+            throw new RyftSearchException("Ryft search URL composition exception", ex);
+        }
+    }
+
+    protected abstract RyftRequestPayload getRyftRequestPayload() throws RyftSearchException;
+
+    protected abstract URI getRyftSearchURL() throws RyftSearchException;
 
     protected String getEncodedQuery() throws RyftSearchException {
         try {
@@ -81,7 +133,6 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     public boolean canBeAggregatedByRYFT() {
-        RyftProperties query = new RyftProperties();
         if (!getParsedQuery().has("aggs") && !getParsedQuery().has("aggregations")) {
             return false;
         } else {
@@ -90,8 +141,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
                 if (aggregations.findValue("script") != null) {
                     return false;
                 }
+                if (aggregations.findValue("meta") != null) {
+                    return false;
+                }
             }
-            return true;
+            Boolean result = true;
+            for (JsonNode aggregation : aggregations) {
+                result &= supportedAggregations.contains(aggregation.fieldNames().next());
+            }
+            return result;
         }
     }
 

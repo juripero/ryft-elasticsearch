@@ -87,6 +87,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         InternalHistogram<InternalHistogram.Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
         ryftAggregation.getBuckets().forEach((bucket) -> {
             LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
@@ -135,6 +136,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Min ryftAggregation = (Min) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT min value: {}", ryftAggregation.getValue());
 
@@ -176,6 +178,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Max ryftAggregation = (Max) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT max value: {}", ryftAggregation.getValue());
 
@@ -217,6 +220,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT sum value: {}", ryftAggregation.getValue());
 
@@ -258,6 +262,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
 
@@ -299,6 +304,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());
 
@@ -342,6 +348,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Stats ryftAggregation = (Stats) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT stats: avg={}, count={}, max={}, min={}, sum={}",
                 ryftAggregation.getAvg(), ryftAggregation.getCount(), ryftAggregation.getMax(),
@@ -396,6 +403,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         ExtendedStats ryftAggregation = (ExtendedStats) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("ES extended stats: avg={}, count={}, max={}, min={}, sum={},\n"
                 + "stddev={}, lower_stddev={}, upper_stddev={}, sqsum={}, variance={}",
@@ -454,6 +462,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         GeoBounds ryftAggregation = (GeoBounds) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT top left: {}", ryftAggregation.topLeft());
         LOGGER.info("RYFT bottom right: {}", ryftAggregation.bottomRight());
@@ -498,6 +507,8 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
+
         GeoCentroid ryftAggregation = (GeoCentroid) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT centroid: {}", ryftAggregation.centroid());
         LOGGER.info("RYFT count: {}", ryftAggregation.count());
@@ -547,6 +558,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         List<Percentile> ryftPercentiles = Lists.newArrayList((Percentiles) ryftResponse.getAggregations().asList().get(0));
         ryftPercentiles.forEach((percentile) -> {
             LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
@@ -597,6 +609,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         List<Percentile> ryftPercentiles = Lists.newArrayList((PercentileRanks) ryftResponse.getAggregations().asList().get(0));
         ryftPercentiles.forEach((percentile) -> {
             LOGGER.info("percent: {}, value: {}", percentile.getPercent(), percentile.getValue());
@@ -653,6 +666,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Min ryftAggregation1 = (Min) ryftResponse.getAggregations().asMap().get("1");
         Max ryftAggregation2 = (Max) ryftResponse.getAggregations().asMap().get("2");
         LOGGER.info("RYFT min value: {}", ryftAggregation1.getValue());
@@ -699,6 +713,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT count value: {}", ryftAggregation.getValue());
         assertEquals("Count values should be equal", aggregation.getValue(), ryftAggregation.getValue(), 1e-10);
@@ -748,6 +763,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
         LOGGER.info("RYFT avg value: {}", ryftAggregation.getValue());
 
@@ -790,6 +806,7 @@ public class AggregationTest extends RyftElasticTestCase {
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
                 new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
+        assertNotNull(ryftResponse.getAggregations());
         assertEquals(searchResponse.getHits().getTotalHits(), ryftResponse.getHits().getTotalHits());
         assertEquals(0, ryftResponse.getHits().hits().length);
         Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);

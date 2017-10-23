@@ -40,7 +40,6 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.search.SearchShardTarget;
 
 public class AggregationService {
 
@@ -49,20 +48,12 @@ public class AggregationService {
 
     private final Client client;
     private final ObjectMapper mapper;
-    private final RyftRestClient channelProvider;
-    private final PropertiesProvider props;
-
-    private final List<String> supportedAggregations;
 
     @Inject
     public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory,
             RyftRestClient channelProvider, PropertiesProvider props) {
         this.client = client;
-        this.mapper = objectMapperFactory.get();
-        this.channelProvider = channelProvider;
-        this.props = props;
-
-        supportedAggregations = Arrays.asList(props.get().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
+        mapper = objectMapperFactory.get();
     }
 
     public InternalAggregations applyAggregationElastic(List<InternalSearchHit> searchHitList,
@@ -93,10 +84,15 @@ public class AggregationService {
         }
     }
 
-    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, Map<SearchShardTarget, RyftResponse> resultResponses) throws RyftSearchException {
-        RyftResponse ryftResponse = resultResponses.values().stream().findFirst().get();
-        ObjectNode ryftAggregationResults = ryftResponse.getStats().getExtra().getAggregations();
-        return getFromRyftAggregations(requestEvent, ryftAggregationResults);
+    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, RyftResponse ryftResponse) throws RyftSearchException {
+        if ((ryftResponse.getStats() != null)
+                && (ryftResponse.getStats().getExtra() != null)
+                && (ryftResponse.getStats().getExtra().getAggregations() != null)) {
+            return getFromRyftAggregations(requestEvent, ryftResponse.getStats().getExtra().getAggregations());
+        } else {
+            LOGGER.warn("Can net get aggregations from RYFT response");
+            return null;
+        }
     }
 
     public Map<String, Map> getAggregationsFromEvent(SearchRequestEvent requestEvent) {

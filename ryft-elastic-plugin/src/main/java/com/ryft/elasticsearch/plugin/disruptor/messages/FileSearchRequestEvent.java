@@ -1,9 +1,11 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
 import com.ryft.elasticsearch.converter.entities.RyftRequestParameters;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import static com.ryft.elasticsearch.plugin.disruptor.messages.EventType.FILE_SEARCH_REQUEST;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
+import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -12,11 +14,15 @@ import java.util.stream.Collectors;
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
 
 public class FileSearchRequestEvent extends SearchRequestEvent {
-    
+
+    private static final ESLogger LOGGER = Loggers.getLogger(FileSearchRequestEvent.class);
+
     public static final String NON_INDEXED_TYPE = "nonindexed";
-    
+
     @Override
     public EventType getEventType() {
         return FILE_SEARCH_REQUEST;
@@ -24,28 +30,29 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
 
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
+            ObjectMapperFactory objectMapperFactory,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
-        super(clusterService, requestParameters);
+        super(clusterService, objectMapperFactory, requestParameters);
     }
 
+    public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
+        validateRequest();
+        RyftRequestPayload payload = new RyftRequestPayload();
+        if (canBeAggregatedByRYFT()) {
+            LOGGER.info("Ryft Server selected as aggregation backend");
+            payload.setAggs(getAggregations());
+        }
+        return payload;            
+    }
 
     public URI getRyftSearchURL() throws RyftSearchException {
-        int clusterSize = clusterState.getNodes().dataNodes().size();
-
-        String local;
-        if (clusterSize > 1) {
-            local = "false";
-        } else {
-            local = "true";
-        }
-
         validateRequest();
         try {
             URI result = new URI("http://"
-                    + getHost() + ":" + getPort()
+                    + clusterState.getNodes().getLocalNode().getHostAddress() + ":" + getPort()
                     + "/search?query=" + getEncodedQuery()
                     + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
-                    + "&local=" + local
+                    + "&local=" + (clusterState.getNodes().dataNodes().size() == 1)
                     + "&stats=true"
                     + "&cs=" + getCaseSensitive()
                     + "&format=" + getFormat().name().toLowerCase()
@@ -64,7 +71,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         }
     }
 
-    public List<String> getFilenames() {
+    private List<String> getFilenames() {
         if (requestParameters.getRyftProperties().containsKey(PropertiesProvider.RYFT_FILES_TO_SEARCH)) {
             return (List) requestParameters.getRyftProperties().get(PropertiesProvider.RYFT_FILES_TO_SEARCH);
         } else {
@@ -72,14 +79,9 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         }
     }
 
-    private String getHost() {
-        return clusterState.getNodes().getLocalNode().getHostAddress();
-    }
-
     @Override
     public String toString() {
-        return "FileSearchRequestEvent{query=" + requestParameters.getQuery() + "files=" + getFilenames() +'}';
+        return "FileSearchRequestEvent{query=" + requestParameters.getQuery() + "files=" + getFilenames() + '}';
     }
-    
-    
+
 }
