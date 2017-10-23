@@ -7,7 +7,6 @@ import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload.Tweaks.ClusterRoute;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +20,8 @@ import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexService;
+import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.search.SearchShardTarget;
 
 public class IndexSearchRequestEvent extends SearchRequestEvent {
@@ -31,7 +32,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     private final List<ShardRouting> shards;
 
-    private final List<String> failedNodes = new ArrayList<>();
+    private final IndicesService indicesService;
 
     @Override
     public EventType getEventType() {
@@ -39,21 +40,25 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     }
 
     @Inject
-    public IndexSearchRequestEvent(ClusterService clusterService,
+    public IndexSearchRequestEvent(ClusterService clusterService, IndicesService indicesService,
             Settings settings, ObjectMapperFactory objectMapperFactory,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super(clusterService, objectMapperFactory, requestParameters);
         this.settings = settings;
+        this.indicesService = indicesService;
         ShardsIterator shardsIterator = clusterState.getRoutingTable().allShards(requestParameters.getIndices());
         shards = StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
                 .collect(Collectors.toList());
     }
 
     @Override
-    protected RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
-        Collection<SearchShardTarget> shards = getShardsToSearch();
+    public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
+        Collection<SearchShardTarget> shardsToSearch = getShardsToSearch();
+        if (shardsToSearch.size() < getShardsNumber()) {
+            throw new RyftSearchException("Can not create search request. Not enougnt nodes.");
+        }
         RyftRequestPayload payload = new RyftRequestPayload();
-        payload.setTweaks(getTweaks(shards));
+        payload.setTweaks(getTweaks(shardsToSearch));
         if (canBeAggregatedByRYFT()) {
             LOGGER.info("Ryft Server selected as aggregation backend");
             payload.setAggs(getAggregations());
@@ -62,16 +67,20 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     }
 
     @Override
-    protected URI getRyftSearchURL() throws RyftSearchException {
+    public URI getRyftSearchURL() throws RyftSearchException {
         validateRequest();
         try {
-            return new URI("http://"
-                    + clusterState.getNodes().getLocalNode().getHostAddress() + ":" + getPort()
-                    + "/search?query=" + getEncodedQuery()
-                    + "&local=false&file&stats=true"
-                    + "&cs=" + getCaseSensitive()
-                    + "&format=" + getFormat().name().toLowerCase()
-                    + "&limit=" + getLimit());
+            if (!nodesToSearch.isEmpty()) {
+                return new URI("http://"
+                        + nodesToSearch.get(0) + ":" + getPort()
+                        + "/search?query=" + getEncodedQuery()
+                        + "&local=false&file&stats=true"
+                        + "&cs=" + getCaseSensitive()
+                        + "&format=" + getFormat().name().toLowerCase()
+                        + "&limit=" + getLimit());
+            } else {
+                throw new RyftSearchException("No RYFT nodes to search left");
+            }
         } catch (URISyntaxException ex) {
             throw new RyftSearchException("Ryft search URL composition exceptoion", ex);
         }
@@ -118,16 +127,12 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     public List<SearchShardTarget> getShardsToSearch() {
         return shards.stream()
-                .filter(shard -> !failedNodes.contains(shard.currentNodeId()))
-                .collect(Collectors.groupingBy(shard -> shard.id())).values().stream()
-                .map(shardList -> {
-                    ShardRouting shard = shardList.get(0);
-                    return new SearchShardTarget(shard.currentNodeId(), shard.getIndex(), shard.id());
-                }).collect(Collectors.toList());
-    }
-
-    public void addFailedNode(String nodeId) {
-        failedNodes.add(nodeId);
+                .map(shard -> new SearchShardTarget(shard.currentNodeId(), shard.getIndex(), shard.id()))
+                .filter(shardTarget
+                        -> nodesToSearch.contains(clusterState.nodes().get(shardTarget.getNodeId()).getHostName())
+                ).collect(Collectors.groupingBy(shardTarget
+                        -> String.format("%s%d", shardTarget.getIndex(), shardTarget.getShardId()))
+                ).values().stream().map(shardTargets -> shardTargets.get(0)).collect(Collectors.toList());
     }
 
     @Override
@@ -135,6 +140,17 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
         return "IndexSearchRequestEvent{query=" + requestParameters.getQuery()
                 + ", indices=" + Arrays.toString(requestParameters.getIndices())
                 + ", shards=" + shards.size() + '}';
+    }
+
+    private Integer getShardsNumber() {
+        Integer result = 0;
+        for (String index : requestParameters.getIndices()) {
+            IndexService indexService = indicesService.indexService(index);
+            if (indexService != null) {
+                result += indicesService.indexService(index).numberOfShards();
+            }
+        }
+        return result;
     }
 
 }

@@ -20,8 +20,10 @@ import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.HttpRequest;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,18 +85,25 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
     public abstract int getPoolSize();
 
     protected RyftResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
-        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest();
+        URI ryftURI = requestEvent.getRyftSearchURL();
+        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest(ryftURI);
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Channel ryftChannel = channelProvider.get();
-        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-        LOGGER.debug("Send request: {}", ryftRequest);
-        ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException ex) {
-            throw new RyftSearchException(ex);
+        Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
+        if (maybeRyftChannel.isPresent()) {
+            Channel ryftChannel = maybeRyftChannel.get();
+            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+            LOGGER.debug("Send request: {}", ryftRequest);
+            ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException ex) {
+                throw new RyftSearchException(ex);
+            }
+            return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
+        } else {
+            requestEvent.addFailedNode(ryftURI.getHost());
+            return sendToRyft(requestEvent);
         }
-        return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
     }
 
     protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, RyftResponse ryftResponse, Long searchTime) throws RyftSearchException {

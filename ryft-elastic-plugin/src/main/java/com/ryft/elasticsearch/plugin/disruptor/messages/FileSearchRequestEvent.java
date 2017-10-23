@@ -43,23 +43,27 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
             LOGGER.info("Ryft Server selected as aggregation backend");
             payload.setAggs(getAggregations());
         }
-        return payload;            
+        return payload;
     }
 
     @Override
     public URI getRyftSearchURL() throws RyftSearchException {
         validateRequest();
         try {
-            URI result = new URI("http://"
-                    + clusterState.getNodes().getLocalNode().getHostAddress() + ":" + getPort()
-                    + "/search?query=" + getEncodedQuery()
-                    + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
-                    + "&local=" + (clusterState.getNodes().dataNodes().size() == 1)
-                    + "&stats=true&ignore-missing-files=true"
-                    + "&cs=" + getCaseSensitive()
-                    + "&format=" + getFormat().name().toLowerCase()
-                    + "&limit=" + getLimit());
-            return result;
+            if (!nodesToSearch.isEmpty()) {
+                URI result = new URI("http://"
+                        + nodesToSearch.get(0) + ":" + getPort()
+                        + "/search?query=" + getEncodedQuery()
+                        + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
+                        + "&local=" + (clusterState.getNodes().dataNodes().size() == 1)
+                        + "&stats=true&ignore-missing-files=true"
+                        + "&cs=" + getCaseSensitive()
+                        + "&format=" + getFormat().name().toLowerCase()
+                        + "&limit=" + getLimit());
+                return result;
+            } else {
+                throw new RyftSearchException("No RYFT nodes to search left");
+            }
         } catch (URISyntaxException ex) {
             throw new RyftSearchException("Ryft search URL composition exceptoion", ex);
         }

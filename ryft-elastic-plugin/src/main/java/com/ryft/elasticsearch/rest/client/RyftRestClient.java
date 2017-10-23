@@ -21,7 +21,7 @@ import org.elasticsearch.common.logging.Loggers;
 import com.ryft.elasticsearch.utils.PostConstruct;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
-import java.net.InetAddress;
+import java.util.Optional;
 
 @Singleton
 public class RyftRestClient implements PostConstruct {
@@ -52,22 +52,17 @@ public class RyftRestClient implements PostConstruct {
                 });
     }
 
-    public Channel get() throws RyftSearchException {
-        Integer port = props.getInt(PropertiesProvider.PORT);
-        return get(new InetSocketAddress(InetAddress.getLoopbackAddress(), port));
-    }
-
-    public Channel get(String host) throws RyftSearchException {
+    public Optional<Channel> get(String host) {
         Integer port = props.getInt(PropertiesProvider.PORT);
         return get(new InetSocketAddress(host, port));
     }
 
-    private Channel get(InetSocketAddress address) throws RyftSearchException {
+    private Optional<Channel> get(InetSocketAddress address) {
         try {
-            return b.connect(address).sync().channel();
-        } catch (InterruptedException | RuntimeException ex) {
+            return Optional.of(b.connect(address).sync().channel());
+        } catch (InterruptedException|RuntimeException ex) {
             LOGGER.error("Can not open channel to {}.", ex, address);
-            throw new RyftSearchException("Can not open channel to " + address, ex);
+            return Optional.empty();
         }
     }
 }

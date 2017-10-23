@@ -23,12 +23,15 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 
 import org.elasticsearch.cluster.ClusterService;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 
@@ -41,13 +44,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected String ryftSupportedAggregationQuery;
 
     protected long requestId;
-    
+
     private final List<String> supportedAggregations;
 
     protected final ObjectMapper mapper;
 
+    protected final List<String> nodesToSearch;
+
     @Inject
-    protected SearchRequestEvent(ClusterService clusterService, 
+    protected SearchRequestEvent(ClusterService clusterService,
             ObjectMapperFactory objectMapperFactory,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super();
@@ -56,6 +61,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
         requestId = System.currentTimeMillis();
         mapper = objectMapperFactory.get();
         supportedAggregations = Arrays.asList(requestParameters.getRyftProperties().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
+        nodesToSearch = new ArrayList<>();
+        Iterator<DiscoveryNode> nodeIterator = clusterState.getNodes().iterator();
+        while (nodeIterator.hasNext()) {
+            DiscoveryNode discoveryNode = nodeIterator.next();
+            nodesToSearch.add(discoveryNode.address().getHost());
+        }
+
     }
 
     protected void validateRequest() throws RyftSearchException {
@@ -66,10 +78,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    public HttpRequest getRyftHttpRequest() throws RyftSearchException {
+    public HttpRequest getRyftHttpRequest(URI uri) throws RyftSearchException {
         validateRequest();
         try {
-            URI uri = getRyftSearchURL();
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri.toString());
             RyftRequestPayload payload = getRyftRequestPayload();
             String body = mapper.writeValueAsString(payload);
@@ -90,9 +101,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    protected abstract RyftRequestPayload getRyftRequestPayload() throws RyftSearchException;
+    public abstract RyftRequestPayload getRyftRequestPayload() throws RyftSearchException;
 
-    protected abstract URI getRyftSearchURL() throws RyftSearchException;
+    public abstract URI getRyftSearchURL() throws RyftSearchException;
 
     protected String getEncodedQuery() throws RyftSearchException {
         try {
@@ -144,12 +155,14 @@ public abstract class SearchRequestEvent extends RequestEvent {
                 if (aggregations.findValue("meta") != null) {
                     return false;
                 }
+                Boolean result = true;
+                for (JsonNode aggregation : aggregations) {
+                    result &= supportedAggregations.contains(aggregation.fieldNames().next());
+                }
+                return result;
+            } else {
+                return false;
             }
-            Boolean result = true;
-            for (JsonNode aggregation : aggregations) {
-                result &= supportedAggregations.contains(aggregation.fieldNames().next());
-            }
-            return result;
         }
     }
 
@@ -167,5 +180,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     public String getPort() {
         return requestParameters.getRyftProperties().getStr(PropertiesProvider.PORT);
+    }
+
+    public void addFailedNode(String hostname) {
+        nodesToSearch.remove(hostname);
     }
 }

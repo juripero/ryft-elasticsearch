@@ -6,6 +6,8 @@ import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import java.util.Arrays;
+import java.util.List;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.inject.Inject;
 
@@ -24,14 +26,17 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent) throws RyftSearchException {
         Long start = System.currentTimeMillis();
-        RyftResponse ryftResponse = sendToRyft(requestEvent);
+        RyftResponse ryftResponse;
+        ryftResponse = sendToRyft(requestEvent);
         if (ryftResponse.hasErrors()) {
-            LOGGER.warn("RYFT error: {}", ryftResponse.toString());
+            LOGGER.warn("RYFT response has errors: {}", Arrays.toString(ryftResponse.getErrors()));
+            List<String> failedNodes = getFailedNodes(ryftResponse);
+            failedNodes.forEach(requestEvent::addFailedNode);
+            return getSearchResponse(requestEvent);
         }
         Long searchTime = System.currentTimeMillis() - start;
         return constructSearchResponse(requestEvent, ryftResponse, searchTime);
     }
-
 
     @Override
     public int getPoolSize() {
@@ -41,6 +46,13 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     @Override
     public String getName() {
         return String.format("ryft-indexsearch-pool-%d", getPoolSize());
+    }
+
+    private List<String> getFailedNodes(RyftResponse ryftResponse) {
+
+        ryftResponse.getErrors();
+
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
