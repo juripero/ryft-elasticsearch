@@ -3,21 +3,11 @@ package com.ryft.elasticsearch.rest.processors;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
-import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
-import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.handler.codec.http.HttpRequest;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.search.SearchShardTarget;
 
 public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchRequestEvent> {
 

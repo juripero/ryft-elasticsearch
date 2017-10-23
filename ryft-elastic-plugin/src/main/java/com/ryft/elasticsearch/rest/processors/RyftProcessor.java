@@ -15,19 +15,12 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -88,25 +81,6 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
     public abstract String getName();
 
     public abstract int getPoolSize();
-
-    protected ChannelFuture sendToRyft(URI searchUri, RyftRequestPayload ryftRequestPayload, CountDownLatch countDownLatch) throws RyftSearchException {
-//        LOGGER.info("Search in routes: {}", ryftRequestPayload.getTweaks().getClusterRoutes());
-        Channel ryftChannel = channelProvider.get(searchUri.getHost());
-        NettyUtils.setAttribute(ClusterRestClientHandler.RYFT_PAYLOAD_ATTR, ryftRequestPayload, ryftChannel);
-        ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
-        DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, searchUri.toString());
-
-        if (props.get().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
-            String login = props.get().getStr(PropertiesProvider.RYFT_REST_LOGIN);
-            String password = props.get().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
-            String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-            request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
-        }
-        request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", searchUri.getHost(), searchUri.getPort()));
-        LOGGER.debug("Send request: {}", request);
-        return ryftChannel.writeAndFlush(request);
-
-    }
 
     protected RyftResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         HttpRequest ryftRequest = requestEvent.getRyftHttpRequest();

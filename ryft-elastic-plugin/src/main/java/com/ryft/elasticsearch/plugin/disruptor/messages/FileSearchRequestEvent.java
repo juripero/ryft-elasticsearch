@@ -35,6 +35,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         super(clusterService, objectMapperFactory, requestParameters);
     }
 
+    @Override
     public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
         validateRequest();
         RyftRequestPayload payload = new RyftRequestPayload();
@@ -45,6 +46,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         return payload;            
     }
 
+    @Override
     public URI getRyftSearchURL() throws RyftSearchException {
         validateRequest();
         try {
@@ -53,7 +55,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
                     + "/search?query=" + getEncodedQuery()
                     + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
                     + "&local=" + (clusterState.getNodes().dataNodes().size() == 1)
-                    + "&stats=true"
+                    + "&stats=true&ignore-missing-files=true"
                     + "&cs=" + getCaseSensitive()
                     + "&format=" + getFormat().name().toLowerCase()
                     + "&limit=" + getLimit());
