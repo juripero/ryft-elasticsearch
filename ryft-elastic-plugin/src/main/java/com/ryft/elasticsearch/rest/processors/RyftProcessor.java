@@ -15,6 +15,7 @@ import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
+import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import io.netty.channel.Channel;
@@ -86,11 +87,14 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     protected RyftResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI ryftURI = requestEvent.getRyftSearchURL();
-        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest(ryftURI);
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+        RyftRequestPayload payload = requestEvent.getRyftRequestPayload();
+        LOGGER.info("Preparing request to {}", ryftURI.getHost());
+        LOGGER.info("Requesting routes: {}", payload.getTweaks().getClusterRoutes());
+        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest(ryftURI, payload);
         Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
+            CountDownLatch countDownLatch = new CountDownLatch(1);
             ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
             LOGGER.debug("Send request: {}", ryftRequest);
             ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);

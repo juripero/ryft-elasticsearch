@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.elasticsearch.cluster.ClusterService;
@@ -20,8 +21,6 @@ import org.elasticsearch.common.inject.assistedinject.Assisted;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.index.IndexService;
-import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.search.SearchShardTarget;
 
 public class IndexSearchRequestEvent extends SearchRequestEvent {
@@ -30,31 +29,23 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     private final Settings settings;
 
-    private final List<ShardRouting> shards;
-
-    private final IndicesService indicesService;
-
     @Override
     public EventType getEventType() {
         return EventType.INDEX_SEARCH_REQUEST;
     }
 
     @Inject
-    public IndexSearchRequestEvent(ClusterService clusterService, IndicesService indicesService,
+    public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, ObjectMapperFactory objectMapperFactory,
             @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
         super(clusterService, objectMapperFactory, requestParameters);
         this.settings = settings;
-        this.indicesService = indicesService;
-        ShardsIterator shardsIterator = clusterState.getRoutingTable().allShards(requestParameters.getIndices());
-        shards = StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
-                .collect(Collectors.toList());
     }
 
     @Override
     public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
         Collection<SearchShardTarget> shardsToSearch = getShardsToSearch();
-        if (shardsToSearch.size() < getShardsNumber()) {
+        if (shardsToSearch.size() != getShardsNumber()) {
             throw new RyftSearchException("Can not create search request. Not enougnt nodes.");
         }
         RyftRequestPayload payload = new RyftRequestPayload();
@@ -122,34 +113,37 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     }
 
     public List<ShardRouting> getAllShards() {
-        return shards;
+        ShardsIterator shardsIterator = clusterState.getRoutingTable().allShards(requestParameters.getIndices());
+        return StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
+                .filter(shard -> shard.started())
+                .collect(Collectors.toList());
     }
 
     public List<SearchShardTarget> getShardsToSearch() {
-        return shards.stream()
+        List<ShardRouting> filteredShards = getAllShards().stream()
+                .filter(shard -> nodesToSearch.contains(clusterState.nodes().get(shard.currentNodeId()).getHostName()))
+                .collect(Collectors.toList());
+        Map<String, List<ShardRouting>> groupedShards = filteredShards.stream()
+                .collect(Collectors.groupingBy(shard
+                        -> String.format("%s_%d", shard.getIndex(), shard.getId())));
+        List<SearchShardTarget> result = groupedShards.values().stream()
+                .map(shardList -> shardList.get(0))
                 .map(shard -> new SearchShardTarget(shard.currentNodeId(), shard.getIndex(), shard.id()))
-                .filter(shardTarget
-                        -> nodesToSearch.contains(clusterState.nodes().get(shardTarget.getNodeId()).getHostName())
-                ).collect(Collectors.groupingBy(shardTarget
-                        -> String.format("%s%d", shardTarget.getIndex(), shardTarget.getShardId()))
-                ).values().stream().map(shardTargets -> shardTargets.get(0)).collect(Collectors.toList());
+                .collect(Collectors.toList());
+        return result;
     }
 
     @Override
     public String toString() {
         return "IndexSearchRequestEvent{query=" + requestParameters.getQuery()
                 + ", indices=" + Arrays.toString(requestParameters.getIndices())
-                + ", shards=" + shards.size() + '}';
+                + ", shards=" + getAllShards().size() + '}';
     }
 
-    private Integer getShardsNumber() {
-        Integer result = 0;
-        for (String index : requestParameters.getIndices()) {
-            IndexService indexService = indicesService.indexService(index);
-            if (indexService != null) {
-                result += indicesService.indexService(index).numberOfShards();
-            }
-        }
+    private Long getShardsNumber() {
+        Long result = getAllShards().stream()
+                .filter(shard -> shard.primary())
+                .collect(Collectors.counting());
         return result;
     }
 

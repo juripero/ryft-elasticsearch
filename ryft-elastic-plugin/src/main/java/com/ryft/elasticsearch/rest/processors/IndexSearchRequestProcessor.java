@@ -6,8 +6,15 @@ import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.inject.Inject;
 
@@ -49,10 +56,20 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     }
 
     private List<String> getFailedNodes(RyftResponse ryftResponse) {
-
-        ryftResponse.getErrors();
-
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        List<String> result = new ArrayList<>();
+        Pattern addressPattern = Pattern.compile("\\(CLUSTER\\{.*?addr:(.*?)\\}\\)");
+        for (String error : ryftResponse.getErrors()) {
+            Matcher matcher = addressPattern.matcher(error);
+            if (matcher.find()) {
+                try {
+                    URL url = new URL(matcher.group(1));
+                    result.add(url.getHost());
+                } catch (MalformedURLException | RuntimeException ex) {
+                    LOGGER.warn("can not extract failed node from errormessage.");
+                }
+            }
+        }
+        return result;
     }
 
 }

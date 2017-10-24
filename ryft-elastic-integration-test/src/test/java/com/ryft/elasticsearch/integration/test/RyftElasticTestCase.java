@@ -179,7 +179,7 @@ public abstract class RyftElasticTestCase extends LuceneTestCase {
         LOGGER.info("Creating index {}", index);
         Settings settings = Settings.settingsBuilder()
                 .put("number_of_replicas", "1")
-                .put("number_of_shards", "3")
+               // .put("number_of_shards", "3")
                 .build();
         getClient().admin().indices().prepareCreate(index).setSettings(settings).get();
 

@@ -78,12 +78,11 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    public HttpRequest getRyftHttpRequest(URI uri) throws RyftSearchException {
+    public HttpRequest getRyftHttpRequest(URI uri, RyftRequestPayload requestPayload) throws RyftSearchException {
         validateRequest();
         try {
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri.toString());
-            RyftRequestPayload payload = getRyftRequestPayload();
-            String body = mapper.writeValueAsString(payload);
+            String body = mapper.writeValueAsString(requestPayload);
             ByteBuf bbuf = Unpooled.copiedBuffer(body, StandardCharsets.UTF_8);
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", uri.getHost(), uri.getPort()));
             request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
@@ -180,6 +179,10 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     public String getPort() {
         return requestParameters.getRyftProperties().getStr(PropertiesProvider.PORT);
+    }
+
+    public RyftRequestParameters getRequestParameters() {
+        return requestParameters;
     }
 
     public void addFailedNode(String hostname) {
