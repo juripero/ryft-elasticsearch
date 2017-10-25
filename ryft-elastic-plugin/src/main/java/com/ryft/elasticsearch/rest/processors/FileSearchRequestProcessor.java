@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.rest.processors;
 
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
@@ -11,10 +12,14 @@ import org.elasticsearch.common.inject.Inject;
 
 public class FileSearchRequestProcessor extends RyftProcessor<FileSearchRequestEvent> {
 
+    private final PropertiesProvider props;
+
     @Inject
     public FileSearchRequestProcessor(PropertiesProvider properties,
-            RyftRestClient channelProvider, AggregationService aggregationService) {
-        super(properties, channelProvider, aggregationService);
+            ObjectMapperFactory objectMapperFactory, RyftRestClient channelProvider,
+            AggregationService aggregationService) {
+        super(objectMapperFactory, channelProvider, aggregationService);
+        this.props = properties;
     }
 
     @Override
@@ -24,7 +29,6 @@ public class FileSearchRequestProcessor extends RyftProcessor<FileSearchRequestE
         Long searchTime = System.currentTimeMillis() - start;
         return constructSearchResponse(event, ryftResponse, searchTime);
     }
-
 
     @Override
     public int getPoolSize() {

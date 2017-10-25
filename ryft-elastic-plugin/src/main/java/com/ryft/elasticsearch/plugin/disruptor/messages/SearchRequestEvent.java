@@ -70,33 +70,11 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     }
 
-    protected void validateRequest() throws RyftSearchException {
+    public void validateRequest() throws RyftSearchException {
         RyftProperties ryftProperties = requestParameters.getRyftProperties();
         if (ryftProperties.containsKey(PropertiesProvider.RYFT_FORMAT)
                 && ryftProperties.get(PropertiesProvider.RYFT_FORMAT).equals(RyftFormat.UNKNOWN_FORMAT)) {
             throw new RyftSearchException("Unknown format. Please use one of the following formats: json, xml, utf8, raw");
-        }
-    }
-
-    public HttpRequest getRyftHttpRequest(URI uri, RyftRequestPayload requestPayload) throws RyftSearchException {
-        validateRequest();
-        try {
-            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri.toString());
-            String body = mapper.writeValueAsString(requestPayload);
-            ByteBuf bbuf = Unpooled.copiedBuffer(body, StandardCharsets.UTF_8);
-            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", uri.getHost(), uri.getPort()));
-            request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
-            request.headers().set(HttpHeaders.Names.CONTENT_TYPE, "application/json");
-            if (requestParameters.getRyftProperties().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
-                String login = requestParameters.getRyftProperties().getStr(PropertiesProvider.RYFT_REST_LOGIN);
-                String password = requestParameters.getRyftProperties().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
-                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
-                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
-            }
-            request.content().clear().writeBytes(bbuf);
-            return request;
-        } catch (JsonProcessingException ex) {
-            throw new RyftSearchException("Ryft search URL composition exception", ex);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.ryft.elasticsearch.rest.processors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -7,6 +9,7 @@ import java.util.concurrent.Executors;
 import com.ryft.elasticsearch.utils.PostConstruct;
 import com.ryft.elasticsearch.plugin.disruptor.messages.RequestEvent;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
@@ -18,11 +21,19 @@ import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -46,12 +57,12 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     protected ExecutorService executor;
     protected final RyftRestClient channelProvider;
-    protected final PropertiesProvider props;
     protected final AggregationService aggregationService;
+    protected final ObjectMapper mapper;
 
-    public RyftProcessor(PropertiesProvider properties, RyftRestClient channelProvider,
-            AggregationService aggregationService) {
-        this.props = properties;
+    public RyftProcessor(ObjectMapperFactory objectMapperFactory,
+            RyftRestClient channelProvider, AggregationService aggregationService) {
+        mapper = objectMapperFactory.get();
         this.channelProvider = channelProvider;
         this.aggregationService = aggregationService;
     }
@@ -89,8 +100,10 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         URI ryftURI = requestEvent.getRyftSearchURL();
         RyftRequestPayload payload = requestEvent.getRyftRequestPayload();
         LOGGER.info("Preparing request to {}", ryftURI.getHost());
-        LOGGER.info("Requesting routes: {}", payload.getTweaks().getClusterRoutes());
-        HttpRequest ryftRequest = requestEvent.getRyftHttpRequest(ryftURI, payload);
+        if (payload.getTweaks() != null) {
+            LOGGER.info("Requesting routes: {}", payload.getTweaks().getClusterRoutes());
+        }
+        HttpRequest ryftRequest = getRyftHttpRequest(requestEvent);
         Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
@@ -107,6 +120,34 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         } else {
             requestEvent.addFailedNode(ryftURI.getHost());
             return sendToRyft(requestEvent);
+        }
+    }
+
+    public HttpRequest getRyftHttpRequest(SearchRequestEvent requestEvent) throws RyftSearchException {
+        requestEvent.validateRequest();
+        URI ryftURI = requestEvent.getRyftSearchURL();
+        RyftRequestPayload payload = requestEvent.getRyftRequestPayload();
+        LOGGER.info("Preparing request to {}", ryftURI.getHost());
+        if (payload.getTweaks() != null) {
+            LOGGER.info("Requesting routes: {}", payload.getTweaks().getClusterRoutes());
+        }
+        try {
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, ryftURI.toString());
+            String body = mapper.writeValueAsString(payload);
+            ByteBuf bbuf = Unpooled.copiedBuffer(body, StandardCharsets.UTF_8);
+            request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", ryftURI.getHost(), ryftURI.getPort()));
+            request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
+            request.headers().set(HttpHeaders.Names.CONTENT_TYPE, "application/json");
+            if (requestEvent.getRequestParameters().getRyftProperties().getBool(PropertiesProvider.RYFT_REST_AUTH_ENABLED)) {
+                String login = requestEvent.getRequestParameters().getRyftProperties().getStr(PropertiesProvider.RYFT_REST_LOGIN);
+                String password = requestEvent.getRequestParameters().getRyftProperties().getStr(PropertiesProvider.RYFT_REST_PASSWORD);
+                String basicAuthToken = Base64.getEncoder().encodeToString(String.format("%s:%s", login, password).getBytes());
+                request.headers().add(HttpHeaders.Names.AUTHORIZATION, "Basic " + basicAuthToken);
+            }
+            request.content().clear().writeBytes(bbuf);
+            return request;
+        } catch (JsonProcessingException ex) {
+            throw new RyftSearchException("Ryft search URL composition exception", ex);
         }
     }
 

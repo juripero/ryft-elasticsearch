@@ -43,11 +43,8 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     }
 
     @Override
-    public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
+    public RyftRequestPayload getRyftRequestPayload() {
         Collection<SearchShardTarget> shardsToSearch = getShardsToSearch();
-        if (shardsToSearch.size() != getShardsNumber()) {
-            throw new RyftSearchException("Can not create search request. Not enougnt nodes.");
-        }
         RyftRequestPayload payload = new RyftRequestPayload();
         payload.setTweaks(getTweaks(shardsToSearch));
         if (canBeAggregatedByRYFT()) {
@@ -145,6 +142,10 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                 .filter(shard -> shard.primary())
                 .collect(Collectors.counting());
         return result;
+    }
+
+    public boolean canBeExecuted() {
+        return getShardsToSearch().size() == getShardsNumber();
     }
 
 }

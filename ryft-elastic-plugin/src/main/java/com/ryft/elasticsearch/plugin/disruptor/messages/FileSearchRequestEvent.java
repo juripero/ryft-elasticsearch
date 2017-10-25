@@ -70,7 +70,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     }
 
     @Override
-    protected void validateRequest() throws RyftSearchException {
+    public void validateRequest() throws RyftSearchException {
         super.validateRequest();
         if ((getFilenames() == null) || (getFilenames().isEmpty())) {
             throw new RyftSearchException("File names should be defined for non indexed search.");

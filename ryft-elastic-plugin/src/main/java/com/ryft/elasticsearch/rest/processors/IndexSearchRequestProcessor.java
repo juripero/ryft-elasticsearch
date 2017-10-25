@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.rest.processors;
 
+import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
@@ -11,8 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.elasticsearch.action.search.SearchResponse;
@@ -20,29 +19,43 @@ import org.elasticsearch.common.inject.Inject;
 
 public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchRequestEvent> {
 
+    private final PropertiesProvider props;
+
     @Inject
     public IndexSearchRequestProcessor(PropertiesProvider properties,
-            RyftRestClient channelProvider, AggregationService aggregationService) {
-        super(properties, channelProvider, aggregationService);
+            ObjectMapperFactory objectMapperFactory, RyftRestClient channelProvider,
+            AggregationService aggregationService) {
+        super(objectMapperFactory, channelProvider, aggregationService);
+        this.props = properties;
     }
 
     @Override
     protected SearchResponse executeRequest(IndexSearchRequestEvent event) throws RyftSearchException {
-        return getSearchResponse(event);
+        return getSearchResponse(event, new ArrayList<>(), null);
     }
 
-    private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent) throws RyftSearchException {
-        Long start = System.currentTimeMillis();
-        RyftResponse ryftResponse;
-        ryftResponse = sendToRyft(requestEvent);
-        if (ryftResponse.hasErrors()) {
-            LOGGER.warn("RYFT response has errors: {}", Arrays.toString(ryftResponse.getErrors()));
-            List<String> failedNodes = getFailedNodes(ryftResponse);
-            failedNodes.forEach(requestEvent::addFailedNode);
-            return getSearchResponse(requestEvent);
+    private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
+            List<RyftResponse> responseHistory, Long start) throws RyftSearchException {
+        if (start == null) {
+            start = System.currentTimeMillis();
         }
+        if (requestEvent.canBeExecuted()) {
+            RyftResponse ryftResponse = sendToRyft(requestEvent);
+            responseHistory.add(ryftResponse);
+            if (ryftResponse.hasErrors()) {
+                LOGGER.warn("RYFT response has errors: {}", Arrays.toString(ryftResponse.getErrors()));
+                List<String> failedNodes = getFailedNodes(ryftResponse);
+                failedNodes.forEach(requestEvent::addFailedNode);
+                return getSearchResponse(requestEvent, responseHistory, start);
+            }
+        }
+        if (responseHistory.isEmpty()) {
+            throw new RyftSearchException("Can not get any RYFT response");
+        }
+        RyftResponse maxResponse = responseHistory.stream()
+                .max((r1, r2) -> r1.getResults().size() - r2.getResults().size()).get();
         Long searchTime = System.currentTimeMillis() - start;
-        return constructSearchResponse(requestEvent, ryftResponse, searchTime);
+        return constructSearchResponse(requestEvent, maxResponse, searchTime);
     }
 
     @Override
