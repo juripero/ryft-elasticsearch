@@ -25,7 +25,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class SmokeTest extends ESSmokeClientTestCase {
+public class SmokeTest extends RyftElasticTestCase {
 
     private static String testDataContent;
 

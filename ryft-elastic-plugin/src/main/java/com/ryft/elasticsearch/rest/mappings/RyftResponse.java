@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftResponse {
 
-    private ArrayList<ObjectNode> results = new ArrayList<>();
+    private ArrayList<RyftResult> results = new ArrayList<>();
 
     private RyftStats stats;
 
@@ -22,7 +21,7 @@ public class RyftResponse {
     }
 
     @JsonCreator
-    public RyftResponse(@JsonProperty("results") ArrayList<ObjectNode> results,
+    public RyftResponse(@JsonProperty("results") ArrayList<RyftResult> results,
             @JsonProperty("stats") RyftStats stats,
             @JsonProperty("errors") String[] errors,
             @JsonProperty("message") String message) {
@@ -52,11 +51,11 @@ public class RyftResponse {
     }
 
     @JsonProperty("results")
-    public ArrayList<ObjectNode> getResults() {
+    public ArrayList<RyftResult> getResults() {
         return results;
     }
 
-    public void setResults(ArrayList<ObjectNode> results) {
+    public void setResults(ArrayList<RyftResult> results) {
         this.results = results;
     }
 

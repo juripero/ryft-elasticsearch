@@ -69,58 +69,8 @@ public class RyftIndex {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((fuzziness == null) ? 0 : fuzziness.hashCode());
-        result = prime * result + ((host == null) ? 0 : host.hashCode());
-        result = prime * result + ((length == null) ? 0 : length.hashCode());
-        result = prime * result + ((offset == null) ? 0 : offset.hashCode());
-        result = prime * result + ((sourceFile == null) ? 0 : sourceFile.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        RyftIndex other = (RyftIndex) obj;
-        if (fuzziness == null) {
-            if (other.fuzziness != null)
-                return false;
-        } else if (!fuzziness.equals(other.fuzziness))
-            return false;
-        if (host == null) {
-            if (other.host != null)
-                return false;
-        } else if (!host.equals(other.host))
-            return false;
-        if (length == null) {
-            if (other.length != null)
-                return false;
-        } else if (!length.equals(other.length))
-            return false;
-        if (offset == null) {
-            if (other.offset != null)
-                return false;
-        } else if (!offset.equals(other.offset))
-            return false;
-        if (sourceFile == null) {
-            if (other.sourceFile != null)
-                return false;
-        } else if (!sourceFile.equals(other.sourceFile))
-            return false;
-        return true;
-    }
-
-    @Override
     public String toString() {
-        return "RyftIndex [sourceFile=" + sourceFile + ", offset=" + offset + ", length=" + length + ", fuzziness="
-                + fuzziness + ", host=" + host + "]";
+        return "RyftIndex{" + "file=" + sourceFile + ", offset=" + offset + ", length=" + length + ", fuzziness=" + fuzziness + ", host=" + host + '}';
     }
 
 }

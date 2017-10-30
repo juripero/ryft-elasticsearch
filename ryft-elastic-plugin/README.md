@@ -769,19 +769,20 @@ Resulting RYFT query:
 Plugin has several configuration levels: configuration file, settings index, query properties.
 All configuration properties can be defined in config file and some properties can be overridden by settings index and/or query properties.
 
-| Property                            | Meaning                                              |
-| ----------------------------------- | ---------------------------------------------------- |
-| ryft_rest_client_host               | RYFT service host                                    |
-| ryft_rest_client_port               | RYFT service port                                    |
-| ryft_rest_auth_login                | RYFT service login                                   |
-| ryft_rest_auth_password             | RYFT service password                                |
-| ryft_request_processing_thread_num  | Thread number for request processing                 |
-| ryft_response_processing_thread_num | Thread number for response processing                |
-| ryft_query_limit                    | Results limit                                        |
-| ryft_integration_enabled            | Integration with RYFT                                |
-| ryft_plugin_settings_index          | Settings index name                                  |
-| ryft_disruptor_capacity             | Capacity of internal queue                           |
-| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST |
+| Property                            | Meaning                                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------|
+| ryft_rest_client_host               | RYFT service host                                                              |
+| ryft_rest_client_port               | RYFT service port                                                              |
+| ryft_rest_auth_login                | RYFT service login                                                             |
+| ryft_rest_auth_password             | RYFT service password                                                          |
+| ryft_request_processing_thread_num  | Thread number for request processing                                           |
+| ryft_response_processing_thread_num | Thread number for response processing                                          |
+| ryft_query_limit                    | Results limit                                                                  |
+| ryft_integration_enabled            | Integration with RYFT                                                          |
+| ryft_plugin_settings_index          | Settings index name                                                            |
+| ryft_disruptor_capacity             | Capacity of internal queue                                                     |
+| ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST                           |
+| ryft_aggregations_on_ryft_server    | Comma-separated list of aggregations that will be performed on the Ryft Server |
 
 
 To change property value using settings index you have to execute next call:

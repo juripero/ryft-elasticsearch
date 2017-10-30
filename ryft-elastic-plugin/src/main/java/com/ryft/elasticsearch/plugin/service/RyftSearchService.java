@@ -31,15 +31,8 @@ public class RyftSearchService {
         if (requestParameters.isFileSearch()) {
             return fileSearchRequestEventFactory.create(requestParameters);
         } else {
-            return indexSearchRequestEventFactory.create(requestParameters,
-                    getShards(requestParameters));
+            return indexSearchRequestEventFactory.create(requestParameters);
         }
     }
 
-    private List<ShardRouting> getShards(RyftRequestParameters requestParameters) {
-        ShardsIterator shardsIterator = clusterService.state().getRoutingTable().allShards(requestParameters.getIndices());
-        List<ShardRouting> shardRoutingList = StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
-                .collect(Collectors.toList());
-        return shardRoutingList;
-    }
 }

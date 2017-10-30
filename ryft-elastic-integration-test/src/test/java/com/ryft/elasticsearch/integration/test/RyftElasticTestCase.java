@@ -56,7 +56,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * {@link ESSmokeClientTestCase} is an abstract base class to run integration
+ * {@link RyftElasticTestCase} is an abstract base class to run integration
  * tests against an external Elasticsearch Cluster.
  * <p>
  * You can define a list of transport addresses from where you can reach your
@@ -71,7 +71,7 @@ import static org.junit.Assert.assertNotNull;
  * "tests.cluster=localhost:PORT" when running your test.
  */
 @LuceneTestCase.SuppressSysoutChecks(bugUrl = "we log a lot on purpose")
-public abstract class ESSmokeClientTestCase extends LuceneTestCase {
+public abstract class RyftElasticTestCase extends LuceneTestCase {
 
     /**
      * Key used to eventually switch to using an external cluster and provide
@@ -112,7 +112,7 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
     public static final String KEYSTORE_PASSWORD_DEFAULT = "admin123";
     protected static String keystorePassword;
 
-    protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(ESSmokeClientTestCase.class.getName());
+    protected static final ESLogger LOGGER = ESLoggerFactory.getLogger(RyftElasticTestCase.class.getName());
 
     private static final AtomicInteger COUNTER = new AtomicInteger();
     private static Client client;
@@ -177,7 +177,11 @@ public abstract class ESSmokeClientTestCase extends LuceneTestCase {
             deleteIndex(index);
         }
         LOGGER.info("Creating index {}", index);
-        getClient().admin().indices().prepareCreate(index).get();
+        Settings settings = Settings.settingsBuilder()
+                .put("number_of_replicas", "1")
+                .put("number_of_shards", "5")
+                .build();
+        getClient().admin().indices().prepareCreate(index).setSettings(settings).get();
 
         getClient().admin().indices().preparePutMapping(index).setType(type)
                 .setSource((Object[]) mapping).get();
