@@ -468,8 +468,7 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
-        assertEquals("(((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS > 07:00:00))) "
-                + "OR ((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(HH:MM:SS < 12:00:00))))",
+        assertEquals("((RECORD.timestamp CONTAINS DATE(YYYY/MM/DD = 2014/01/01)) AND (RECORD.timestamp CONTAINS TIME(07:00:00 < HH:MM:SS < 12:00:00)))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
@@ -834,10 +833,8 @@ public class ElasticConverterTest {
                 + "      \"query\": {\n"
                 + "        \"query\": {\n"
                 + "          \"term\": {\n"
-                + "            \"registered\": {\n"
-                + "              \"format\": \"yyyy-MM-dd HH:mm:ss\",\n"
-                + "              \"type\": \"datetime\",\n"
-                + "              \"value\": \"2014-01-01 07:00:00\"\n"
+                + "            \"name\": {\n"
+                + "              \"value\": \"Jim\"\n"
                 + "            }\n"
                 + "          }\n"
                 + "        },\n"
@@ -865,12 +862,12 @@ public class ElasticConverterTest {
         SearchRequest request = new SearchRequest(new String[]{""}, query.getBytes());
         RyftRequestParameters ryftRequest = elasticConverter.convert(request);
         assertNotNull(ryftRequest);
-        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) "
-                + "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) "
-                + "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) "
-                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) "
-                + "AND ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2014-01-01)) "
-                + "AND (RECORD.registered CONTAINS TIME(HH:MM:SS = 07:00:00))))",
+        assertEquals("((((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2012-06-02)) " +
+                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS >= 14:10:55))) " +
+                        "OR (RECORD.registered CONTAINS DATE(2012-06-02 < YYYY-MM-DD < 2017-06-02)) " +
+                        "OR ((RECORD.registered CONTAINS DATE(YYYY-MM-DD = 2017-06-02)) " +
+                        "AND (RECORD.registered CONTAINS TIME(HH:MM:SS <= 14:10:55)))) " +
+                        "AND (RECORD.name CONTAINS \"Jim\"))",
                 ryftRequest.getQuery().buildRyftString());
     }
 
