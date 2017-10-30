@@ -124,6 +124,16 @@ public class RyftQueryDateTimeUtil {
                 lowerDate = sdf.parse(lowerBound.get(operatorCompareLower.get()));
                 upperDate = sdf.parse(upperBound.get(operatorCompareUpper.get()));
             }
+            //Special case - if the first date is the same as the last, we can create a simplified expression
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+            sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+            if (fmt.format(lowerDate).equals(fmt.format(upperDate))) {
+                RyftQuery dayQuery = buildSimpleDateQuery(lowerDate, format, RyftOperator.CONTAINS, fieldName, RyftOperatorCompare.EQ);
+                RyftQuery timeQuery = buildSimpleRangeQuery(lowerBound, upperBound, format, RyftOperator.CONTAINS, fieldName, true);
+
+                List<RyftQuery> allQueries = Arrays.asList(dayQuery, timeQuery);
+                return new RyftQueryComplex(RyftQueryComplex.RyftLogicalOperator.AND, allQueries);
+            }
 
             RyftQuery lowerDayQuery = buildBoundaryDayQuery(lowerDate, format,
                     ryftOperator, fieldName, operatorCompareLower.get());
@@ -139,13 +149,7 @@ public class RyftQueryDateTimeUtil {
             List<RyftQuery> finalQueries = new ArrayList<>();
             finalQueries.add(lowerDayQuery);
 
-            //Special case - if the first is the same as the last, we do not need an extra expression to retrieve the
-            //days that fall between them
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
-            sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
-            if (!fmt.format(lowerDate).equals(fmt.format(upperDate))) {
-                finalQueries.add(middleDayQuery);
-            }
+            finalQueries.add(middleDayQuery);
             finalQueries.add(upperDayQuery);
 
             return new RyftQueryComplex(RyftQueryComplex.RyftLogicalOperator.OR, finalQueries);

@@ -11,8 +11,8 @@ public class ProcessorsModule extends AbstractModule {
     protected void configure() {
         
         MapBinder<EventType, RyftProcessor> processors = MapBinder.newMapBinder(binder(), EventType.class, RyftProcessor.class);
-        processors.addBinding(EventType.INDEX_SEARCH_REQUEST).to(SearchRequestProcessor.class);
-        processors.addBinding(EventType.FILE_SEARCH_REQUEST).to(SearchRequestProcessor.class);
+        processors.addBinding(EventType.INDEX_SEARCH_REQUEST).to(IndexSearchRequestProcessor.class);
+        processors.addBinding(EventType.FILE_SEARCH_REQUEST).to(FileSearchRequestProcessor.class);
     }
 
 }

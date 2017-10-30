@@ -2,18 +2,25 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.ryft.elasticsearch.converter.QueryConverterHelper;
+import com.ryft.elasticsearch.converter.aggregation.AggregationConverter;
 import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
+import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
+import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
+
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -27,6 +34,7 @@ import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
 import java.util.concurrent.ExecutionException;
+
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
@@ -43,12 +51,13 @@ public class AggregationService {
     private final ObjectMapper mapper;
 
     @Inject
-    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory) {
+    public AggregationService(TransportClient client, ObjectMapperFactory objectMapperFactory,
+            RyftRestClient channelProvider, PropertiesProvider props) {
         this.client = client;
-        this.mapper = objectMapperFactory.get();
+        mapper = objectMapperFactory.get();
     }
 
-    public InternalAggregations applyAggregation(List<InternalSearchHit> searchHitList,
+    public InternalAggregations applyAggregationElastic(List<InternalSearchHit> searchHitList,
             SearchRequestEvent requestEvent) throws RyftSearchException {
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
@@ -74,6 +83,41 @@ public class AggregationService {
             LOGGER.debug("No aggregation");
             return InternalAggregations.EMPTY;
         }
+    }
+
+    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, RyftResponse ryftResponse) throws RyftSearchException {
+        if ((ryftResponse.getStats() != null)
+                && (ryftResponse.getStats().getExtra() != null)
+                && (ryftResponse.getStats().getExtra().getAggregations() != null)) {
+            return getFromRyftAggregations(requestEvent, ryftResponse.getStats().getExtra().getAggregations());
+        } else {
+            LOGGER.warn("Can net get aggregations from RYFT response");
+            return null;
+        }
+    }
+
+    private ObjectNode getAggregationsFromQuery(JsonNode query) {
+        JsonNode result = query.findValue("aggs");
+        if (result == null) {
+            result = query.findValue("aggregations");
+        }
+        return (ObjectNode) result;
+    }
+
+    public InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
+        ObjectNode aggregationsNode = getAggregationsFromQuery(requestEvent.getParsedQuery());
+        List<InternalAggregation> internalAggregationList = new ArrayList<>();
+        Iterator<String> aggNames = aggregationsNode.fieldNames();
+        while (aggNames.hasNext()) {
+            String aggaggregationName = aggNames.next();
+            ObjectNode aggregationNode = (ObjectNode) aggregationsNode.get(aggaggregationName);
+            InternalAggregation internalAggregation = AggregationConverter.convertJsonToAggregation(aggregationNode, aggaggregationName, ryftAggregations);
+
+            if (internalAggregation != null) {
+                internalAggregationList.add(internalAggregation);
+            }
+        }
+        return new InternalAggregations(internalAggregationList);
     }
 
     private void prepareTempIndex(SearchRequestEvent requestEvent, List<InternalSearchHit> searchHitList, String tempIndexName)
@@ -131,8 +175,8 @@ public class AggregationService {
     }
 
     private void createMapping(IndexSearchRequestEvent requestEvent, String tempIndexName) throws RyftSearchException {
-        if (requestEvent.getShards().size() > 0) {
-            String index = requestEvent.getShards().get(0).getIndex();
+        if (requestEvent.getAllShards().size() > 0) {
+            String index = requestEvent.getAllShards().get(0).getIndex();
             try {
                 GetMappingsResponse mappingsResponse = client.admin().indices().prepareGetMappings(index).get();
                 LOGGER.debug("Creating mappings in temp index.");
@@ -166,4 +210,5 @@ public class AggregationService {
     private String getTempIndexName(SearchRequestEvent requestEvent) {
         return String.format("%s%d", TEMPINDEX_PREFIX, requestEvent.hashCode());
     }
+
 }

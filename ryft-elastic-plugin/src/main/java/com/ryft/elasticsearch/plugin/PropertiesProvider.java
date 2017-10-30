@@ -35,6 +35,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     public static final String RYFT_REST_PASSWORD = "ryft_rest_auth_password";
     public static final String REQ_THREAD_NUM = "ryft_request_processing_thread_num";
     public static final String RESP_THREAD_NUM = "ryft_response_processing_thread_num";
+    public static final String AGGREGATIONS_ON_RYFT_SERVER = "ryft_aggregations_on_ryft_server";
     // Query properties
     public static final String RYFT_FILES_TO_SEARCH = "ryft_files";
     public static final String RYFT_FORMAT = "ryft_format";
@@ -60,6 +61,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(RYFT_REST_PASSWORD, "admin");
         defaults.put(RYFT_FORMAT, RyftFormat.JSON);
         defaults.put(RYFT_CASE_SENSITIVE, "false");
+        defaults.put(AGGREGATIONS_ON_RYFT_SERVER, "");
 
         props = new RyftProperties();
         props.putAll(defaults);

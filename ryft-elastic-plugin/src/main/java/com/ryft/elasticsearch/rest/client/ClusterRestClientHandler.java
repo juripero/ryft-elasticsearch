@@ -1,6 +1,7 @@
 package com.ryft.elasticsearch.rest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -10,13 +11,13 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
+import java.io.IOException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.CountDownLatch;
 
-import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
@@ -25,9 +26,9 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
     private static final ESLogger LOGGER = Loggers.getLogger(ClusterRestClientHandler.class);
 
     private static final String RYFT_RESPONSE = "RYFT_RESPONSE";
-    private static final String INDEX_SHARD = "INDEX_SHARD";
+    private static final String RYFT_PAYLOAD = "RYFT_PAYLOAD";
     public static final AttributeKey<RyftResponse> RYFT_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_RESPONSE);
-    public static final AttributeKey<ShardRouting> INDEX_SHARD_ATTR = AttributeKey.valueOf(INDEX_SHARD);
+    public static final AttributeKey<RyftRequestPayload> RYFT_PAYLOAD_ATTR = AttributeKey.valueOf(RYFT_PAYLOAD);
 
     private final CountDownLatch countDownLatch;
     private final ByteBuf accumulator = Unpooled.buffer();
@@ -60,7 +61,7 @@ public class ClusterRestClientHandler extends SimpleChannelInboundHandler<Object
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 ryftResponse = mapper.readValue(accumulator.toString(StandardCharsets.UTF_8), RyftResponse.class);
-            } catch (Exception ex) {
+            } catch (IOException | RuntimeException ex) {
                 LOGGER.error("Failed to parse RYFT response", ex);
                 ryftResponse = new RyftResponse();
                 ryftResponse.setMessage(ex.getMessage());
