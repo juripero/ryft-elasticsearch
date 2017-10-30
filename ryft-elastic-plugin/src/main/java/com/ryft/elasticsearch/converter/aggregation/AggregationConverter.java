@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
-import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalDateHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalHistogram;
 import org.elasticsearch.search.aggregations.bucket.histogram.RyftInternalOrder;
@@ -23,15 +22,15 @@ import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class AggregationConverter {
 
-    public static InternalAggregation convertJsonToAggregation(Map.Entry<String, Map> aggregationQuery, String aggregationName, ObjectNode ryftAggregations) {
-        String aggregationType = aggregationQuery.getKey();
+    public static InternalAggregation convertJsonToAggregation(ObjectNode aggregationQuery, String aggregationName, ObjectNode ryftAggregations) {
+        String aggregationType = aggregationQuery.fieldNames().next();
+        ObjectNode aggregationValue = (ObjectNode) aggregationQuery.get(aggregationType);
 
         JsonNode resultNode = ryftAggregations.findValue(aggregationName);
-        if (resultNode == null) {
+        if ((resultNode == null) || (resultNode.isEmpty(null))) {
             return null;
         }
 
@@ -49,7 +48,7 @@ public class AggregationConverter {
             case "stats":
                 return convertStats(aggregationName, resultNode);
             case "extended_stats":
-                return convertExtendedStats(aggregationName, resultNode, aggregationQuery.getValue());
+                return convertExtendedStats(aggregationName, resultNode, aggregationValue);
             case "geo_bounds":
                 return convertGeoBounds(aggregationName, resultNode);
             case "geo_centroid":
@@ -95,14 +94,18 @@ public class AggregationConverter {
         return new InternalStats(name, count, sum, min, max, ValueFormatter.RAW, Collections.EMPTY_LIST, null);
     }
 
-    private static InternalExtendedStats convertExtendedStats(String name, JsonNode ryftAggregation, Map<String, Object> statsQuery) {
+    private static InternalExtendedStats convertExtendedStats(String name, JsonNode ryftAggregation, ObjectNode statsQuery) {
         Long count = ryftAggregation.get("count").longValue();
         Double min = ryftAggregation.get("min").doubleValue();
         Double max = ryftAggregation.get("max").doubleValue();
         Double sum = ryftAggregation.get("sum").doubleValue();
         Double sumOfSqrs = ryftAggregation.get("sum_of_squares").doubleValue();
-        Double sigma = (Double) statsQuery.get("sigma");
-        if (sigma == null) sigma = 2.0;
+        Double sigma;
+        if (statsQuery.has("sigma")) {
+            sigma = statsQuery.get("sigma").asDouble();
+        } else {
+            sigma = 2.0;
+        }
 
         return new InternalExtendedStats(name, count, sum, min, max, sumOfSqrs, sigma, ValueFormatter.RAW, Collections.EMPTY_LIST, null);
     }

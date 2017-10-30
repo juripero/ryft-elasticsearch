@@ -2,6 +2,7 @@ package com.ryft.elasticsearch.plugin.service;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
@@ -95,40 +96,27 @@ public class AggregationService {
         }
     }
 
-    public Map<String, Map> getAggregationsFromEvent(SearchRequestEvent requestEvent) {
-        RyftProperties query = new RyftProperties();
-        query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
-
-        //TODO - when optional parameters are not set by user, set them explicitly here
-        return getAggregationsFromProperties(query);
-    }
-
-    public Map<String, Map> getAggregationsFromProperties(RyftProperties query) {
-        Map aggs = (Map) query.get("aggs");
-        if (aggs == null) {
-            aggs = (Map) query.get("aggregations");
+    private ObjectNode getAggregationsFromQuery(JsonNode query) {
+        JsonNode result = query.findValue("aggs");
+        if (result == null) {
+            result = query.findValue("aggregations");
         }
-
-        return aggs;
+        return (ObjectNode) result;
     }
 
     public InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
-        Map<String, Map> aggregationQuery = getAggregationsFromEvent(requestEvent);
+        ObjectNode aggregationsNode = getAggregationsFromQuery(requestEvent.getParsedQuery());
         List<InternalAggregation> internalAggregationList = new ArrayList<>();
+        Iterator<String> aggNames = aggregationsNode.fieldNames();
+        while (aggNames.hasNext()) {
+            String aggaggregationName = aggNames.next();
+            ObjectNode aggregationNode = (ObjectNode) aggregationsNode.get(aggaggregationName);
+            InternalAggregation internalAggregation = AggregationConverter.convertJsonToAggregation(aggregationNode, aggaggregationName, ryftAggregations);
 
-        //Aggregation results return without an aggregation type, so we have to map that back to the original request based on the aggregation name
-        for (Map.Entry<String, Map> entry : aggregationQuery.entrySet()) {
-            Map<String, Map> value = entry.getValue();
-
-            for (Map.Entry<String, Map> innerEntry : value.entrySet()) {
-                InternalAggregation internalAggregation = AggregationConverter.convertJsonToAggregation(innerEntry, entry.getKey(), ryftAggregations);
-
-                if (internalAggregation != null) {
-                    internalAggregationList.add(internalAggregation);
-                }
+            if (internalAggregation != null) {
+                internalAggregationList.add(internalAggregation);
             }
         }
-
         return new InternalAggregations(internalAggregationList);
     }
 
