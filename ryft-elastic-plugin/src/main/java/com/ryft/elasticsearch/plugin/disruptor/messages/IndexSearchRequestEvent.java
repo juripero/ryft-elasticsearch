@@ -37,7 +37,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public IndexSearchRequestEvent(ClusterService clusterService,
             Settings settings, ObjectMapperFactory objectMapperFactory,
-            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
+            @Assisted RyftRequestParameters requestParameters) {
         super(clusterService, objectMapperFactory, requestParameters);
         this.settings = settings;
     }
@@ -86,7 +86,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
     private ClusterRoute getClusterRoute(String nodeId, Collection<SearchShardTarget> shards) {
         ClusterRoute result = new ClusterRoute();
         result.setLocation(
-                "http://" + clusterState.getNodes().get(nodeId).getHostName() + ":" + getPort());
+                "http://" + clusterService.state().getNodes().get(nodeId).getHostName() + ":" + getPort());
         result.setFiles(getFilenames(shards));
         return result;
     }
@@ -103,14 +103,14 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
         return shards.stream().map(shardTarget
                 -> String.format("%1$s/%2$s/nodes/0/indices/%3$s/%4$d/index/*.%3$sjsonfld",
                         pathBegin,
-                        clusterState.getClusterName().value(),
+                        clusterService.state().getClusterName().value(),
                         shardTarget.getIndex(),
                         shardTarget.getShardId())
         ).collect(Collectors.toList());
     }
 
     public List<ShardRouting> getAllShards() {
-        ShardsIterator shardsIterator = clusterState.getRoutingTable().allShards(requestParameters.getIndices());
+        ShardsIterator shardsIterator = clusterService.state().getRoutingTable().allShards(requestParameters.getIndices());
         return StreamSupport.stream(shardsIterator.asUnordered().spliterator(), false)
                 .filter(shard -> shard.started())
                 .collect(Collectors.toList());
@@ -118,7 +118,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
 
     public List<SearchShardTarget> getShardsToSearch() {
         List<ShardRouting> filteredShards = getAllShards().stream()
-                .filter(shard -> nodesToSearch.contains(clusterState.nodes().get(shard.currentNodeId()).getHostName()))
+                .filter(shard -> nodesToSearch.contains(clusterService.state().nodes().get(shard.currentNodeId()).getHostName()))
                 .collect(Collectors.toList());
         Map<String, List<ShardRouting>> groupedShards = filteredShards.stream()
                 .collect(Collectors.groupingBy(shard
@@ -137,7 +137,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                 + ", shards=" + getAllShards().size() + '}';
     }
 
-    private Long getShardsNumber() {
+    public Long getShardsNumber() {
         Long result = getAllShards().stream()
                 .filter(shard -> shard.primary())
                 .collect(Collectors.counting());

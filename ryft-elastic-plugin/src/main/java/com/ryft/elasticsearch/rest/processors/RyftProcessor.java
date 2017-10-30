@@ -12,6 +12,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
+import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
@@ -155,6 +156,9 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         List<InternalSearchHit> searchHitList = new ArrayList<>();
         List<ShardSearchFailure> failures = new ArrayList<>();
         Integer totalShards = 0;
+        if (requestEvent instanceof IndexSearchRequestEvent) {
+            totalShards = ((IndexSearchRequestEvent) requestEvent).getShardsNumber().intValue();
+        }
         Integer failureShards = 0;
         String errorMessage = ryftResponse.getMessage();
         String[] errors = ryftResponse.getErrors();

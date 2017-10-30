@@ -31,7 +31,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     @Inject
     public FileSearchRequestEvent(ClusterService clusterService,
             ObjectMapperFactory objectMapperFactory,
-            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
+            @Assisted RyftRequestParameters requestParameters) {
         super(clusterService, objectMapperFactory, requestParameters);
     }
 
@@ -55,7 +55,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
                         + nodesToSearch.get(0) + ":" + getPort()
                         + "/search?query=" + getEncodedQuery()
                         + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
-                        + "&local=" + (clusterState.getNodes().dataNodes().size() == 1)
+                        + "&local=" + (clusterService.state().getNodes().dataNodes().size() == 1)
                         + "&stats=true&ignore-missing-files=true"
                         + "&cs=" + getCaseSensitive()
                         + "&format=" + getFormat().name().toLowerCase()

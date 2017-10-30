@@ -31,22 +31,23 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
 
     @Override
     protected SearchResponse executeRequest(IndexSearchRequestEvent event) throws RyftSearchException {
-        return getSearchResponse(event, new ArrayList<>(), null);
+        return getSearchResponse(event, new ArrayList<>(), null, 0);
     }
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
-            List<RyftResponse> responseHistory, Long start) throws RyftSearchException {
+            List<RyftResponse> responseHistory, Long start, Integer count) throws RyftSearchException {
         if (start == null) {
             start = System.currentTimeMillis();
         }
         if (requestEvent.canBeExecuted()) {
             RyftResponse ryftResponse = sendToRyft(requestEvent);
             responseHistory.add(ryftResponse);
-            if (ryftResponse.hasErrors()) {
+            if (ryftResponse.hasErrors() && 
+                    (count < requestEvent.getClusterService().state().getNodes().size())) {
                 LOGGER.warn("RYFT response has errors: {}", Arrays.toString(ryftResponse.getErrors()));
                 List<String> failedNodes = getFailedNodes(ryftResponse);
                 failedNodes.forEach(requestEvent::addFailedNode);
-                return getSearchResponse(requestEvent, responseHistory, start);
+                return getSearchResponse(requestEvent, responseHistory, start, ++count);
             }
         }
         if (responseHistory.isEmpty()) {

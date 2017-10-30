@@ -1,6 +1,5 @@
 package com.ryft.elasticsearch.plugin.disruptor.messages;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,33 +10,23 @@ import com.ryft.elasticsearch.plugin.ObjectMapperFactory;
 import com.ryft.elasticsearch.plugin.PropertiesProvider;
 import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 
 import org.elasticsearch.cluster.ClusterService;
-import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.assistedinject.Assisted;
 
 public abstract class SearchRequestEvent extends RequestEvent {
 
-    protected final ClusterState clusterState;
+    protected final ClusterService clusterService;
 
     protected final RyftRequestParameters requestParameters;
 
@@ -54,15 +43,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
             ObjectMapperFactory objectMapperFactory,
-            @Assisted RyftRequestParameters requestParameters) throws RyftSearchException {
+            @Assisted RyftRequestParameters requestParameters) {
         super();
         this.requestParameters = requestParameters;
-        clusterState = clusterService.state();
+        this.clusterService = clusterService;
         requestId = System.currentTimeMillis();
         mapper = objectMapperFactory.get();
         supportedAggregations = Arrays.asList(requestParameters.getRyftProperties().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
         nodesToSearch = new ArrayList<>();
-        Iterator<DiscoveryNode> nodeIterator = clusterState.getNodes().iterator();
+        Iterator<DiscoveryNode> nodeIterator = clusterService.state().getNodes().iterator();
         while (nodeIterator.hasNext()) {
             DiscoveryNode discoveryNode = nodeIterator.next();
             nodesToSearch.add(discoveryNode.address().getHost());
@@ -166,4 +155,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
     public void addFailedNode(String hostname) {
         nodesToSearch.remove(hostname);
     }
+
+    public ClusterService getClusterService() {
+        return clusterService;
+    }
+
 }
