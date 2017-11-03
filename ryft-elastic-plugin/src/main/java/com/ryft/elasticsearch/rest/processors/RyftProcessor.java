@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.bytes.BytesArray;
@@ -161,15 +160,15 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         Integer failureShards = 0;
         String errorMessage = ryftResponse.getMessage();
-        String[] errors = ryftResponse.getErrors();
+        List<String> errors = ryftResponse.getErrorsAndMessage();
 
         if (ryftResponse.hasErrors()) {
             failureShards += 1;
             if ((errorMessage != null) && (!errorMessage.isEmpty())) {
                 failures.add(new ShardSearchFailure(new Exception(errorMessage)));
             }
-            if ((errors != null) && (errors.length > 0)) {
-                Stream.of(errors)
+            if ((errors != null) && (!errors.isEmpty())) {
+                errors.stream()
                         .map(error -> new ShardSearchFailure(new Exception(error)))
                         .collect(Collectors.toCollection(() -> failures));
             }

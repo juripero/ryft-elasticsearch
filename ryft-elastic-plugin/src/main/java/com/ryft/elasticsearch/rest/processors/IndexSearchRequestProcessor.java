@@ -10,7 +10,6 @@ import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +43,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
             responseHistory.add(ryftResponse);
             if (ryftResponse.hasErrors() && 
                     (count < requestEvent.getClusterService().state().getNodes().size())) {
-                LOGGER.warn("RYFT response has errors: {}", Arrays.toString(ryftResponse.getErrors()));
+                LOGGER.warn("RYFT response has errors: {}", ryftResponse);
                 List<String> failedNodes = getFailedNodes(ryftResponse);
                 failedNodes.forEach(requestEvent::addFailedNode);
                 return getSearchResponse(requestEvent, responseHistory, start, ++count);
@@ -72,7 +71,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     private List<String> getFailedNodes(RyftResponse ryftResponse) {
         List<String> result = new ArrayList<>();
         Pattern addressPattern = Pattern.compile("\\(CLUSTER\\{.*?addr:(.*?)\\}\\)");
-        for (String error : ryftResponse.getErrors()) {
+        for (String error : ryftResponse.getErrorsAndMessage()) {
             Matcher matcher = addressPattern.matcher(error);
             if (matcher.find()) {
                 try {
