@@ -15,7 +15,7 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.disruptor.messages.SearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
-import com.ryft.elasticsearch.rest.client.ClusterRestClientHandler;
+import com.ryft.elasticsearch.rest.client.ClusterRestClientStreamHandler;
 import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
@@ -108,7 +108,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            ryftChannel.pipeline().addLast(new ClusterRestClientHandler(countDownLatch));
+            ryftChannel.pipeline().addLast(new ClusterRestClientStreamHandler(countDownLatch, 1000, mapper));
             LOGGER.debug("Send request: {}", ryftRequest);
             ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
             try {
@@ -116,7 +116,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
             } catch (InterruptedException ex) {
                 throw new RyftSearchException(ex);
             }
-            return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientHandler.RYFT_RESPONSE_ATTR);
+            return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientStreamHandler.RYFT_RESPONSE_ATTR);
         } else {
             requestEvent.addFailedNode(ryftURI.getHost());
             return sendToRyft(requestEvent);

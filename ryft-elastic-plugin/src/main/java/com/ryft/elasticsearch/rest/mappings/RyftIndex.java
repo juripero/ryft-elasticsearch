@@ -1,6 +1,9 @@
 package com.ryft.elasticsearch.rest.mappings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.elasticsearch.search.SearchShardTarget;
 
 public class RyftIndex {
 
@@ -66,6 +69,18 @@ public class RyftIndex {
 
     public void setHost(String host) {
         this.host = host;
+    }
+
+    public SearchShardTarget getSearchShardTarget() {
+        try {
+            Path sourcePath = Paths.get(sourceFile);
+            String index = sourcePath.getName(4).toString();
+            Integer shardId = -1;
+            shardId = Integer.valueOf(sourcePath.getName(5).toString());
+            return new SearchShardTarget(host, index, shardId);
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     @Override
