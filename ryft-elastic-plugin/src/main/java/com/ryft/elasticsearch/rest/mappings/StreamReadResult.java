@@ -3,14 +3,13 @@ package com.ryft.elasticsearch.rest.mappings;
 import java.util.ArrayList;
 import java.util.List;
 import org.elasticsearch.action.search.ShardSearchFailure;
-import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
 public class StreamReadResult {
 
     private final List<InternalSearchHit> searchHits = new ArrayList<>();
     private final List<ShardSearchFailure> failures = new ArrayList<>();
-    private InternalAggregations aggregations;
+    private RyftStats ryftStats;
 
     public StreamReadResult() {
     }
@@ -31,12 +30,12 @@ public class StreamReadResult {
         return failures;
     }
 
-    public InternalAggregations getAggregations() {
-        return aggregations;
+    public RyftStats getStats() {
+        return ryftStats;
     }
 
-    public void setAggregations(InternalAggregations aggregations) {
-        this.aggregations = aggregations;
+    public void setStats(RyftStats ryftStats) {
+        this.ryftStats = ryftStats;
     }
 
 }

@@ -6,12 +6,9 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.rest.mappings.RyftResponse;
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.inject.Inject;
@@ -34,14 +31,14 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     }
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
-            List<RyftResponse> responseHistory, Long start, Integer count) throws RyftSearchException {
+            List<StreamReadResult> responseHistory, Long start, Integer count) throws RyftSearchException {
         if (start == null) {
             start = System.currentTimeMillis();
         }
         if (requestEvent.canBeExecuted()) {
-            RyftResponse ryftResponse = sendToRyft(requestEvent);
+            StreamReadResult ryftResponse = sendToRyft(requestEvent);
             responseHistory.add(ryftResponse);
-            if (ryftResponse.hasErrors() && 
+            if (!ryftResponse.getFailures().isEmpty() && 
                     (count < requestEvent.getClusterService().state().getNodes().size())) {
                 LOGGER.warn("RYFT response has errors: {}", ryftResponse);
                 List<String> failedNodes = getFailedNodes(ryftResponse);
@@ -52,8 +49,8 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         if (responseHistory.isEmpty()) {
             throw new RyftSearchException("Can not get any RYFT response");
         }
-        RyftResponse maxResponse = responseHistory.stream()
-                .max((r1, r2) -> r1.getResults().size() - r2.getResults().size()).get();
+        StreamReadResult maxResponse = responseHistory.stream()
+                .max((r1, r2) -> r1.getSearchHits().size() - r2.getSearchHits().size()).get();
         Long searchTime = System.currentTimeMillis() - start;
         return constructSearchResponse(requestEvent, maxResponse, searchTime);
     }
@@ -68,20 +65,20 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         return String.format("ryft-indexsearch-pool-%d", getPoolSize());
     }
 
-    private List<String> getFailedNodes(RyftResponse ryftResponse) {
+    private List<String> getFailedNodes(StreamReadResult ryftResponse) {
         List<String> result = new ArrayList<>();
         Pattern addressPattern = Pattern.compile("\\(CLUSTER\\{.*?addr:(.*?)\\}\\)");
-        for (String error : ryftResponse.getErrorsAndMessage()) {
-            Matcher matcher = addressPattern.matcher(error);
-            if (matcher.find()) {
-                try {
-                    URL url = new URL(matcher.group(1));
-                    result.add(url.getHost());
-                } catch (MalformedURLException | RuntimeException ex) {
-                    LOGGER.warn("can not extract failed node from errormessage.");
-                }
-            }
-        }
+//        for (String error : ryftResponse.getErrorsAndMessage()) {
+//            Matcher matcher = addressPattern.matcher(error);
+//            if (matcher.find()) {
+//                try {
+//                    URL url = new URL(matcher.group(1));
+//                    result.add(url.getHost());
+//                } catch (MalformedURLException | RuntimeException ex) {
+//                    LOGGER.warn("can not extract failed node from errormessage.");
+//                }
+//            }
+//        }
         return result;
     }
 

@@ -29,10 +29,8 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
 
     private static final ESLogger LOGGER = Loggers.getLogger(ClusterRestClientStreamHandler.class);
 
-    private static final String RYFT_RESPONSE = "RYFT_RESPONSE";
     private static final String RYFT_STREAM_RESPONSE = "RYFT_STREAM_RESPONSE";
     private static final String RYFT_PAYLOAD = "RYFT_PAYLOAD";
-    public static final AttributeKey<RyftResponse> RYFT_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_RESPONSE);
     public static final AttributeKey<StreamReadResult> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
 
     public static final AttributeKey<RyftRequestPayload> RYFT_PAYLOAD_ATTR = AttributeKey.valueOf(RYFT_PAYLOAD);
@@ -42,7 +40,6 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private final ByteBuf accumulator = Unpooled.buffer();
     private final DataInputStream inputStream = new DataInputStream(new ByteBufInputStream(accumulator));
     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-    private StreamReadResult result = new StreamReadResult();
     private final ObjectMapper mapper;
     RyftStreamReadingProcess readingProcess;
     Future<StreamReadResult> future;
@@ -64,75 +61,13 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
             LOGGER.debug("Content received {}", msg);
             HttpContent m = (HttpContent) msg;
             accumulator.writeBytes(m.content());
-        } else if (msg instanceof LastHttpContent) {
-            LOGGER.debug("Last http content {}", msg);
-            HttpContent m = (HttpContent) msg;
-            accumulator.writeBytes(m.content());
-            getResult(ctx);
+            if (msg instanceof LastHttpContent) {
+                StreamReadResult result = future.get();
+                NettyUtils.setAttribute(RYFT_STREAM_RESPONSE_ATTR, result, ctx);
+                countDownLatch.countDown();
+                accumulator.clear();
+                ctx.channel().close();
+            }
         }
-    }
-
-//    private void parseStream(ChannelHandlerContext ctx) throws Exception {
-////        String jsonLine = reader.readLine();
-////        accumulator.discardReadBytes();
-////        while (jsonLine != null) {
-////            switch (mapper.readValue(jsonLine, String.class)) {
-////                case "rec":
-////                    RyftResult r = mapper.readValue(reader.readLine(), RyftResult.class);
-////                    result.addHit(r.getInternalSearchHit());
-////                    break;
-////                case "stat":
-////                    RyftStats stats = mapper.readValue(reader.readLine(), RyftStats.class);
-////                    break;
-////            }
-////            jsonLine = reader.readLine();
-////        }
-//    }
-
-//    private Boolean processStreamObject(BufferedReader reader) throws IOException {
-//        switch (getJsonString(reader.readLine())) {
-//            case "rec":
-//                rawData.add(getJsonObject(reader.readLine()));
-//                receivedResults++;
-//                break;
-//            case "stat":
-//                stats = getJsonObject(reader.readLine());
-//                break;
-//            case "end":
-//                return false;
-//            case "err":
-//                String error = getJsonString(reader.readLine())
-//                        .replaceAll("\\\\n", "\n").trim();
-//                LOG.error(error);
-//                errors.add(error);
-//            default:
-//        }
-//        return true;
-//    }
-//    private void parseFullReply(ChannelHandlerContext ctx) throws Exception {
-//        // Ugly construction because of SecurityManager used by ES
-//        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-//            RyftResponse ryftResponse;
-//            try {
-//                ObjectMapper mapper = new ObjectMapper();
-//                ryftResponse = mapper.readValue(accumulator.toString(StandardCharsets.UTF_8), RyftResponse.class);
-//            } catch (IOException | RuntimeException ex) {
-//                LOGGER.error("Failed to parse RYFT response", ex);
-//                ryftResponse = new RyftResponse();
-//                ryftResponse.setMessage(ex.getMessage());
-//            }
-//            NettyUtils.setAttribute(RYFT_RESPONSE_ATTR, ryftResponse, ctx);
-//            return null;
-//        });
-//        countDownLatch.countDown();
-//        accumulator.clear();
-//        ctx.channel().close();
-//    }
-
-    private void getResult(ChannelHandlerContext ctx) throws InterruptedException, ExecutionException {
-        NettyUtils.setAttribute(RYFT_STREAM_RESPONSE_ATTR, future.get(), ctx);
-        countDownLatch.countDown();
-        accumulator.clear();
-        ctx.channel().close();
     }
 }

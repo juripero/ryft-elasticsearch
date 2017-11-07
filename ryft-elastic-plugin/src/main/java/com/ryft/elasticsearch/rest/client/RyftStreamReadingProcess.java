@@ -48,7 +48,7 @@ public class RyftStreamReadingProcess implements Callable<StreamReadResult> {
                             RyftStats stats = ryftStreamDecoder.decode(ctx, RyftStats.class);
                             if (stats != null) {
                                 LOGGER.info("stats: {}", stats);
-                                result.setAggregations(InternalAggregations.EMPTY);
+                                result.setStats(stats);
                                 jsonLine = ryftStreamDecoder.decode(ctx, String.class);
                             }
                             break;

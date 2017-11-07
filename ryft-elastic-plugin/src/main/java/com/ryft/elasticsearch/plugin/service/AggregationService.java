@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -85,7 +86,7 @@ public class AggregationService {
         }
     }
 
-    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, RyftResponse ryftResponse) throws RyftSearchException {
+    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, StreamReadResult ryftResponse) throws RyftSearchException {
         if ((ryftResponse.getStats() != null)
                 && (ryftResponse.getStats().getExtra() != null)
                 && (ryftResponse.getStats().getExtra().getAggregations() != null)) {

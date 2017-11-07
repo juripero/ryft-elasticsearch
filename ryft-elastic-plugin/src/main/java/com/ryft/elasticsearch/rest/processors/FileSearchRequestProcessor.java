@@ -6,7 +6,7 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.FileSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.inject.Inject;
 
@@ -25,7 +25,7 @@ public class FileSearchRequestProcessor extends RyftProcessor<FileSearchRequestE
     @Override
     protected SearchResponse executeRequest(FileSearchRequestEvent event) throws RyftSearchException {
         Long start = System.currentTimeMillis();
-        RyftResponse ryftResponse = sendToRyft(event);
+        StreamReadResult ryftResponse = sendToRyft(event);
         Long searchTime = System.currentTimeMillis() - start;
         return constructSearchResponse(event, ryftResponse, searchTime);
     }
