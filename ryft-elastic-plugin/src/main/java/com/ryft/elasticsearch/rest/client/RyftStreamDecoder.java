@@ -10,20 +10,29 @@ public class RyftStreamDecoder extends LineBasedFrameDecoder {
 
     private final ByteBuf buffer;
     private final ObjectMapper mapper;
+    private final static Integer MAX_FRAME_SIZE = 1024 * 1024;//1Mb frame
 
     public RyftStreamDecoder(ByteBuf buffer, ObjectMapper mapper) {
-        super(1024 * 1024);
+        super(MAX_FRAME_SIZE); 
         this.buffer = buffer;
         this.mapper = mapper;
     }
 
     public <T> T decode(ChannelHandlerContext ctx, Class<T> clazz) throws Exception {
-        ByteBuf slicedByteBuf = (ByteBuf) this.decode(ctx, buffer);
-        if (slicedByteBuf != null) {
-            String line = slicedByteBuf.toString(StandardCharsets.UTF_8);
+        ByteBuf byteBuf = decode(ctx);
+        if (byteBuf != null) {
+            String line = byteBuf.toString(StandardCharsets.UTF_8);
             return mapper.readValue(line, clazz);
         } else {
             return null;
         }
+    }
+
+    public ByteBuf decode(ChannelHandlerContext ctx) throws Exception {
+        ByteBuf result;
+        do {
+            result = (ByteBuf) this.decode(ctx, buffer);
+        } while (result == null);
+        return result;
     }
 }

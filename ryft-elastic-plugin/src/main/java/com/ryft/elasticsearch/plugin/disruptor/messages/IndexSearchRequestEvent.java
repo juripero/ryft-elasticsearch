@@ -65,7 +65,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                         + "&local=false&file&stats=true"
                         + "&cs=" + getCaseSensitive()
                         + "&format=" + getFormat().name().toLowerCase()
-                        + "&limit=" + getLimit() + "&stream=true");
+                        + "&stream=true");
             } else {
                 throw new RyftSearchException("No RYFT nodes to search left");
             }

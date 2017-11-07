@@ -99,7 +99,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            ryftChannel.pipeline().addLast(new ClusterRestClientStreamHandler(countDownLatch, 1000, mapper));
+            ryftChannel.pipeline().addLast(new ClusterRestClientStreamHandler(countDownLatch, requestEvent.getSize(), mapper));
             LOGGER.debug("Send request: {}", ryftRequest);
             ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
             try {
@@ -161,7 +161,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         InternalSearchHit[] hits;
         hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
 
-        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, ryftResponse.getSearchHits().size(), Float.NEGATIVE_INFINITY);
+        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, ryftResponse.getStats().getMatches(), Float.NEGATIVE_INFINITY);
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
 

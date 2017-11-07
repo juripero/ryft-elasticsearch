@@ -38,20 +38,16 @@ public class RyftResult {
     public void setIndex(RyftIndex index) {
         this.index = index;
     }
-    
+
     public InternalSearchHit getInternalSearchHit() {
-                InternalSearchHit searchHit;
+        InternalSearchHit searchHit;
         try {
             String uid = record.has("_uid") ? record.get("_uid").asText() : String.valueOf(hashCode());
             String type = record.has("type") ? record.get("type").asText() : FileSearchRequestEvent.NON_INDEXED_TYPE;
 
             searchHit = new InternalSearchHit(0, uid, new Text(type),
                     ImmutableMap.of());
-            if(record.has("type")) {
-                searchHit.shardTarget(index.getSearchShardTarget());
-            } else {
-                searchHit.shardTarget(null);
-            }
+            searchHit.shardTarget(index.getSearchShardTarget());
 
             String error = record.has("error") ? record.get("error").asText() : "";
             if (!error.isEmpty()) {

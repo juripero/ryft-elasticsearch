@@ -2,10 +2,8 @@ package com.ryft.elasticsearch.rest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
-import com.ryft.elasticsearch.rest.mappings.RyftResponse;
 import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -13,12 +11,8 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.AttributeKey;
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.InputStreamReader;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -38,11 +32,8 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private final CountDownLatch countDownLatch;
     private final Integer size;
     private final ByteBuf accumulator = Unpooled.buffer();
-    private final DataInputStream inputStream = new DataInputStream(new ByteBufInputStream(accumulator));
-    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
     private final ObjectMapper mapper;
-    RyftStreamReadingProcess readingProcess;
-    Future<StreamReadResult> future;
+    private Future<StreamReadResult> future;
 
     public ClusterRestClientStreamHandler(CountDownLatch countDownLatch, Integer size, ObjectMapper mapper) {
         super();
@@ -55,7 +46,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse) {
             LOGGER.debug("Message received {}", msg);
-            readingProcess = new RyftStreamReadingProcess(ctx, size, new RyftStreamDecoder(accumulator, mapper));
+            RyftStreamReadingProcess readingProcess = new RyftStreamReadingProcess(ctx, size, new RyftStreamDecoder(accumulator, mapper));
             future = Executors.newSingleThreadExecutor().submit(readingProcess);
         } else if (msg instanceof HttpContent) {
             LOGGER.debug("Content received {}", msg);

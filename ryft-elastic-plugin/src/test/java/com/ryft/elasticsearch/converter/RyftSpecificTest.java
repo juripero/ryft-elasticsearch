@@ -259,18 +259,6 @@ public class RyftSpecificTest {
     }
 
     @Test
-    public void RyftLimitSearchTest() throws Exception {
-        String query = "{\"query\": {\"match\": {\"text_entry\": \"good mother\"}}, \"size\": 5, "
-                + "\"ryft\": {\"limit\": 100}}";
-        SearchRequest request = new SearchRequest(new String[]{"test"}, query.getBytes());
-        RyftRequestParameters ryftRequest = elasticConverter.convert(request);
-        assertEquals(new Integer(100), ryftRequest.getRyftProperties().getInt(RYFT_QUERY_LIMIT));
-        assertNotNull(ryftRequest);
-        assertEquals("((RECORD.text_entry CONTAINS \"good\") OR (RECORD.text_entry CONTAINS \"mother\"))",
-                ryftRequest.getQuery().buildRyftString());
-    }
-
-    @Test
     public void RyftEnabledTest() throws Exception {
         String query = "{\"query\": {\"match\": {\"text_entry\": \"good mother\"}}, "
                 + "\"ryft_enabled\": false}";
