@@ -149,7 +149,6 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         Integer failureShards = ryftResponse.getFailures().size();
 
-
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
         InternalAggregations aggregations;
         if (!requestEvent.canBeAggregatedByRYFT()) {
@@ -160,8 +159,11 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
         InternalSearchHit[] hits;
         hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
-
-        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, ryftResponse.getStats().getMatches(), Float.NEGATIVE_INFINITY);
+        Long totalHits = new Long(hits.length);
+        if (ryftResponse.getStats() != null) {
+            totalHits = ryftResponse.getStats().getMatches();
+        }
+        InternalSearchHits internalSearchHits = new InternalSearchHits(hits, totalHits, Float.NEGATIVE_INFINITY);
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
 

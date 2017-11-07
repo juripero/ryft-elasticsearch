@@ -5,6 +5,7 @@ import com.ryft.elasticsearch.rest.mappings.RyftStats;
 import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.concurrent.Callable;
+import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
@@ -28,6 +29,7 @@ public class RyftStreamReadingProcess implements Callable<StreamReadResult> {
     @Override
     public StreamReadResult call() throws Exception {
         StreamReadResult result = new StreamReadResult();
+        LOGGER.debug("Start response stream reading");
         try {
             do {
                 String jsonLine = ryftStreamDecoder.decode(ctx, String.class);
@@ -48,8 +50,15 @@ public class RyftStreamReadingProcess implements Callable<StreamReadResult> {
                         LOGGER.info("Stats: {}", stats);
                         result.setStats(stats);
                         break;
+                    case "err":
+                        String error = ryftStreamDecoder.decode(ctx, String.class)
+                                .replaceAll("\\\\n", "\n").trim();
+                        LOGGER.error("Error: {}", error);
+                        result.addFailure(new ShardSearchFailure(new Exception(error)));
+                        break;
                     case "end":
                         end = true;
+                        LOGGER.debug("End response stream reading");
                         break;
                 }
             } while (!end);
