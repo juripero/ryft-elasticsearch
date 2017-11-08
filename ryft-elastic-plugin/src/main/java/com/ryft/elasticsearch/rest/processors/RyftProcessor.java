@@ -150,12 +150,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         Integer failureShards = ryftResponse.getFailures().size();
 
         LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
-        InternalAggregations aggregations;
-        if (!requestEvent.canBeAggregatedByRYFT()) {
-            aggregations = aggregationService.applyAggregationElastic(ryftResponse.getSearchHits(), requestEvent);
-        } else {
-            aggregations = aggregationService.applyAggregationRyft(requestEvent, ryftResponse);
-        }
+        InternalAggregations aggregations = aggregationService.applyAggregation(requestEvent, ryftResponse);
 
         InternalSearchHit[] hits;
         hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
