@@ -5,13 +5,13 @@ import java.util.List;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
-public class StreamReadResult {
+public class RyftStreamResponse {
 
     private final List<InternalSearchHit> searchHits = new ArrayList<>();
     private final List<ShardSearchFailure> failures = new ArrayList<>();
     private RyftStats ryftStats;
 
-    public StreamReadResult() {
+    public RyftStreamResponse() {
     }
 
     public void addHit(InternalSearchHit hit) {
@@ -36,6 +36,11 @@ public class StreamReadResult {
 
     public void setStats(RyftStats ryftStats) {
         this.ryftStats = ryftStats;
+    }
+
+    @Override
+    public String toString() {
+        return "RyftStreamResponse{" + "searchHits=" + searchHits.size() + ", failures=" + failures + ", ryftStats=" + ryftStats + '}';
     }
 
 }

@@ -18,7 +18,7 @@ import com.ryft.elasticsearch.rest.client.NettyUtils;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
-import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
+import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -87,7 +87,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     public abstract int getPoolSize();
 
-    protected StreamReadResult sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
+    protected RyftStreamResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI ryftURI = requestEvent.getRyftSearchURL();
         RyftRequestPayload payload = requestEvent.getRyftRequestPayload();
         LOGGER.info("Preparing request to {}", ryftURI.getHost());
@@ -142,7 +142,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
     }
 
-    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, StreamReadResult ryftResponse, Long searchTime) throws RyftSearchException {
+    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse, Long searchTime) throws RyftSearchException {
         Integer totalShards = 0;
         if (requestEvent instanceof IndexSearchRequestEvent) {
             totalShards = ((IndexSearchRequestEvent) requestEvent).getShardsNumber().intValue();

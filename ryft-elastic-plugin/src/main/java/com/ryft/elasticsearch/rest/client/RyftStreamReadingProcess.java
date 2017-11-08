@@ -2,14 +2,14 @@ package com.ryft.elasticsearch.rest.client;
 
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import com.ryft.elasticsearch.rest.mappings.RyftStats;
-import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
+import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.concurrent.Callable;
 import org.elasticsearch.action.search.ShardSearchFailure;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 
-public class RyftStreamReadingProcess implements Callable<StreamReadResult> {
+public class RyftStreamReadingProcess implements Callable<RyftStreamResponse> {
 
     private static final ESLogger LOGGER = Loggers.getLogger(RyftStreamReadingProcess.class);
 
@@ -27,8 +27,8 @@ public class RyftStreamReadingProcess implements Callable<StreamReadResult> {
     }
 
     @Override
-    public StreamReadResult call() throws Exception {
-        StreamReadResult result = new StreamReadResult();
+    public RyftStreamResponse call() throws Exception {
+        RyftStreamResponse result = new RyftStreamResponse();
         LOGGER.debug("Start response stream reading");
         try {
             do {

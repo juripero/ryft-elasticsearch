@@ -6,7 +6,7 @@ import com.ryft.elasticsearch.plugin.disruptor.messages.IndexSearchRequestEvent;
 import com.ryft.elasticsearch.plugin.service.AggregationService;
 import com.ryft.elasticsearch.rest.client.RyftRestClient;
 import com.ryft.elasticsearch.rest.client.RyftSearchException;
-import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
+import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -35,12 +35,12 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
     }
 
     private SearchResponse getSearchResponse(IndexSearchRequestEvent requestEvent,
-            List<StreamReadResult> responseHistory, Long start, Integer count) throws RyftSearchException {
+            List<RyftStreamResponse> responseHistory, Long start, Integer count) throws RyftSearchException {
         if (start == null) {
             start = System.currentTimeMillis();
         }
         if (requestEvent.canBeExecuted()) {
-            StreamReadResult ryftResponse = sendToRyft(requestEvent);
+            RyftStreamResponse ryftResponse = sendToRyft(requestEvent);
             responseHistory.add(ryftResponse);
             if (!ryftResponse.getFailures().isEmpty()
                     && (count < requestEvent.getClusterService().state().getNodes().size())) {
@@ -53,7 +53,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         if (responseHistory.isEmpty()) {
             throw new RyftSearchException("Can not get any RYFT response");
         }
-        StreamReadResult maxResponse = responseHistory.stream()
+        RyftStreamResponse maxResponse = responseHistory.stream()
                 .max((r1, r2)
                         -> r1.getSearchHits().size() - r2.getSearchHits().size() - r1.getFailures().size() + r2.getFailures().size()).get();
         Long searchTime = System.currentTimeMillis() - start;
@@ -70,7 +70,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         return String.format("ryft-indexsearch-pool-%d", getPoolSize());
     }
 
-    private List<String> getFailedNodes(StreamReadResult ryftResponse) {
+    private List<String> getFailedNodes(RyftStreamResponse ryftResponse) {
         List<String> result = new ArrayList<>();
         Pattern addressPattern = Pattern.compile("\\(CLUSTER\\{.*?addr:(.*?)\\}\\)");
         for (ShardSearchFailure error : ryftResponse.getFailures()) {

@@ -2,7 +2,7 @@ package com.ryft.elasticsearch.rest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
-import com.ryft.elasticsearch.rest.mappings.StreamReadResult;
+import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,7 +25,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
 
     private static final String RYFT_STREAM_RESPONSE = "RYFT_STREAM_RESPONSE";
     private static final String RYFT_PAYLOAD = "RYFT_PAYLOAD";
-    public static final AttributeKey<StreamReadResult> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
+    public static final AttributeKey<RyftStreamResponse> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
 
     public static final AttributeKey<RyftRequestPayload> RYFT_PAYLOAD_ATTR = AttributeKey.valueOf(RYFT_PAYLOAD);
 
@@ -33,7 +33,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private final Integer size;
     private final ByteBuf accumulator = Unpooled.buffer();
     private final ObjectMapper mapper;
-    private Future<StreamReadResult> future;
+    private Future<RyftStreamResponse> future;
 
     public ClusterRestClientStreamHandler(CountDownLatch countDownLatch, Integer size, ObjectMapper mapper) {
         super();
@@ -53,7 +53,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
             HttpContent m = (HttpContent) msg;
             accumulator.writeBytes(m.content());
             if (msg instanceof LastHttpContent) {
-                StreamReadResult result = future.get();
+                RyftStreamResponse result = future.get();
                 NettyUtils.setAttribute(RYFT_STREAM_RESPONSE_ATTR, result, ctx);
                 countDownLatch.countDown();
                 accumulator.clear();
