@@ -24,10 +24,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private static final ESLogger LOGGER = Loggers.getLogger(ClusterRestClientStreamHandler.class);
 
     private static final String RYFT_STREAM_RESPONSE = "RYFT_STREAM_RESPONSE";
-    private static final String RYFT_PAYLOAD = "RYFT_PAYLOAD";
     public static final AttributeKey<RyftStreamResponse> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
-
-    public static final AttributeKey<RyftRequestPayload> RYFT_PAYLOAD_ATTR = AttributeKey.valueOf(RYFT_PAYLOAD);
 
     private final CountDownLatch countDownLatch;
     private final Integer size;
