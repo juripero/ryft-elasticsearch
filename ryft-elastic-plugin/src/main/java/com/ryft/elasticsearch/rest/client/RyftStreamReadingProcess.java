@@ -30,7 +30,7 @@ public class RyftStreamReadingProcess implements Callable<RyftStreamResponse> {
     @Override
     public RyftStreamResponse call() throws Exception {
         RyftStreamResponse result = new RyftStreamResponse();
-        LOGGER.debug("Start response stream reading");
+        LOGGER.info("Start response stream reading");
         try {
             do {
                 try {

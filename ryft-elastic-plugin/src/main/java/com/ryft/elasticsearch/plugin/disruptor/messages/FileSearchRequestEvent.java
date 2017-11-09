@@ -39,7 +39,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
     public RyftRequestPayload getRyftRequestPayload() throws RyftSearchException {
         validateRequest();
         RyftRequestPayload payload = new RyftRequestPayload();
-        if (canBeAggregatedByRYFT()) {
+        if (canBeAggregatedByRyft()) {
             LOGGER.info("Ryft Server selected as aggregation backend");
             payload.setAggs(getAggregations());
         }
@@ -52,7 +52,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
         try {
             if (!nodesToSearch.isEmpty()) {
                 URI result = new URI("http://"
-                        + nodesToSearch.get(0) + ":" + getPort()
+                        + getHost() + ":" + getPort()
                         + "/search?query=" + getEncodedQuery()
                         + "&file=" + getFilenames().stream().collect(Collectors.joining("&file="))
                         + "&local=" + (clusterService.state().getNodes().dataNodes().size() == 1)

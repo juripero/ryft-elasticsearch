@@ -32,8 +32,6 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected String ryftSupportedAggregationQuery;
 
-    protected long requestId;
-
     private final List<String> supportedAggregations;
 
     protected final ObjectMapper mapper;
@@ -47,7 +45,6 @@ public abstract class SearchRequestEvent extends RequestEvent {
         super();
         this.requestParameters = requestParameters;
         this.clusterService = clusterService;
-        requestId = System.currentTimeMillis();
         mapper = objectMapperFactory.get();
         supportedAggregations = Arrays.asList(requestParameters.getRyftProperties().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
         nodesToSearch = new ArrayList<>();
@@ -81,9 +78,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     public Integer getSize() {
-        if (canBeAggregatedByRYFT()) {
+        if (canBeAggregatedByRyft()) {
             return requestParameters.getRyftProperties()
-                .getInt(PropertiesProvider.ES_RESULT_SIZE);
+                    .getInt(PropertiesProvider.ES_RESULT_SIZE);
         } else {
             return Integer.MAX_VALUE;
         }
@@ -108,7 +105,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return requestParameters.getParsedQuery();
     }
 
-    public boolean canBeAggregatedByRYFT() {
+    public boolean canBeAggregatedByRyft() {
         if (!getParsedQuery().has("aggs") && !getParsedQuery().has("aggregations")) {
             return false;
         } else {
@@ -139,11 +136,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    public long getRequestId() {
-        return requestId;
+    protected String getHost() {
+        if (nodesToSearch.contains(clusterService.localNode().address().getHost())) {
+            return "127.0.0.1";
+        } else {
+            return nodesToSearch.get(0);
+        }
     }
 
-    public String getPort() {
+    protected String getPort() {
         return requestParameters.getRyftProperties().getStr(PropertiesProvider.PORT);
     }
 
