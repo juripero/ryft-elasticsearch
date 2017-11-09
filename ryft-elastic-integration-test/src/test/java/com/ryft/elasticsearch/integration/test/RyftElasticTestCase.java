@@ -218,17 +218,17 @@ public abstract class RyftElasticTestCase extends LuceneTestCase {
         getTransportAddresses();
         LOGGER.info("Cluster addresses: {}\nIndex name: {}\nRecords: {}\nDelete test index: {}",
                 clusterAddresses, indexName, recordsNum, deleteIndex);
-        prepareData();
-    }
-
-    static private void prepareData() throws JsonProcessingException {
-        TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        testDataList = IntStream.range(0, recordsNum).mapToObj(dataGenerator::getDataSample)
-                .collect(Collectors.toList());
+        testDataList = prepareData(recordsNum);
         testDataStringsList = new ArrayList<>();
         for (TestData data : testDataList) {
             testDataStringsList.add(data.toJson());
         }
+    }
+
+    protected static List<TestData> prepareData(Integer size) throws JsonProcessingException {
+        TestDataGenerator dataGenerator = new TestDataGenerator(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+        return IntStream.range(0, size).mapToObj(dataGenerator::getDataSample)
+                .collect(Collectors.toList());
     }
 
     private static void getTransportAddresses() throws UnknownHostException {

@@ -20,7 +20,7 @@ import com.ryft.elasticsearch.rest.client.RyftSearchException;
 import java.io.IOException;
 import java.util.*;
 
-import com.ryft.elasticsearch.rest.mappings.RyftResponse;
+import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -57,15 +57,23 @@ public class AggregationService {
         mapper = objectMapperFactory.get();
     }
 
-    public InternalAggregations applyAggregationElastic(List<InternalSearchHit> searchHitList,
-            SearchRequestEvent requestEvent) throws RyftSearchException {
+    public InternalAggregations applyAggregation(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse) throws RyftSearchException {
+        if (requestEvent.canBeAggregatedByRYFT()) {
+            return applyAggregationRyft(requestEvent, ryftResponse);
+        } else {
+            return applyAggregationElastic(requestEvent, ryftResponse);
+        }
+    }
+
+    private InternalAggregations applyAggregationElastic(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse) throws RyftSearchException {
+        LOGGER.info("Apply aggregation in Elasticsearch.");
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
-        if (!searchHitList.isEmpty()
+        if (!ryftResponse.getSearchHits().isEmpty()
                 && (query.containsKey("aggs") || query.containsKey("aggregations"))) {
             String tempIndexName = getTempIndexName(requestEvent);
             try {
-                prepareTempIndex(requestEvent, searchHitList, tempIndexName);
+                prepareTempIndex(requestEvent, ryftResponse.getSearchHits(), tempIndexName);
                 query.put(QueryConverterHelper.SIZE_PROPERTY, 0);
                 query.remove(QueryConverterHelper.RYFT_PROPERTY);
                 query.put(QueryConverterHelper.RYFT_ENABLED_PROPERTY, false);
@@ -85,7 +93,7 @@ public class AggregationService {
         }
     }
 
-    public InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, RyftResponse ryftResponse) throws RyftSearchException {
+    private InternalAggregations applyAggregationRyft(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse) throws RyftSearchException {
         if ((ryftResponse.getStats() != null)
                 && (ryftResponse.getStats().getExtra() != null)
                 && (ryftResponse.getStats().getExtra().getAggregations() != null)) {
@@ -104,7 +112,8 @@ public class AggregationService {
         return (ObjectNode) result;
     }
 
-    public InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
+    private InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
+        LOGGER.info("Getting aggregation result from RYFT response.");
         ObjectNode aggregationsNode = getAggregationsFromQuery(requestEvent.getParsedQuery());
         List<InternalAggregation> internalAggregationList = new ArrayList<>();
         Iterator<String> aggNames = aggregationsNode.fieldNames();

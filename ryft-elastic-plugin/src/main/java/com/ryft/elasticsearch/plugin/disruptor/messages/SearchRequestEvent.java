@@ -80,14 +80,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    protected Integer getLimit() {
-        return requestParameters.getRyftProperties()
-                .getInt(PropertiesProvider.RYFT_QUERY_LIMIT);
-    }
-
     public Integer getSize() {
-        return requestParameters.getRyftProperties()
+        if (canBeAggregatedByRYFT()) {
+            return requestParameters.getRyftProperties()
                 .getInt(PropertiesProvider.ES_RESULT_SIZE);
+        } else {
+            return Integer.MAX_VALUE;
+        }
     }
 
     public RyftProperties getMapping() {
