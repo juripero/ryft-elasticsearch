@@ -18,7 +18,6 @@ public class QueryConverterHelper {
     public static final String ENABLED_PROPERTY = "enabled";
     public static final String FILES_PROPERTY = "files";
     public static final String FORMAT_PROPERTY = "format";
-    public static final String LIMIT_PROPERTY = "limit";
     public static final String CASE_SENSITIVE_PROPERTY = "case_sensitive";
     public static final String MAPPING_PROPERTY = "mapping";
 
@@ -47,9 +46,6 @@ public class QueryConverterHelper {
             if (ryftJsonNode.has(MAPPING_PROPERTY)) {
                 Map<String, Object> mapping = convertingContext.getObjectMapper().convertValue(ryftJsonNode.get(MAPPING_PROPERTY), Map.class);
                 result.put(RYFT_MAPPING, new RyftProperties(mapping));
-            }
-            if (ryftJsonNode.has(LIMIT_PROPERTY)) {
-                result.put(RYFT_QUERY_LIMIT, ryftJsonNode.get(LIMIT_PROPERTY).asInt(-1));
             }
         }
         JsonNode ryftEnabledJsonNode = objectNode.findValue(RYFT_ENABLED_PROPERTY);

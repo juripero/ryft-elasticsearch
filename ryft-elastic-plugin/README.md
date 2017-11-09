@@ -777,13 +777,12 @@ All configuration properties can be defined in config file and some properties c
 | ryft_rest_auth_password             | RYFT service password                                                          |
 | ryft_request_processing_thread_num  | Thread number for request processing                                           |
 | ryft_response_processing_thread_num | Thread number for response processing                                          |
-| ryft_query_limit                    | Results limit                                                                  |
 | ryft_integration_enabled            | Integration with RYFT                                                          |
 | ryft_plugin_settings_index          | Settings index name                                                            |
 | ryft_disruptor_capacity             | Capacity of internal queue                                                     |
 | ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST                           |
 | ryft_aggregations_on_ryft_server    | Comma-separated list of aggregations that will be performed on the Ryft Server |
-
+| es_result_size                      | Default value of results to return                                             |
 
 To change property value using settings index you have to execute next call:
 
@@ -791,7 +790,7 @@ To change property value using settings index you have to execute next call:
 curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
 {
   "ryft_integration_enabled": "false",
-  "ryft_query_limit":"100",
+  "es_result_size":"100",
   "ryft_rest_client_host":"172.16.14.3",
   "ryft_rest_client_port":"8765"
   
@@ -799,7 +798,7 @@ curl -XPUT "http://<ryft-url>:9200/ryftpluginsettings/def/1" -d'
 ```
 Also, it's possible to edit ryft.elastic.plugin.properties file.
 
-`ryft_integration_enabled` and `ryft_query_limit` properties are overridden by `ryft_enabled` and `limit` query properties.
+`ryft_integration_enabled` and `es_result_size` properties are overridden by `ryft_enabled` and `size` query properties.
 ```json
 {
     "query": {
@@ -807,14 +806,11 @@ Also, it's possible to edit ryft.elastic.plugin.properties file.
             "speaker": "MARCELLUS"
         }
     },
-    "enabled": true,
-    "ryft": {
-      "limit": 100
-    },
+    "ryft_enabled": true,
     "size": 10
 }
 ```
-Elasticsearch `size` property sets number of results for return to client and does not influence on RYFT limit parameter. By default plugin has no limit for  results number from RYFT.
+Elasticsearch `size` property sets number of results for return to client. If available results more than `size` plugin skips odd results.
 
 ##### Case sensitivity
 By default, search is not case-sensitive. To configure this setting, the `ryft` property should be used. 
@@ -852,7 +848,7 @@ The following configuration parameters should be present:
 
 Such search query produce following request to RYFT: 
 `
-http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
+http://<host>:<port>/search?query=(RECORD.Description CONTAINS "vehicle")&file=chicago.crimestat&local=false&stats=true&ignore-missing-files=true&cs=false&format=xml&stream=true
 `
 Example to do fuzzy search on non indexed files:
 
@@ -878,7 +874,7 @@ Example to do fuzzy search on non indexed files:
 Such search query produce following request to RYFT: 
 
 `
-http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&mode=es&local=true&stats=true&format=xml&limit=10
+http://<host>:<port>/search?query=(RECORD.Description CONTAINS FEDS("reckles conduct", DIST=3))&file=chicago.crimestat&local=false&stats=true&ignore-missing-files=true&cs=false&format=xml&stream=true
 `
 ##### Custom mapping
 Mapping property contains information of result records datatypes and can be useful for some data aggregations. It supports same syntax as [Elasticsearch do](https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html).

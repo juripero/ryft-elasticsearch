@@ -160,7 +160,7 @@ public class RyftStats {
                 + ", fabricDuration=" + fabricDuration
                 + ", fabricDataRate=" + fabricDataRate
                 + ", host='" + host + '\''
-                + ", aggregations=" + extra
+                + ", extra=" + extra
                 + '}';
     }
 }

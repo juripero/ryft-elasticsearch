@@ -38,5 +38,10 @@ public class RyftExtra {
     public void setBackend(String backend) {
         this.backend = backend;
     }
+
+    @Override
+    public String toString() {
+        return "RyftExtra{" + "aggregations=" + aggregations + ", session=" + session + ", backend=" + backend + '}';
+    }
     
 }

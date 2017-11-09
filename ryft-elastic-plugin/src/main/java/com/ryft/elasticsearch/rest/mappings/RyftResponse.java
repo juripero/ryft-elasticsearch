@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftResponse {
@@ -73,6 +75,17 @@ public class RyftResponse {
 
     public Boolean hasResults() {
         return !((results == null) || (results.isEmpty()));
+    }
+
+    public List<String> getErrorsAndMessage() {
+        List<String> result = new ArrayList<>();
+        if ((errors != null) && (errors.length > 0)) {
+            result.addAll(Arrays.asList(errors));
+        }
+        if ((message != null) && (!message.isEmpty())) {
+            result.add(message);
+        }
+        return result;
     }
 
     @Override
