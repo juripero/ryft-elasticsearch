@@ -1,5 +1,6 @@
 package com.ryft.elasticsearch.rest.client;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import com.ryft.elasticsearch.rest.mappings.RyftStats;
 import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
@@ -32,34 +33,40 @@ public class RyftStreamReadingProcess implements Callable<RyftStreamResponse> {
         LOGGER.debug("Start response stream reading");
         try {
             do {
-                String jsonLine = ryftStreamDecoder.decode(ctx, String.class);
-                switch (jsonLine) {
-                    case "rec":
-                        if (count < size) {
-                            RyftResult ryftResult = ryftStreamDecoder.decode(ctx, RyftResult.class);
-                            LOGGER.trace("ryftResult: {}", ryftResult);
-                            result.addHit(ryftResult.getInternalSearchHit());
-                            count++;
-                        } else {
-                            ryftStreamDecoder.decode(ctx);
-                            LOGGER.trace("skip");
-                        }
-                        break;
-                    case "stat":
-                        RyftStats stats = ryftStreamDecoder.decode(ctx, RyftStats.class);
-                        LOGGER.info("Stats: {}", stats);
-                        result.setStats(stats);
-                        break;
-                    case "err":
-                        String error = ryftStreamDecoder.decode(ctx, String.class)
-                                .replaceAll("\\\\n", "\n").trim();
-                        LOGGER.error("Error: {}", error);
-                        result.addFailure(new ShardSearchFailure(new Exception(error)));
-                        break;
-                    case "end":
-                        end = true;
-                        LOGGER.debug("End response stream reading");
-                        break;
+                try {
+                    String controlMessage = ryftStreamDecoder.decode(ctx, String.class);
+                    switch (controlMessage) {
+                        case "rec":
+                            if (count < size) {
+                                RyftResult ryftResult = ryftStreamDecoder.decode(ctx, RyftResult.class);
+                                LOGGER.trace("ryftResult: {}", ryftResult);
+                                result.addHit(ryftResult.getInternalSearchHit());
+                                count++;
+                            } else {
+                                ryftStreamDecoder.decode(ctx);
+                                LOGGER.trace("skip");
+                            }
+                            break;
+                        case "stat":
+                            RyftStats stats = ryftStreamDecoder.decode(ctx, RyftStats.class);
+                            LOGGER.info("Stats: {}", stats);
+                            result.setStats(stats);
+                            break;
+                        case "err":
+                            String error = ryftStreamDecoder.decode(ctx, String.class)
+                                    .replaceAll("\\\\n", "\n").trim();
+                            LOGGER.error("Error: {}", error);
+                            result.addFailure(new ShardSearchFailure(new Exception(error)));
+                            break;
+                        case "end":
+                            end = true;
+                            LOGGER.debug("End response stream reading");
+                            break;
+                        default:
+                            LOGGER.error("Unknown control message: {}", controlMessage);
+                    }
+                } catch (JsonMappingException ex) {
+                    LOGGER.error("Json parsing error", ex);
                 }
             } while (!end);
         } catch (Exception ex) {
