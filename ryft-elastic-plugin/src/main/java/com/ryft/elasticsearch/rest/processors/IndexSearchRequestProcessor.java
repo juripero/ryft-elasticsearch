@@ -56,8 +56,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         RyftStreamResponse maxResponse = responseHistory.stream()
                 .max((r1, r2)
                         -> r1.getSearchHits().size() - r2.getSearchHits().size() - r1.getFailures().size() + r2.getFailures().size()).get();
-        Long searchTime = System.currentTimeMillis() - start;
-        return constructSearchResponse(requestEvent, maxResponse, searchTime);
+        return constructSearchResponse(requestEvent, maxResponse, start);
     }
 
     @Override

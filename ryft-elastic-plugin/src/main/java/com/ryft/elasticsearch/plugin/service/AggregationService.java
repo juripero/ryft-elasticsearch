@@ -66,6 +66,7 @@ public class AggregationService {
     }
 
     private InternalAggregations applyAggregationElastic(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse) throws RyftSearchException {
+        LOGGER.info("Apply aggregation in Elasticsearch.");
         RyftProperties query = new RyftProperties();
         query.putAll(mapper.convertValue(requestEvent.getParsedQuery(), Map.class));
         if (!ryftResponse.getSearchHits().isEmpty()
@@ -112,6 +113,7 @@ public class AggregationService {
     }
 
     private InternalAggregations getFromRyftAggregations(SearchRequestEvent requestEvent, ObjectNode ryftAggregations) {
+        LOGGER.info("Getting aggregation result from RYFT response.");
         ObjectNode aggregationsNode = getAggregationsFromQuery(requestEvent.getParsedQuery());
         List<InternalAggregation> internalAggregationList = new ArrayList<>();
         Iterator<String> aggNames = aggregationsNode.fieldNames();

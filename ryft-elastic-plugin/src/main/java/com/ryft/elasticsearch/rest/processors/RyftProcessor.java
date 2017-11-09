@@ -142,18 +142,14 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
     }
 
-    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse, Long searchTime) throws RyftSearchException {
+    protected SearchResponse constructSearchResponse(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse, Long startTime) throws RyftSearchException {
         Integer totalShards = 0;
         if (requestEvent instanceof IndexSearchRequestEvent) {
             totalShards = ((IndexSearchRequestEvent) requestEvent).getShardsNumber().intValue();
         }
         Integer failureShards = ryftResponse.getFailures().size();
-
-        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
         InternalAggregations aggregations = aggregationService.applyAggregation(requestEvent, ryftResponse);
-
-        InternalSearchHit[] hits;
-        hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
+        InternalSearchHit[] hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
         Long totalHits = new Long(hits.length);
         if (ryftResponse.getStats() != null) {
             totalHits = ryftResponse.getStats().getMatches();
@@ -161,7 +157,9 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         InternalSearchHits internalSearchHits = new InternalSearchHits(hits, totalHits, Float.NEGATIVE_INFINITY);
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
-
+        Long searchTime = System.currentTimeMillis() - startTime;
+        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
+ 
         return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                 ryftResponse.getFailures().toArray(new ShardSearchFailure[ryftResponse.getFailures().size()]));
     }

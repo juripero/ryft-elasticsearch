@@ -26,8 +26,7 @@ public class FileSearchRequestProcessor extends RyftProcessor<FileSearchRequestE
     protected SearchResponse executeRequest(FileSearchRequestEvent event) throws RyftSearchException {
         Long start = System.currentTimeMillis();
         RyftStreamResponse ryftResponse = sendToRyft(event);
-        Long searchTime = System.currentTimeMillis() - start;
-        return constructSearchResponse(event, ryftResponse, searchTime);
+        return constructSearchResponse(event, ryftResponse, start);
     }
 
     @Override
