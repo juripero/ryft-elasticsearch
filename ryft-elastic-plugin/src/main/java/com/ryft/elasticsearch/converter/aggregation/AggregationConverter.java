@@ -21,6 +21,7 @@ import org.elasticsearch.search.aggregations.support.format.ValueFormatter;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class AggregationConverter {
@@ -143,10 +144,11 @@ public class AggregationConverter {
         List<RyftInternalDateHistogram.Bucket> buckets = new ArrayList<>();
 
         if (bucketsNode.isArray()) {
-            while (bucketsNode.elements().hasNext()) {
-                JsonNode element = bucketsNode.elements().next();
+            Iterator<JsonNode> iterator = bucketsNode.elements();
+            while (iterator.hasNext()) {
+                JsonNode element = iterator.next();
                 Long key = element.get("key").asLong();
-                Long docCount = element.get("doc_dount").asLong();
+                Long docCount = element.get("doc_count").asLong();
                 buckets.add(dateHistogramFactory.createBucket(key, docCount, InternalAggregations.EMPTY, false, ValueFormatter.RAW));
             }
         }
