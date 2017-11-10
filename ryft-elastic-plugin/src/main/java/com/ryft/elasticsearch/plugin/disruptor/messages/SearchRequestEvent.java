@@ -12,6 +12,7 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -37,6 +38,8 @@ public abstract class SearchRequestEvent extends RequestEvent {
     protected final ObjectMapper mapper;
 
     protected final List<String> nodesToSearch;
+    
+    private static final String LOCALHOST = "127.0.0.1";
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
@@ -138,7 +141,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected String getHost() {
         if (nodesToSearch.contains(clusterService.localNode().address().getHost())) {
-            return "127.0.0.1";
+            return LOCALHOST;
         } else {
             return nodesToSearch.get(0);
         }
@@ -153,7 +156,11 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     public void addFailedNode(String hostname) {
-        nodesToSearch.remove(hostname);
+        if (hostname.equals(LOCALHOST)) {
+            nodesToSearch.remove(clusterService.localNode().address().getHost());
+        } else {
+            nodesToSearch.remove(hostname);
+        }
     }
 
     public ClusterService getClusterService() {

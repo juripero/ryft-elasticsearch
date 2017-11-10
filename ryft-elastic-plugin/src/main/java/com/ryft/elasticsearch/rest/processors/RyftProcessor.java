@@ -110,7 +110,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
             return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientStreamHandler.RYFT_STREAM_RESPONSE_ATTR);
         } else {
             LOGGER.error("Can not connect to {}", ryftURI.getHost());
-            requestEvent.addFailedNode(requestEvent.getClusterService().localNode().address().getHost());
+            requestEvent.addFailedNode(ryftURI.getHost());
             return sendToRyft(requestEvent);
         }
     }
