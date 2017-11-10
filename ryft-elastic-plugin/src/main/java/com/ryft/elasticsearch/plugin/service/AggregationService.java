@@ -58,7 +58,7 @@ public class AggregationService {
     }
 
     public InternalAggregations applyAggregation(SearchRequestEvent requestEvent, RyftStreamResponse ryftResponse) throws RyftSearchException {
-        if (requestEvent.canBeAggregatedByRYFT()) {
+        if (requestEvent.canBeAggregatedByRyft()) {
             return applyAggregationRyft(requestEvent, ryftResponse);
         } else {
             return applyAggregationElastic(requestEvent, ryftResponse);

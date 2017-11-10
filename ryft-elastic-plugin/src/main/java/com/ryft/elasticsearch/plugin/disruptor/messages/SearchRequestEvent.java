@@ -12,6 +12,7 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -32,13 +33,13 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     protected String ryftSupportedAggregationQuery;
 
-    protected long requestId;
-
     private final List<String> supportedAggregations;
 
     protected final ObjectMapper mapper;
 
     protected final List<String> nodesToSearch;
+    
+    private static final String LOCALHOST = "127.0.0.1";
 
     @Inject
     protected SearchRequestEvent(ClusterService clusterService,
@@ -47,7 +48,6 @@ public abstract class SearchRequestEvent extends RequestEvent {
         super();
         this.requestParameters = requestParameters;
         this.clusterService = clusterService;
-        requestId = System.currentTimeMillis();
         mapper = objectMapperFactory.get();
         supportedAggregations = Arrays.asList(requestParameters.getRyftProperties().getStr(PropertiesProvider.AGGREGATIONS_ON_RYFT_SERVER).split(","));
         nodesToSearch = new ArrayList<>();
@@ -81,9 +81,9 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     public Integer getSize() {
-        if (canBeAggregatedByRYFT()) {
+        if (canBeAggregatedByRyft()) {
             return requestParameters.getRyftProperties()
-                .getInt(PropertiesProvider.ES_RESULT_SIZE);
+                    .getInt(PropertiesProvider.ES_RESULT_SIZE);
         } else {
             return Integer.MAX_VALUE;
         }
@@ -108,7 +108,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
         return requestParameters.getParsedQuery();
     }
 
-    public boolean canBeAggregatedByRYFT() {
+    public boolean canBeAggregatedByRyft() {
         if (!getParsedQuery().has("aggs") && !getParsedQuery().has("aggregations")) {
             return false;
         } else {
@@ -139,11 +139,15 @@ public abstract class SearchRequestEvent extends RequestEvent {
         }
     }
 
-    public long getRequestId() {
-        return requestId;
+    protected String getHost() {
+        if (nodesToSearch.contains(clusterService.localNode().address().getHost())) {
+            return LOCALHOST;
+        } else {
+            return nodesToSearch.get(0);
+        }
     }
 
-    public String getPort() {
+    protected String getPort() {
         return requestParameters.getRyftProperties().getStr(PropertiesProvider.PORT);
     }
 
@@ -152,7 +156,11 @@ public abstract class SearchRequestEvent extends RequestEvent {
     }
 
     public void addFailedNode(String hostname) {
-        nodesToSearch.remove(hostname);
+        if (hostname.equals(LOCALHOST)) {
+            nodesToSearch.remove(clusterService.localNode().address().getHost());
+        } else {
+            nodesToSearch.remove(hostname);
+        }
     }
 
     public ClusterService getClusterService() {

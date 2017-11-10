@@ -2,6 +2,7 @@ package com.ryft.elasticsearch.rest.mappings;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -12,6 +13,7 @@ import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.internal.InternalSearchHit;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RyftResult {
 
     @JsonProperty("_index")

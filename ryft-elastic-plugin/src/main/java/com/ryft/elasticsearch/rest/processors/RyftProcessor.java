@@ -109,6 +109,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
             }
             return NettyUtils.getAttribute(channelFuture.channel(), ClusterRestClientStreamHandler.RYFT_STREAM_RESPONSE_ATTR);
         } else {
+            LOGGER.error("Can not connect to {}", ryftURI.getHost());
             requestEvent.addFailedNode(ryftURI.getHost());
             return sendToRyft(requestEvent);
         }
@@ -149,11 +150,13 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         }
         Integer failureShards = ryftResponse.getFailures().size();
         InternalAggregations aggregations = aggregationService.applyAggregation(requestEvent, ryftResponse);
-        InternalSearchHit[] hits = ryftResponse.getSearchHits().toArray(new InternalSearchHit[ryftResponse.getSearchHits().size()]);
-        Long totalHits = new Long(hits.length);
+        Long totalHits = new Long(ryftResponse.getSearchHits().size());
         if (ryftResponse.getStats() != null) {
             totalHits = ryftResponse.getStats().getMatches();
         }
+        Integer size = requestEvent.getRequestParameters().getRyftProperties()
+                .getInt(PropertiesProvider.ES_RESULT_SIZE);
+        InternalSearchHit[] hits = ryftResponse.getSearchHits().stream().limit(size).toArray(InternalSearchHit[]::new);
         InternalSearchHits internalSearchHits = new InternalSearchHits(hits, totalHits, Float.NEGATIVE_INFINITY);
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);

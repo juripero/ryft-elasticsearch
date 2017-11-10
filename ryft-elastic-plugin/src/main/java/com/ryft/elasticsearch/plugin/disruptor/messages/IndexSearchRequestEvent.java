@@ -47,7 +47,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
         Collection<SearchShardTarget> shardsToSearch = getShardsToSearch();
         RyftRequestPayload payload = new RyftRequestPayload();
         payload.setTweaks(getTweaks(shardsToSearch));
-        if (canBeAggregatedByRYFT()) {
+        if (canBeAggregatedByRyft()) {
             LOGGER.info("Ryft Server selected as aggregation backend");
             payload.setAggs(getAggregations());
         }
@@ -60,7 +60,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
         try {
             if (!nodesToSearch.isEmpty()) {
                 return new URI("http://"
-                        + nodesToSearch.get(0) + ":" + getPort()
+                        + getHost() + ":" + getPort()
                         + "/search?query=" + getEncodedQuery()
                         + "&local=false&file&stats=true"
                         + "&cs=" + getCaseSensitive()
