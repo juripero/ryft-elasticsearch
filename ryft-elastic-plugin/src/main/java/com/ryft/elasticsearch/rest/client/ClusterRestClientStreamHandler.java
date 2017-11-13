@@ -26,7 +26,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     public static final AttributeKey<RyftStreamResponse> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
 
     private final Integer BUFFER_SIZE = 100 * 1024 * 1024;
-    private final Integer BUFFER_WARN_SIZE = 50 * 1024 * 1024;
+    private final Integer BUFFER_WARN_SIZE = 5 * 1024 * 1024;
     private final CountDownLatch countDownLatch;
     private final Integer size;
     private final ByteBuf accumulator = Unpooled.buffer(BUFFER_SIZE, BUFFER_SIZE);
@@ -44,15 +44,19 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof HttpResponse) {
             LOGGER.debug("Message received {}", msg);
-            RyftStreamReadingProcess readingProcess = new RyftStreamReadingProcess(ctx, size, new RyftStreamDecoder(accumulator, mapper));
+            RyftStreamReadingProcess readingProcess = new RyftStreamReadingProcess(size, new RyftStreamDecoder(accumulator, mapper));
             future = Executors.newSingleThreadExecutor().submit(readingProcess);
         } else if (msg instanceof HttpContent) {
             LOGGER.debug("Content received {}", msg);
             HttpContent m = (HttpContent) msg;
-            Integer bufferDelta = accumulator.writerIndex() - accumulator.readerIndex();
-            if (size >  BUFFER_WARN_SIZE) {
-                LOGGER.warn("Buffer overflow. Buffer size: {}. Waiting", bufferDelta);
-                Thread.sleep(10);
+            Integer bufferDelta = accumulator.maxCapacity() - accumulator.writerIndex();
+            if (bufferDelta < BUFFER_WARN_SIZE) {
+                LOGGER.warn("Buffer overflow. Buffer capacity: {}. Writer index: {}, Reader index: {}",
+                        accumulator.maxCapacity(), accumulator.writerIndex(), accumulator.readerIndex());
+                while (bufferDelta < BUFFER_WARN_SIZE) {
+                    bufferDelta = accumulator.maxCapacity() - accumulator.writerIndex();
+                    Thread.sleep(1);
+                }
             }
             accumulator.writeBytes(m.content());
             if (msg instanceof LastHttpContent) {
