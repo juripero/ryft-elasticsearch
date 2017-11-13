@@ -12,7 +12,6 @@ import com.ryft.elasticsearch.plugin.RyftProperties;
 import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 
 import java.io.UnsupportedEncodingException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -85,7 +84,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
             return requestParameters.getRyftProperties()
                     .getInt(PropertiesProvider.ES_RESULT_SIZE);
         } else {
-            return Integer.MAX_VALUE;
+            return -1;
         }
     }
 
@@ -110,7 +109,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
 
     public boolean canBeAggregatedByRyft() {
         if (!getParsedQuery().has("aggs") && !getParsedQuery().has("aggregations")) {
-            return false;
+            return true;
         } else {
             ObjectNode aggregations = getAggregations();
             if (aggregations != null) {
@@ -126,7 +125,7 @@ public abstract class SearchRequestEvent extends RequestEvent {
                 }
                 return result;
             } else {
-                return false;
+                return true;
             }
         }
     }

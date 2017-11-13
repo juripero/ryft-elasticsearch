@@ -36,7 +36,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     public ClusterRestClientStreamHandler(CountDownLatch countDownLatch, Integer size, ObjectMapper mapper) {
         super();
         this.countDownLatch = countDownLatch;
-        this.size = size;
+        this.size = (size == -1) ? Integer.MAX_VALUE : size;
         this.mapper = mapper;
     }
 
@@ -55,6 +55,7 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
                         accumulator.maxCapacity(), accumulator.writerIndex(), accumulator.readerIndex());
                 while (bufferDelta < BUFFER_WARN_SIZE) {
                     bufferDelta = accumulator.maxCapacity() - accumulator.writerIndex();
+                    accumulator.discardReadBytes();
                     Thread.sleep(1);
                 }
             }

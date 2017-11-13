@@ -157,7 +157,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
         Long searchTime = System.currentTimeMillis() - startTime;
-        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
+        LOGGER.info("Search time: {} ms. Total hits: {}. Results: {}. Failures: {}", searchTime, totalHits, hits.length, failureShards);
  
         return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                 ryftResponse.getFailures().toArray(new ShardSearchFailure[ryftResponse.getFailures().size()]));
