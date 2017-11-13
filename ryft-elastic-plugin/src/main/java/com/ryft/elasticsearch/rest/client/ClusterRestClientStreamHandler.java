@@ -1,7 +1,6 @@
 package com.ryft.elasticsearch.rest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ryft.elasticsearch.rest.mappings.RyftRequestPayload;
 import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -26,9 +25,11 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private static final String RYFT_STREAM_RESPONSE = "RYFT_STREAM_RESPONSE";
     public static final AttributeKey<RyftStreamResponse> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
 
+    private final Integer BUFFER_SIZE = 100 * 1024 * 1024;
+    private final Integer BUFFER_WARN_SIZE = 50 * 1024 * 1024;
     private final CountDownLatch countDownLatch;
     private final Integer size;
-    private final ByteBuf accumulator = Unpooled.buffer();
+    private final ByteBuf accumulator = Unpooled.buffer(BUFFER_SIZE, BUFFER_SIZE);
     private final ObjectMapper mapper;
     private Future<RyftStreamResponse> future;
 
@@ -48,6 +49,11 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
         } else if (msg instanceof HttpContent) {
             LOGGER.debug("Content received {}", msg);
             HttpContent m = (HttpContent) msg;
+            Integer bufferDelta = accumulator.writerIndex() - accumulator.readerIndex();
+            if (size >  BUFFER_WARN_SIZE) {
+                LOGGER.warn("Buffer overflow. Buffer size: {}. Waiting", bufferDelta);
+                Thread.sleep(10);
+            }
             accumulator.writeBytes(m.content());
             if (msg instanceof LastHttpContent) {
                 RyftStreamResponse result = future.get();

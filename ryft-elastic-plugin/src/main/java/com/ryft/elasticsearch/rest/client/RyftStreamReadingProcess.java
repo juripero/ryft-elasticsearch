@@ -1,6 +1,6 @@
 package com.ryft.elasticsearch.rest.client;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ryft.elasticsearch.rest.mappings.RyftResult;
 import com.ryft.elasticsearch.rest.mappings.RyftStats;
 import com.ryft.elasticsearch.rest.mappings.RyftStreamResponse;
@@ -65,7 +65,7 @@ public class RyftStreamReadingProcess implements Callable<RyftStreamResponse> {
                         default:
                             LOGGER.error("Unknown control message: {}", controlMessage);
                     }
-                } catch (JsonMappingException ex) {
+                } catch (JsonProcessingException ex) {
                     LOGGER.error("Json parsing error", ex);
                 }
             } while (!end);
