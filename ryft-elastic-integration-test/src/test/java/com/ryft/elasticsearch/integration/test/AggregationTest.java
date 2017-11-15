@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
@@ -31,6 +32,7 @@ import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,7 +65,7 @@ public class AggregationTest extends RyftElasticTestCase {
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         InternalHistogram<InternalHistogram.Bucket> aggregation = searchResponse.getAggregations().get(aggregationName);
         aggregation.getBuckets().forEach((bucket) -> {
-            LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
+            LOGGER.info("{} -> {}", bucket.getKey(), bucket.getDocCount());
         });
 
         String elasticQuery = "{\n"
@@ -90,13 +92,15 @@ public class AggregationTest extends RyftElasticTestCase {
         assertNotNull(ryftResponse.getAggregations());
         InternalHistogram<InternalHistogram.Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
         ryftAggregation.getBuckets().forEach((bucket) -> {
-            LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
+            LOGGER.info("{} -> {}", bucket.getKey(), bucket.getDocCount());
         });
         assertEquals("Histograms should have same buckets size", aggregation.getBuckets().size(), ryftAggregation.getBuckets().size());
         for (int i = 0; i < aggregation.getBuckets().size(); i++) {
             InternalHistogram.Bucket esBucket = aggregation.getBuckets().get(i);
             InternalHistogram.Bucket ryftBucket = ryftAggregation.getBuckets().get(i);
-            assertEquals(esBucket.getKey(), ryftBucket.getKey());
+            Date esKey = (esBucket.getKey() instanceof DateTime) ? ((DateTime) esBucket.getKey()).toDate() : new Date((Long) esBucket.getKey());
+            Date ryftKey = (ryftBucket.getKey() instanceof DateTime) ? ((DateTime) ryftBucket.getKey()).toDate() : new Date((Long) ryftBucket.getKey());
+            assertEquals(esKey, ryftKey);
             assertEquals(esBucket.getDocCount(), ryftBucket.getDocCount());
         }
     }

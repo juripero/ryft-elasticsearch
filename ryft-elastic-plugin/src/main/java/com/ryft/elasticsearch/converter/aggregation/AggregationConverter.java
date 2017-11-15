@@ -152,8 +152,8 @@ public class AggregationConverter {
                 buckets.add(dateHistogramFactory.createBucket(key, docCount, InternalAggregations.EMPTY, false, ValueFormatter.RAW));
             }
         }
-
+        // emptyBucketInfo can be null for minDocCount > 0
         return histogramFactory.create(name, buckets, (RyftInternalOrder) RyftInternalOrder.KEY_ASC,
-                0, null, ValueFormatter.RAW, false, Collections.EMPTY_LIST, null);
+                1, null, ValueFormatter.RAW, false, Collections.EMPTY_LIST, null);
     }
 }
