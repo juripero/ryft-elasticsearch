@@ -59,7 +59,7 @@ public class FileSearchRequestEvent extends SearchRequestEvent {
                         + "&stats=true&ignore-missing-files=true"
                         + "&cs=" + getCaseSensitive()
                         + "&format=" + getFormat().name().toLowerCase()
-                        + "&stream=true");
+                        + "&stream=true&limit=" + getSize());
                 return result;
             } else {
                 throw new RyftSearchException("No RYFT nodes to search left");

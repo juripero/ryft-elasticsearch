@@ -4,7 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -31,6 +33,7 @@ import org.elasticsearch.search.aggregations.metrics.stats.Stats;
 import org.elasticsearch.search.aggregations.metrics.stats.extended.ExtendedStats;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
 import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,10 +54,20 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testDateHistogramAggregation() throws Exception {
+        dateHistogramAggregation(DateHistogramInterval.YEAR);
+        dateHistogramAggregation(DateHistogramInterval.MONTH);
+        dateHistogramAggregation(DateHistogramInterval.weeks(6));
+        dateHistogramAggregation(DateHistogramInterval.WEEK);
+        dateHistogramAggregation(DateHistogramInterval.days(3));
+        dateHistogramAggregation(DateHistogramInterval.DAY);
+        dateHistogramAggregation(DateHistogramInterval.HOUR);
+    }
+
+    public void dateHistogramAggregation(DateHistogramInterval interval) throws Exception {
         String aggregationName = "1";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
-                .dateHistogram(aggregationName).field("registered").interval(DateHistogramInterval.YEAR);
+                .dateHistogram(aggregationName).field("registered").interval(interval);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
@@ -62,8 +75,9 @@ public class AggregationTest extends RyftElasticTestCase {
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         InternalHistogram<InternalHistogram.Bucket> aggregation = searchResponse.getAggregations().get(aggregationName);
-        aggregation.getBuckets().forEach((bucket) -> {
-            LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
+        List<InternalHistogram.Bucket> esBuckets = aggregation.getBuckets().stream().filter(bucket -> bucket.getDocCount() > 0).collect(Collectors.toList());
+        esBuckets.forEach((bucket) -> {
+            LOGGER.info("{} -> {}", getBucketKey(bucket), bucket.getDocCount());
         });
 
         String elasticQuery = "{\n"
@@ -78,7 +92,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "    \"" + aggregationName + "\": {\n"
                 + "      \"date_histogram\": {\n"
                 + "        \"field\": \"registered\",\n"
-                + "        \"interval\": \"1y\"\n"
+                + "        \"interval\": \"" + interval.toString() + "\"\n"
                 + "      }\n"
                 + "    }\n"
                 + "  },\n"
@@ -89,16 +103,22 @@ public class AggregationTest extends RyftElasticTestCase {
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         InternalHistogram<InternalHistogram.Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
-        ryftAggregation.getBuckets().forEach((bucket) -> {
-            LOGGER.info("{} -> {}", bucket.getKeyAsString(), bucket.getDocCount());
+        List<InternalHistogram.Bucket> ryftBuckets = ryftAggregation.getBuckets().stream().filter(bucket -> bucket.getDocCount() > 0).collect(Collectors.toList());
+
+        ryftBuckets.forEach((bucket) -> {
+            LOGGER.info("{} -> {}", getBucketKey(bucket), bucket.getDocCount());
         });
-        assertEquals("Histograms should have same buckets size", aggregation.getBuckets().size(), ryftAggregation.getBuckets().size());
-        for (int i = 0; i < aggregation.getBuckets().size(); i++) {
-            InternalHistogram.Bucket esBucket = aggregation.getBuckets().get(i);
-            InternalHistogram.Bucket ryftBucket = ryftAggregation.getBuckets().get(i);
-            assertEquals(esBucket.getKey(), ryftBucket.getKey());
+        assertEquals("Histograms should have same buckets size", esBuckets.size(), ryftBuckets.size());
+        for (int i = 0; i < ryftBuckets.size(); i++) {
+            InternalHistogram.Bucket esBucket = esBuckets.get(i);
+            InternalHistogram.Bucket ryftBucket = ryftBuckets.get(i);
+            assertEquals(getBucketKey(esBucket), getBucketKey(ryftBucket));
             assertEquals(esBucket.getDocCount(), ryftBucket.getDocCount());
         }
+    }
+
+    private Date getBucketKey(InternalHistogram.Bucket bucket) {
+        return (bucket.getKey() instanceof DateTime) ? ((DateTime) bucket.getKey()).toDate() : new Date((Long) bucket.getKey());
     }
 
     @Test

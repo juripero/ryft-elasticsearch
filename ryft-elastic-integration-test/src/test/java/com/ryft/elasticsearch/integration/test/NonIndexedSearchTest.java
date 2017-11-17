@@ -9,6 +9,7 @@ import com.ryft.elasticsearch.integration.test.util.DataGenerator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -27,7 +28,9 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -301,7 +304,9 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
         for (int i = 0; i < expectedAggregation.getBuckets().size(); i++) {
             InternalHistogram.Bucket expectedBucket = expectedAggregation.getBuckets().get(i);
             InternalHistogram.Bucket actualBucket = actualAggregation.getBuckets().get(i);
-            assertEquals(expectedBucket.getKey(), actualBucket.getKey());
+            Date expectedKey = (expectedBucket.getKey() instanceof DateTime) ? ((DateTime) expectedBucket.getKey()).toDate() : new Date((Long) expectedBucket.getKey());
+            Date actualKey = (actualBucket.getKey() instanceof DateTime) ? ((DateTime) actualBucket.getKey()).toDate() : new Date((Long) actualBucket.getKey());
+            assertEquals(expectedKey, actualKey);
             assertEquals(expectedBucket.getDocCount(), actualBucket.getDocCount());
         }
     }

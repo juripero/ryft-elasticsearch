@@ -68,7 +68,8 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         LOGGER.info("Processing event: {}", event);
         executor.submit(() -> {
             try {
-                event.getCallback().onResponse(executeRequest(event));
+                SearchResponse response = executeRequest(event);
+                event.getCallback().onResponse(response);
             } catch (RyftSearchException | RuntimeException ex) {
                 LOGGER.error("Request processing error", ex);
                 event.getCallback().onFailure(ex);
@@ -89,11 +90,6 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
 
     protected RyftStreamResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI ryftURI = requestEvent.getRyftSearchURL();
-        RyftRequestPayload payload = requestEvent.getRyftRequestPayload();
-        LOGGER.info("Preparing request to {}", ryftURI.getHost());
-        if (payload.getTweaks() != null) {
-            LOGGER.info("Requesting routes: {}", payload.getTweaks().getClusterRoutes());
-        }
         HttpRequest ryftRequest = getRyftHttpRequest(requestEvent);
         Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
         if (maybeRyftChannel.isPresent()) {
@@ -161,7 +157,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         InternalSearchResponse internalSearchResponse = new InternalSearchResponse(internalSearchHits, aggregations,
                 null, null, false, false);
         Long searchTime = System.currentTimeMillis() - startTime;
-        LOGGER.info("Search time: {} ms. Results: {}. Failures: {}", searchTime, ryftResponse.getSearchHits().size(), ryftResponse.getFailures().size());
+        LOGGER.info("Search time: {} ms. Total hits: {}. Results: {}. Failures: {}", searchTime, totalHits, hits.length, failureShards);
  
         return new SearchResponse(internalSearchResponse, null, totalShards, totalShards - failureShards, searchTime,
                 ryftResponse.getFailures().toArray(new ShardSearchFailure[ryftResponse.getFailures().size()]));

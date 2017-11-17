@@ -2,37 +2,44 @@ package com.ryft.elasticsearch.rest.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.LineBasedFrameDecoder;
 import java.nio.charset.StandardCharsets;
 
-public class RyftStreamDecoder extends LineBasedFrameDecoder {
+public class RyftStreamDecoder {
 
     private final ByteBuf buffer;
     private final ObjectMapper mapper;
-    private final static Integer MAX_FRAME_SIZE = 1024 * 1024;//1Mb frame
 
     public RyftStreamDecoder(ByteBuf buffer, ObjectMapper mapper) {
-        super(MAX_FRAME_SIZE); 
         this.buffer = buffer;
         this.mapper = mapper;
     }
 
-    public <T> T decode(ChannelHandlerContext ctx, Class<T> clazz) throws Exception {
-        ByteBuf byteBuf = decode(ctx);
-        if (byteBuf != null) {
-            String line = byteBuf.toString(StandardCharsets.UTF_8);
+    public <T> T decode(Class<T> clazz) throws Exception {
+        Integer lineSize = getLineSize();
+        ByteBuf lineByteBuf = buffer.readBytes(lineSize);
+        if (lineByteBuf != null) {
+            String line = lineByteBuf.toString(StandardCharsets.UTF_8).trim();
             return mapper.readValue(line, clazz);
         } else {
             return null;
         }
     }
 
-    public ByteBuf decode(ChannelHandlerContext ctx) throws Exception {
-        ByteBuf result;
+    public void skipLine() throws Exception {
+        Integer lineSize = getLineSize();
+        buffer.skipBytes(lineSize);
+        buffer.discardSomeReadBytes();
+    }
+    
+    private Integer getLineSize() {
+        Integer result = -1;
         do {
-            result = (ByteBuf) this.decode(ctx, buffer);
-        } while (result == null);
-        return result;
+            result = buffer.bytesBefore((byte) '\n');
+            if (result == 0) {
+                buffer.skipBytes(1);
+                result = -1;
+            }
+        } while (result == -1);
+        return result + 1;
     }
 }
