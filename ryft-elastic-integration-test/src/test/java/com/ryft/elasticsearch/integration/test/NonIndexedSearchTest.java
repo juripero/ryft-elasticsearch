@@ -32,6 +32,7 @@ import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class NonIndexedSearchTest extends RyftElasticTestCase {
@@ -77,7 +78,9 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
         try {
             testFunction.accept(fileContentsMap);
         } finally {
-            filesApi.deleteFiles(null, new ArrayList(fileContentsMap.keySet()), null, true);
+            if (deleteIndex) {
+                filesApi.deleteFiles(null, new ArrayList(fileContentsMap.keySet()), null, true);
+            }
         }
     }
 
@@ -401,5 +404,44 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
         long actualTotalHits = testDataList.stream().filter(td -> td.getAbout().contains(query)).count();
         assertEquals(actualTotalHits, ryftResponse.getHits().getTotalHits());
         assertEquals(0, ryftResponse.getHits().hits().length);
+    }
+
+    @Test
+    @Ignore
+    public void testCSVSearch() throws Exception {
+        String fileContents = testDataList.stream().map(testdata -> testdata.toCsv())
+                .collect(Collectors.joining("\n", "", "\n"));
+        String fileName = "test/" + indexName + ".csv";
+        filesApi.postRawFile(fileContents.getBytes(), fileName, null, null, null,
+                Long.valueOf(fileContents.length()), null, "wait-10s", true);
+        try {
+            String aggName = "1";
+            String query = "perspiciatis";
+            String ryftQuery = "{\n"
+                    + "  \"query\": {\n"
+                    + "    \"match\": {\n"
+                    + "      \"4\": {\n"
+                    + "        \"query\": \"" + query + "\"\n"
+                    + "      }\n"
+                    + "    }\n"
+                    + "  },\n"
+                    + "  \"ryft\": {\n"
+                    + "    \"enabled\": true,\n"
+                    + "    \"files\": [\"" + fileName + "\"],\n"
+                    + "    \"format\": \"csv\"\n"
+                    + "  },"
+                    + "  \"size\": 0\n"
+                    + "}\n";
+            SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
+                    new SearchRequest(new String[]{fileName}, ryftQuery.getBytes())).get();
+            assertResponse(ryftResponse);
+            long actualTotalHits = testDataList.stream().filter(td -> td.getAbout().contains(query)).count();
+            assertEquals(actualTotalHits, ryftResponse.getHits().getTotalHits());
+            assertEquals(0, ryftResponse.getHits().hits().length);
+        } finally {
+            if (deleteIndex) {
+                filesApi.deleteFiles(null, Lists.newArrayList(fileName), null, true);
+            }
+        }
     }
 }

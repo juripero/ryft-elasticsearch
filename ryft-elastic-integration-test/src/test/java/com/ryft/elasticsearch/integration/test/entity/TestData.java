@@ -271,6 +271,14 @@ public class TestData {
     public String toJson() throws JsonProcessingException {
         return MAPPER.writeValueAsString(this);
     }
+    
+    public String toCsv() {
+        return '\"' + registered + "\",\"" + ipv6 + "\",\"" + ipv4 + "\",\"" 
+                + about + "\",\"" + company + "\",\"" + lastName + "\",\"" 
+                + firstName + "\",\"" + eyeColor + "\",\"" + age + "\",\"" 
+                + balanceRaw + "\",\"" + balance + "\",\"" + isActive + "\",\""
+                + index + "\",\"" + location + "\",\"" + id + '\"';
+    }
 
     public static TestData fromJson(byte[] content) throws IOException {
         return MAPPER.readValue(content, TestData.class);

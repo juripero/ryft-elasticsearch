@@ -826,12 +826,12 @@ The following configuration parameters should be present:
 RYFT plugin is able to perform record search on non-indexed files. To do this `ryft` property should be used. 
 The following configuration parameters should be present:
 
-| Parameter | Meaning                       |
-| --------- | ----------------------------- |
-| enabled   | The same as `ryft_enabled`    |
-| files     | List of files to search       |
-| format    | Input data format             |
-| mapping   | Data fields mapping properies |
+| Parameter | Meaning                                                       |
+| --------- | ------------------------------------------------------------- |
+| enabled   | The same as `ryft_enabled`                                    |
+| files     | List of files to search                                       |
+| format    | Input data format. Accepted values: JSON, XML, UTF8, RAW, CSV |
+| mapping   | Data fields mapping properies                                 |
 ```json
 {
     "query": {

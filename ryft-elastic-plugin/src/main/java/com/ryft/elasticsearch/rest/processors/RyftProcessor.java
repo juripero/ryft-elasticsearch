@@ -91,6 +91,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
     protected RyftStreamResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI ryftURI = requestEvent.getRyftSearchURL();
         HttpRequest ryftRequest = getRyftHttpRequest(requestEvent);
+        LOGGER.debug("Prepared request: {}", ryftRequest);
         Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
