@@ -41,6 +41,7 @@ public class IndexSearchRequestProcessor extends RyftProcessor<IndexSearchReques
         }
         if (requestEvent.canBeExecuted()) {
             RyftStreamResponse ryftResponse = sendToRyft(requestEvent);
+            LOGGER.debug("Receive response: ", ryftResponse);
             responseHistory.add(ryftResponse);
             if (!ryftResponse.getFailures().isEmpty()
                     && (count < requestEvent.getClusterService().state().getNodes().size())) {

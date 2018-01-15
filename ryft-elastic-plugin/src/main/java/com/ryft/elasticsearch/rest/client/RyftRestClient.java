@@ -59,6 +59,7 @@ public class RyftRestClient implements PostConstruct {
 
     private Optional<Channel> get(InetSocketAddress address) {
         try {
+            LOGGER.debug("Openning channel to: {}", address);
             return Optional.of(b.connect(address).sync().channel());
         } catch (Exception ex) {
             LOGGER.error("Can not open channel to {}.", ex, address);
