@@ -1,7 +1,7 @@
 package com.ryft.elasticsearch.converter.ryftdsl;
 
 public enum RyftFormat {
-    JSON, XML, UTF8, RAW, UNKNOWN_FORMAT;
+    JSON, XML, UTF8, RAW, CSV, UNKNOWN_FORMAT;
 
     public static RyftFormat get(String value) {
         try {
