@@ -56,11 +56,10 @@ public class AggregationTest extends RyftElasticTestCase {
     public void testDateHistogramAggregation() throws Exception {
         dateHistogramAggregation(DateHistogramInterval.YEAR);
         dateHistogramAggregation(DateHistogramInterval.MONTH);
-        dateHistogramAggregation(DateHistogramInterval.weeks(6));
         dateHistogramAggregation(DateHistogramInterval.WEEK);
-        dateHistogramAggregation(DateHistogramInterval.days(3));
         dateHistogramAggregation(DateHistogramInterval.DAY);
         dateHistogramAggregation(DateHistogramInterval.HOUR);
+//        dateHistogramAggregation(DateHistogramInterval.days(3));
     }
 
     public void dateHistogramAggregation(DateHistogramInterval interval) throws Exception {
