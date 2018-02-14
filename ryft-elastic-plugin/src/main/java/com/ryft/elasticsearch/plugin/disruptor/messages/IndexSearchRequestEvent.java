@@ -62,7 +62,7 @@ public class IndexSearchRequestEvent extends SearchRequestEvent {
                 return new URI("http://"
                         + getHost() + ":" + getPort()
                         + "/search?query=" + getEncodedQuery()
-                        + "&local=false&file&stats=true"
+                        + "&local=false&stats=true&ignore-missing-files=true"
                         + "&cs=" + getCaseSensitive()
                         + "&format=" + getFormat().name().toLowerCase()
                         + "&stream=true&limit=" + getSize());
