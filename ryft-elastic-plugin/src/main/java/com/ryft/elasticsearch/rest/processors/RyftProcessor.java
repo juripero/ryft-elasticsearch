@@ -91,7 +91,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
     protected RyftStreamResponse sendToRyft(SearchRequestEvent requestEvent) throws RyftSearchException {
         URI ryftURI = requestEvent.getRyftSearchURL();
         HttpRequest ryftRequest = getRyftHttpRequest(requestEvent);
-        LOGGER.debug("Prepared request: {}", ryftRequest);
+        LOGGER.info("Prepared request: {}", ryftRequest);
         Optional<Channel> maybeRyftChannel = channelProvider.get(ryftURI.getHost());
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
@@ -123,6 +123,7 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         try {
             DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, ryftURI.toString());
             String body = mapper.writeValueAsString(payload);
+            LOGGER.info("Request body: {}", body);
             ByteBuf bbuf = Unpooled.copiedBuffer(body, StandardCharsets.UTF_8);
             request.headers().add(HttpHeaders.Names.HOST, String.format("%s:%d", ryftURI.getHost(), ryftURI.getPort()));
             request.headers().set(HttpHeaders.Names.CONTENT_LENGTH, bbuf.readableBytes());
