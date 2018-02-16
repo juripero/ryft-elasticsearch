@@ -771,8 +771,8 @@ All configuration properties can be defined in config file and some properties c
 
 | Property                            | Meaning                                                                        |
 | ----------------------------------- | -------------------------------------------------------------------------------|
-| ryft_rest_client_host               | RYFT service host                                                              |
-| ryft_rest_client_port               | RYFT service port                                                              |
+| ryft_rest_service_host              | RYFT service host                                                              |
+| ryft_rest_service_port              | RYFT service port                                                              |
 | ryft_rest_auth_login                | RYFT service login                                                             |
 | ryft_rest_auth_password             | RYFT service password                                                          |
 | ryft_request_processing_thread_num  | Thread number for request processing                                           |
@@ -780,9 +780,10 @@ All configuration properties can be defined in config file and some properties c
 | ryft_integration_enabled            | Integration with RYFT                                                          |
 | ryft_plugin_settings_index          | Settings index name                                                            |
 | ryft_disruptor_capacity             | Capacity of internal queue                                                     |
+| ryft_response_buffer_size           | Size of read buffer for streaming responses from RYFT service                  |
 | ryft_rest_client_thread_num         | NETTY internal number of threads to access Ryft REST                           |
 | ryft_aggregations_on_ryft_server    | Comma-separated list of aggregations that will be performed on the Ryft Server |
-| es_result_size                      | Default value of results to return                                             |
+| es_result_size                      | Default number of results to return                                             |
 
 To change property value using settings index you have to execute next call:
 

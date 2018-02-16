@@ -27,6 +27,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
     // Local
     public static final String PLUGIN_SETTINGS_INDEX = "ryft_plugin_settings_index";
     public static final String DISRUPTOR_CAPACITY = "ryft_disruptor_capacity";
+    public static final String RESPONSE_BUFFER_SIZE = "ryft_response_buffer_size";
     public static final String WORKER_THREAD_COUNT = "ryft_rest_client_thread_num";
     public static final String PORT = "ryft_rest_service_port";
     public static final String RYFT_REST_AUTH_ENABLED = "ryft_rest_auth_enabled";
@@ -51,6 +52,7 @@ public class PropertiesProvider implements PostConstruct, Provider<RyftPropertie
         defaults.put(ES_RESULT_SIZE, "1000");
         defaults.put(PLUGIN_SETTINGS_INDEX, "ryftpluginsettings");
         defaults.put(DISRUPTOR_CAPACITY, "1048576");
+        defaults.put(RESPONSE_BUFFER_SIZE, "104857600");
         defaults.put(WORKER_THREAD_COUNT, "2");
         defaults.put(PORT, "8765");
         defaults.put(REQ_THREAD_NUM, "2");
