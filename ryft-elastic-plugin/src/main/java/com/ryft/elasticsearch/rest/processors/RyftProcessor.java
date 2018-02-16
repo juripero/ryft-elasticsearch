@@ -96,7 +96,8 @@ public abstract class RyftProcessor<T extends RequestEvent> implements PostConst
         if (maybeRyftChannel.isPresent()) {
             Channel ryftChannel = maybeRyftChannel.get();
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            ryftChannel.pipeline().addLast(new ClusterRestClientStreamHandler(countDownLatch, requestEvent.getSize(), mapper));
+            Integer bufferSize = requestEvent.getRequestParameters().getRyftProperties().getInt(PropertiesProvider.RESPONSE_BUFFER_SIZE);
+            ryftChannel.pipeline().addLast(new ClusterRestClientStreamHandler(countDownLatch, requestEvent.getSize(), mapper, bufferSize));
             LOGGER.debug("Send request: {}", ryftRequest);
             ChannelFuture channelFuture = ryftChannel.writeAndFlush(ryftRequest);
             try {

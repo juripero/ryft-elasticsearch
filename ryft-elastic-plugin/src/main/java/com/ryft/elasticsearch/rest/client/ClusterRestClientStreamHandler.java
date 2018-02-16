@@ -25,19 +25,22 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
     private static final String RYFT_STREAM_RESPONSE = "RYFT_STREAM_RESPONSE";
     public static final AttributeKey<RyftStreamResponse> RYFT_STREAM_RESPONSE_ATTR = AttributeKey.valueOf(RYFT_STREAM_RESPONSE);
 
-    private final Integer BUFFER_SIZE = 100 * 1024 * 1024;
-    private final Integer BUFFER_WARN_SIZE = 5 * 1024 * 1024;
+    private final Integer bufferWarnSize;
     private final CountDownLatch countDownLatch;
     private final Integer size;
-    private final ByteBuf accumulator = Unpooled.buffer(BUFFER_SIZE, BUFFER_SIZE);
+    private final ByteBuf accumulator;
     private final ObjectMapper mapper;
     private Future<RyftStreamResponse> future;
 
-    public ClusterRestClientStreamHandler(CountDownLatch countDownLatch, Integer size, ObjectMapper mapper) {
+    public ClusterRestClientStreamHandler(CountDownLatch countDownLatch, Integer size, ObjectMapper mapper, Integer bufferSize) {
         super();
         this.countDownLatch = countDownLatch;
         this.size = (size == -1) ? Integer.MAX_VALUE : size;
         this.mapper = mapper;
+
+        Double warnSize = bufferSize * 0.05;
+        this.bufferWarnSize = warnSize.intValue();
+        this.accumulator = Unpooled.buffer(bufferSize, bufferSize);
     }
 
     @Override
@@ -50,10 +53,10 @@ public class ClusterRestClientStreamHandler extends SimpleChannelInboundHandler<
             LOGGER.debug("Content received {}", msg);
             HttpContent m = (HttpContent) msg;
             Integer bufferDelta = accumulator.maxCapacity() - accumulator.writerIndex();
-            if (bufferDelta < BUFFER_WARN_SIZE) {
+            if (bufferDelta < bufferWarnSize) {
                 LOGGER.warn("Buffer overflow. Buffer capacity: {}. Writer index: {}, Reader index: {}",
                         accumulator.maxCapacity(), accumulator.writerIndex(), accumulator.readerIndex());
-                while (bufferDelta < BUFFER_WARN_SIZE) {
+                while (bufferDelta < bufferWarnSize) {
                     bufferDelta = accumulator.maxCapacity() - accumulator.writerIndex();
                     accumulator.discardReadBytes();
                     Thread.sleep(1);
