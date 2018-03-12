@@ -28,6 +28,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.bucket.histogram.InternalHistogram;
 import org.elasticsearch.search.aggregations.metrics.geobounds.GeoBounds;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
+import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCount;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
@@ -72,7 +73,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
                 .map(list -> list.stream().collect(Collectors.joining("\n")))
                 .collect(Collectors.toMap(d -> DataGenerator.DATA_FACTORY.getNumberText(8) + ".json", f -> f));
         for (Map.Entry<String, String> entry : fileContentsMap.entrySet()) {
-            filesApi.postRawFile(entry.getValue().getBytes(), entry.getKey(), null, null, null, Long.valueOf(entry.getValue().length()), null, "wait-10s", true);
+            filesApi.postRawFile(entry.getValue().getBytes(), entry.getKey(), null, null, null, (long) entry.getValue().getBytes().length, null, "wait-10s", true);
         }
         Thread.sleep(1000L);
         try {
@@ -172,6 +173,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
     public void testAggregation(Collection<String> files) {
         try {
             String aggName = "1";
+            String aggCount = "countAgg";
             String query = "perspiciatis";
             String ryftQuery = "{\n"
                     + "  \"query\": {\n"
@@ -186,8 +188,13 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
                     + "      \"sum\": {\n"
                     + "        \"field\": \"balance\"\n"
                     + "      }\n"
+                    + "    },\n"
+                    + "    \"" + aggCount + "\": {\n"
+                    + "      \"value_count\": {\n"
+                    + "        \"field\": \"balance\"\n"
+                    + "      }\n"
                     + "    }\n"
-                    + "  },"
+                    + "  },\n"
                     + "  \"ryft\": {\n"
                     + "    \"enabled\": true,\n"
                     + "    \"files\": [" + files.stream().collect(Collectors.joining("\",\"", "\"", "\"")) + "],\n"
@@ -198,6 +205,13 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
                     new SearchRequest(files.toArray(new String[files.size()]), ryftQuery.getBytes())).get();
             assertResponse(ryftResponse);
             Sum aggregation = (Sum) ryftResponse.getAggregations().get(aggName);
+            ValueCount countAggregation = (ValueCount) ryftResponse.getAggregations().get(aggCount);
+            Long actualCount = countAggregation.getValue();
+            Long expectedCount = testDataList.stream()
+                    .filter(testData -> testData.getAbout().contains(query))
+                    .mapToDouble(testData -> testData.getBalance())
+                    .count();
+            assertEquals("Aggregations should have the same amount of input entities", expectedCount, actualCount);
             Double actual = aggregation.getValue();
             Double expected = testDataList.stream()
                     .filter(testData -> testData.getAbout().contains(query))
