@@ -16,8 +16,6 @@ Elasticsearch JVM opts: ```-Xms4g -Xmx4g -XX:+UseParNewGC -XX:+UseConcMarkSweepG
 
 ## Benchmarking results
 
-Detailed results formatted as [gatling reports](https://github.com/getryft/ryft-elasticsearch/tree/master/ryft-elastic-benchmark/results).
-
 Queries are stored [here, in the configs](https://github.com/getryft/ryft-elasticsearch/blob/master/ryft-elastic-benchmark/src/main/resources/application.conf). All queries were limited to fetch only first 1000 results. That was made because of differences in search algorithm between Elasticsearch an Ryft search to prevent returning too much results. Sometimes especially with high value(more then 1) of fuzziness it's possible that Ryft box will fetch more results.
 
 First column describes amount of user that are simultaneously sending requests to the ES.
