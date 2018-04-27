@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.ryft.elasticsearch.integration.test.util.DataGenerator;
 import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -40,16 +42,19 @@ import org.junit.Test;
 
 public class AggregationTest extends RyftElasticTestCase {
 
+    private static String aggregationIndexName;
+
     @BeforeClass
     static void prepareData() throws IOException {
-        createIndex(indexName, "test", testDataStringsList,
+        aggregationIndexName = indexName + DataGenerator.DATA_FACTORY.getNumberText(6);
+        createIndex(aggregationIndexName, "test", testDataStringsList,
                 "registered", "type=date,format=yyyy-MM-dd HH:mm:ss",
                 "location", "type=geo_point");
     }
 
     @AfterClass
     static void cleanUp() {
-        cleanUp(indexName);
+        cleanUp(aggregationIndexName);
     }
 
     @Test
@@ -63,14 +68,14 @@ public class AggregationTest extends RyftElasticTestCase {
     }
 
     public void dateHistogramAggregation(DateHistogramInterval interval) throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "dateHistogramAggregation" + interval.toString();
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .dateHistogram(aggregationName).field("registered").interval(interval);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         InternalHistogram<InternalHistogram.Bucket> aggregation = searchResponse.getAggregations().get(aggregationName);
@@ -98,7 +103,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         InternalHistogram<InternalHistogram.Bucket> ryftAggregation = (InternalHistogram) ryftResponse.getAggregations().asList().get(0);
@@ -122,14 +127,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testMinAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testMinAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .min(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Min aggregation = (Min) searchResponse.getAggregations().get(aggregationName);
@@ -153,7 +158,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Min ryftAggregation = (Min) ryftResponse.getAggregations().asList().get(0);
@@ -164,14 +169,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testMaxAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testMaxAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .max(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Max aggregation = (Max) searchResponse.getAggregations().get(aggregationName);
@@ -195,7 +200,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Max ryftAggregation = (Max) ryftResponse.getAggregations().asList().get(0);
@@ -206,14 +211,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testSumAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testSumAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .sum(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Sum aggregation = (Sum) searchResponse.getAggregations().get(aggregationName);
@@ -237,7 +242,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Sum ryftAggregation = (Sum) ryftResponse.getAggregations().asList().get(0);
@@ -248,14 +253,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testAvgAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testAvgAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
                 .field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Avg aggregation = (Avg) searchResponse.getAggregations().get(aggregationName);
@@ -279,7 +284,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
@@ -290,14 +295,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testCountAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testCountAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.count(aggregationName)
                 .field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ValueCount aggregation = (ValueCount) searchResponse.getAggregations().get(aggregationName);
@@ -321,7 +326,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
@@ -332,14 +337,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testStatsAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testStatsAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.stats(aggregationName)
                 .field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Stats aggregation = (Stats) searchResponse.getAggregations().get(aggregationName);
@@ -365,7 +370,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Stats ryftAggregation = (Stats) ryftResponse.getAggregations().asList().get(0);
@@ -382,14 +387,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testExtStatsAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testExtStatsAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.extendedStats(aggregationName)
                 .field("age").sigma(3.1415926);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ExtendedStats aggregation = (ExtendedStats) searchResponse.getAggregations().get(aggregationName);
@@ -420,7 +425,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         ExtendedStats ryftAggregation = (ExtendedStats) ryftResponse.getAggregations().asList().get(0);
@@ -448,14 +453,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testGeoBoundsAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testGeoBoundsAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .geoBounds(aggregationName).field("location");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         GeoBounds aggregation = (GeoBounds) searchResponse.getAggregations().get(aggregationName);
@@ -479,7 +484,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         GeoBounds ryftAggregation = (GeoBounds) ryftResponse.getAggregations().asList().get(0);
@@ -493,14 +498,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testGeoCentroidAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testGeoCentroidAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .geoCentroid(aggregationName).field("location");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         GeoCentroid aggregation = (GeoCentroid) searchResponse.getAggregations().get(aggregationName);
@@ -524,7 +529,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
 
@@ -538,7 +543,7 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testPercentileTDigestAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testPercentileTDigestAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .percentiles(aggregationName).field("age").percentiles(20, 40, 60, 80, 95)
@@ -546,7 +551,7 @@ public class AggregationTest extends RyftElasticTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         List<Percentile> esPercentiles = Lists.newArrayList((Percentiles) searchResponse.getAggregations().get(aggregationName));
@@ -575,7 +580,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         List<Percentile> ryftPercentiles = Lists.newArrayList((Percentiles) ryftResponse.getAggregations().asList().get(0));
@@ -593,14 +598,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testPercentileRanksAggregation() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testPercentileRanksAggregation";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .percentileRanks(aggregationName).field("age").percentiles(20, 25, 30, 35, 40);
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         List<Percentile> esPercentiles = Lists.newArrayList((PercentileRanks) searchResponse.getAggregations().get(aggregationName));
@@ -626,7 +631,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         List<Percentile> ryftPercentiles = Lists.newArrayList((PercentileRanks) ryftResponse.getAggregations().asList().get(0));
@@ -653,7 +658,7 @@ public class AggregationTest extends RyftElasticTestCase {
         LOGGER.info("Testing aggregation1: {}", aggregationBuilder1.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
         LOGGER.info("Testing aggregation2: {}", aggregationBuilder2.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder1).addAggregation(aggregationBuilder2).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Min aggregation1 = (Min) searchResponse.getAggregations().get("1");
@@ -683,7 +688,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Min ryftAggregation1 = (Min) ryftResponse.getAggregations().asMap().get("1");
@@ -696,14 +701,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithMetadata() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testAggregationWithMetadata";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.count(aggregationName)
                 .field("age").setMetaData(ImmutableMap.of("color", "green"));
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         ValueCount aggregation = (ValueCount) searchResponse.getAggregations().get(aggregationName);
@@ -730,7 +735,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         ValueCount ryftAggregation = (ValueCount) ryftResponse.getAggregations().asList().get(0);
@@ -741,7 +746,7 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithScript() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testAggregationWithScript";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         Script script = new Script("_value * correction", ScriptService.ScriptType.INLINE, "groovy", ImmutableMap.of("correction", 1.2));
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders.avg(aggregationName)
@@ -749,7 +754,7 @@ public class AggregationTest extends RyftElasticTestCase {
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Avg aggregation = (Avg) searchResponse.getAggregations().get(aggregationName);
@@ -780,7 +785,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"ryft_enabled\": true\n"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         Avg ryftAggregation = (Avg) ryftResponse.getAggregations().asList().get(0);
@@ -791,14 +796,14 @@ public class AggregationTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithSizeZero() throws Exception {
-        String aggregationName = "1";
+        String aggregationName = "testAggregationWithSizeZero";
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("eyeColor", "green");
         AbstractAggregationBuilder aggregationBuilder = AggregationBuilders
                 .sum(aggregationName).field("age");
         LOGGER.info("Testing query: {}", queryBuilder.toString());
         LOGGER.info("Testing aggregation: {}", aggregationBuilder.toXContent(jsonBuilder().startObject(), EMPTY_PARAMS).string());
 
-        SearchResponse searchResponse = getClient().prepareSearch(indexName).setQuery(queryBuilder)
+        SearchResponse searchResponse = getClient().prepareSearch(aggregationIndexName).setQuery(queryBuilder)
                 .addAggregation(aggregationBuilder).setSize(0).get();
         LOGGER.info("ES response has {} hits", searchResponse.getHits().getTotalHits());
         Sum aggregation = (Sum) searchResponse.getAggregations().get(aggregationName);
@@ -823,7 +828,7 @@ public class AggregationTest extends RyftElasticTestCase {
                 + "  \"size\": 0"
                 + "}";
         SearchResponse ryftResponse = getClient().execute(SearchAction.INSTANCE,
-                new SearchRequest(new String[]{indexName}, elasticQuery.getBytes())).get();
+                new SearchRequest(new String[]{aggregationIndexName}, elasticQuery.getBytes())).get();
         LOGGER.info("RYFT response has {} hits", ryftResponse.getHits().getTotalHits());
         assertNotNull(ryftResponse.getAggregations());
         assertEquals(searchResponse.getHits().getTotalHits(), ryftResponse.getHits().getTotalHits());

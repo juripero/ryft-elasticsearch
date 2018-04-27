@@ -43,7 +43,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     @BeforeClass
     static void prepareData() throws IOException, ApiException {
-        testFilename = String.format("%s.json", indexName);
+        testFilename = String.format("%s.json", indexName + DataGenerator.DATA_FACTORY.getNumberText(6));
         byte[] testDataBytes = testDataStringsList.stream()
                 .collect(Collectors.joining("\n")).getBytes();
         createFilesApi();
@@ -172,7 +172,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     public void testAggregation(Collection<String> files) {
         try {
-            String aggName = "1";
+            String aggName = "testAggregation";
             String aggCount = "countAgg";
             String query = "perspiciatis";
             String ryftQuery = "{\n"
@@ -235,7 +235,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithMetadata() throws Exception {
-        String aggName = "1";
+        String aggName = "testAggregationWithMetadata";
         String query = "perspiciatis";
         String ryftQuery = "{\n"
                 + "  \"query\": {\n"
@@ -271,7 +271,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithMapping1() throws Exception {
-        String aggName = "1";
+        String aggName = "testAggregationWithMapping1";
         String query = "perspiciatis";
         String ryftQuery = "{\n"
                 + "  \"query\": {\n"
@@ -330,7 +330,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithMapping2() throws Exception {
-        String aggName = "1";
+        String aggName = "testAggregationWithMapping2";
         String query = "perspiciatis";
         String ryftQuery = "{\n"
                 + "  \"query\": {\n"
@@ -388,7 +388,7 @@ public class NonIndexedSearchTest extends RyftElasticTestCase {
 
     @Test
     public void testAggregationWithSizeZero() throws Exception {
-        String aggName = "1";
+        String aggName = "testAggregationWithSizeZero";
         String query = "perspiciatis";
         String ryftQuery = "{\n"
                 + "  \"query\": {\n"
